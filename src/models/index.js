@@ -11,6 +11,7 @@ const db = {};
 db.main = new Sequelize(config.databases.main.database, config.databases.main.username, config.databases.main.password, config.databases.main);
 db.tenant = new Sequelize(config.databases.tenant.database, config.databases.tenant.username, config.databases.tenant.password, config.databases.tenant);
 
+console.log(db.main.import);
 db.model = {
   main: {},
   tenant: {}
@@ -23,7 +24,8 @@ fs
       (file !== basename) &&
       (file.slice(-3) === '.js'))
   .forEach(file => {
-      const model = db.main.import(path.join(__dirname + '/main', file));
+      // const model = db.main.import(path.join(__dirname + '/main', file));
+      const model = require(path.join(__dirname + '/main', file))(db.main, Sequelize.DataTypes);
       db.model.main[model.name] = model;
   });
 
@@ -35,7 +37,8 @@ fs
       (file !== basename) &&
       (file.slice(-3) === '.js'))
   .forEach(file => {
-      const model = db.tenant.import(path.join(__dirname + '/tenant', file));
+      // const model = db.tenant.import(path.join(__dirname + '/tenant', file));
+      const model = require(path.join(__dirname + '/tenant', file))(db.tenant, Sequelize.DataTypes);
       db.model.tenant[model.name] = model;
   });
 
