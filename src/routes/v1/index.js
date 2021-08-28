@@ -3,6 +3,10 @@ const config = require('../../config/config');
 
 const router = express.Router();
 
+router.get('/status', (req, res) => {
+  res.status(200).send('OK');
+});
+
 const defaultRoutes = [];
 
 const devRoutes = [];

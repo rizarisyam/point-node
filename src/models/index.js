@@ -11,11 +11,6 @@ const db = {};
 db.main = new Sequelize(config.databases.main.database, config.databases.main.username, config.databases.main.password, config.databases.main);
 db.tenant = new Sequelize(config.databases.tenant.database, config.databases.tenant.username, config.databases.tenant.password, config.databases.tenant);
 
-console.log(db.main.import);
-db.model = {
-  main: {},
-  tenant: {}
-}
 //Add models from main folder
 fs
   .readdirSync(__dirname + '/main')
@@ -24,9 +19,8 @@ fs
       (file !== basename) &&
       (file.slice(-3) === '.js'))
   .forEach(file => {
-      // const model = db.main.import(path.join(__dirname + '/main', file));
       const model = require(path.join(__dirname + '/main', file))(db.main, Sequelize.DataTypes);
-      db.model.main[model.name] = model;
+      db.main[model.name] = model;
   });
 
 // Add models from tenant folder
@@ -37,20 +31,19 @@ fs
       (file !== basename) &&
       (file.slice(-3) === '.js'))
   .forEach(file => {
-      // const model = db.tenant.import(path.join(__dirname + '/tenant', file));
       const model = require(path.join(__dirname + '/tenant', file))(db.tenant, Sequelize.DataTypes);
-      db.model.tenant[model.name] = model;
+      db.tenant[model.name] = model;
   });
 
-Object.keys(db.model.main).forEach((modelName) => {
-  if (db.main.models[modelName].associate) {
-    db.main.models[modelName].associate(db);
+Object.keys(db.main).forEach((modelName) => {
+  if (db.main[modelName].associate) {
+    db.main[modelName].associate(db);
   }
 });
 
-Object.keys(db.model.tenant).forEach((modelName) => {
-  if (db.tenant.model[modelName].associate) {
-    db.tenant.model[modelName].associate(db);
+Object.keys(db.tenant).forEach((modelName) => {
+  if (db.tenant[modelName].associate) {
+    db.tenant[modelName].associate(db);
   }
 });
 
