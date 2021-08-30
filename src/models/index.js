@@ -6,10 +6,25 @@ const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require(`${__dirname}/../config/database.js`)[env];
-const db = {};
+const db = {
+  main: {},
+  tenant: {}
+};
 
-db.main = new Sequelize(config.databases.main.database, config.databases.main.username, config.databases.main.password, config.databases.main);
-db.tenant = new Sequelize(config.databases.tenant.database, config.databases.tenant.username, config.databases.tenant.password, config.databases.tenant);
+const configDbMain = config.databases.main;
+const mainSequelize = new Sequelize(
+ configDbMain.database,
+ configDbMain.username,
+ configDbMain.password,
+ configDbMain
+);
+const configDbTenant = config.databases.tenant;
+const tenantSequelize = new Sequelize(
+  configDbTenant.database,
+  configDbTenant.username,
+  configDbTenant.password,
+  configDbTenant
+);
 
 //Add models from main folder
 fs
@@ -19,7 +34,7 @@ fs
       (file !== basename) &&
       (file.slice(-3) === '.js'))
   .forEach(file => {
-      const model = require(path.join(__dirname + '/main', file))(db.main, Sequelize.DataTypes);
+      const model = require(path.join(__dirname + '/main', file))(mainSequelize, Sequelize.DataTypes);
       db.main[model.name] = model;
   });
 
@@ -31,7 +46,7 @@ fs
       (file !== basename) &&
       (file.slice(-3) === '.js'))
   .forEach(file => {
-      const model = require(path.join(__dirname + '/tenant', file))(db.tenant, Sequelize.DataTypes);
+      const model = require(path.join(__dirname + '/tenant', file))(tenantSequelize, Sequelize.DataTypes);
       db.tenant[model.name] = model;
   });
 
@@ -48,6 +63,8 @@ Object.keys(db.tenant).forEach((modelName) => {
 });
 
 db.Sequelize = Sequelize;
+db.main.sequelize = mainSequelize
+db.tenant.sequelize = tenantSequelize
 
 module.exports = db;
 /* eslint-enable */

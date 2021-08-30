@@ -1,17 +1,22 @@
-const mongoose = require('mongoose');
-const config = require('../../src/config/config');
+const { sequelize: mainSequelize } = require('../../src/models').main;
 
 const setupTestDB = () => {
   beforeAll(async () => {
-    await mongoose.connect(config.mongoose.url, config.mongoose.options);
+    await mainSequelize.query('SET FOREIGN_KEY_CHECKS = 0', null);
+    await mainSequelize.truncate({ cascade: true, force: true });
+    await mainSequelize.query('SET FOREIGN_KEY_CHECKS = 1', null);
   });
 
   beforeEach(async () => {
-    await Promise.all(Object.values(mongoose.connection.collections).map(async (collection) => collection.deleteMany()));
+    await mainSequelize.query('SET FOREIGN_KEY_CHECKS = 0', null);
+    await mainSequelize.truncate({ cascade: true, force: true });
+    await mainSequelize.query('SET FOREIGN_KEY_CHECKS = 1', null);
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
+    await mainSequelize.query('SET FOREIGN_KEY_CHECKS = 0', null);
+    await mainSequelize.truncate({ cascade: true, force: true });
+    await mainSequelize.query('SET FOREIGN_KEY_CHECKS = 1', null);
   });
 };
 

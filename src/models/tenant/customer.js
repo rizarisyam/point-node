@@ -1,56 +1,77 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class User extends Model {
+  class Customer extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate(models) {
+    static associate() {
       // define association here
     }
   }
-  User.init(
+  Customer.init(
     {
+      code: {
+        type: DataTypes.STRING,
+      },
+      taxIdentificationNumber: {
+        type: DataTypes.STRING,
+      },
       name: {
-        type: DataTypes.STRING,
-      },
-      firstName: {
-        type: DataTypes.STRING,
-      },
-      lastName: {
         type: DataTypes.STRING,
       },
       address: {
         type: DataTypes.STRING,
       },
+      city: {
+        type: DataTypes.STRING,
+      },
+      state: {
+        type: DataTypes.STRING,
+      },
+      country: {
+        type: DataTypes.STRING,
+      },
+      zipCode: {
+        type: DataTypes.STRING,
+      },
+      latitude: {
+        type: DataTypes.DOUBLE,
+      },
+      longitude: {
+        type: DataTypes.DOUBLE,
+      },
       phone: {
+        type: DataTypes.STRING,
+      },
+      phoneCc: {
         type: DataTypes.STRING,
       },
       email: {
         type: DataTypes.STRING,
       },
-      password: {
-        type: DataTypes.STRING,
+      notes: {
+        type: DataTypes.TEXT,
       },
-      phoneConfirmationCode: {
-        type: DataTypes.STRING,
+      creditLimit: {
+        type: DataTypes.DECIMAL,
       },
-      phoneConfirmed: {
-        type: DataTypes.BOOLEAN,
-      },
-      emailConfirmationCode: {
+      branchId: {
         type: DataTypes.INTEGER,
       },
-      emailConfirmed: {
-        type: DataTypes.BOOLEAN,
+      createdBy: {
+        type: DataTypes.INTEGER,
       },
-      rememberToken: {
-        type: DataTypes.STRING,
+      updatedBy: {
+        type: DataTypes.INTEGER,
       },
       archivedBy: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
+      },
+      pricingGroupId: {
+        type: DataTypes.INTEGER,
       },
       archivedAt: {
         type: DataTypes.DATE,
@@ -59,10 +80,10 @@ module.exports = (sequelize, DataTypes) => {
     {
       hooks: {},
       sequelize,
-      modelName: 'User',
-      tableName: 'users',
+      modelName: 'Customer',
+      tableName: 'customers',
       underscored: true,
     }
   );
-  return User;
+  return Customer;
 };

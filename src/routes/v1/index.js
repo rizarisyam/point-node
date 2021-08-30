@@ -1,5 +1,6 @@
 const express = require('express');
 const config = require('../../config/config');
+const { User } = require('../../models').main;
 
 const router = express.Router();
 
