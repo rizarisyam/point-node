@@ -1,4 +1,4 @@
-const { SalesInvoice } = require('../../../models').tenant;
+const { SalesInvoice } = require('../../../../models').tenant;
 
 module.exports = async function createApproveSalesInvoice(salesInvoiceId, createApproveSalesInvoiceDto) {
   const salesInvoice = await SalesInvoice.findOne({ where: { id: salesInvoiceId } });

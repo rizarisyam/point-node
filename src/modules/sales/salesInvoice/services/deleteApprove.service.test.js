@@ -1,8 +1,8 @@
-const setupTestDb = require('../../../../utils/setupTestDB');
-const { SalesInvoice, Customer, Form } = require('../../../../../src/models');
-const deleteApproveSalesInvoice = require('../../../../../src/services/v1/salesInvoice/deleteApprove.service');
+const setupTestDbTenant = require('../../../../../tests/utils/setupTestDbTenant');
+const { SalesInvoice, Customer, Form } = require('../../../../models');
+const deleteApproveSalesInvoice = require('./deleteApprove.service');
 
-setupTestDb();
+setupTestDbTenant();
 
 describe('deleteApproveSalesInvoice service', () => {
   let salesInvoice;

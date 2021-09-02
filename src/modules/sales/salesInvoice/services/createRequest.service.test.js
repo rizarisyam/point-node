@@ -1,8 +1,8 @@
-const setupTestDb = require('../../../../utils/setupTestDB');
-const { Customer } = require('../../../../../src/models');
-const createSalesInvoice = require('../../../../../src/services/v1/salesInvoice/createRequest.service');
+const setupTestDbTenant = require('../../../../../tests/utils/setupTestDbTenant');
+const { Customer } = require('../../../../models');
+const createSalesInvoice = require('./createRequest.service');
 
-setupTestDb();
+setupTestDbTenant();
 
 describe('createSalesInvoice service', () => {
   describe('validation', () => {
@@ -36,7 +36,7 @@ describe('createSalesInvoice service', () => {
       // SI + nomor urut form (001) + bulan created form (07) + tahun created form (21)
       expect(salesInvoice.form).toBeDefined();
       expect(salesInvoice.form.number).toEqual('SI0010721');
-      expect(salesInvoice.form.approvalStatus).toEqual(0);
+      expect(salesInvoice.form.approvalStatus).toEqual(0); // pending
     });
 
     it('has correct sales invoice items data', async () => {

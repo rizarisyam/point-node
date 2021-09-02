@@ -1,6 +1,6 @@
 const express = require('express');
-const config = require('../../config/config');
-const { User } = require('../../models').main;
+const config = require('../config/config');
+const salesInvoiceRoute = require('../modules/sales/salesInvoice/routes');
 
 const router = express.Router();
 
@@ -8,7 +8,12 @@ router.get('/status', (req, res) => {
   res.status(200).send('OK');
 });
 
-const defaultRoutes = [];
+const defaultRoutes = [
+  {
+    path: '/sales/salesInvoice',
+    route: salesInvoiceRoute,
+  },
+];
 
 const devRoutes = [];
 

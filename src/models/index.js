@@ -38,17 +38,27 @@ fs
       db.main[model.name] = model;
   });
 
-// Add models from tenant folder
-fs
-  .readdirSync(__dirname + '/tenant')
-  .filter(file =>
-      (file.indexOf('.') !== 0) &&
-      (file !== basename) &&
-      (file.slice(-3) === '.js'))
-  .forEach(file => {
-      const model = require(path.join(__dirname + '/tenant', file))(tenantSequelize, Sequelize.DataTypes);
-      db.tenant[model.name] = model;
-  });
+const modulesDir = `${__dirname}/../modules`;
+const tenantModelsDir = [
+  // master
+  '/master/models/customer.model.js',
+  '/master/models/user.model.js',
+  // sales/salesInvoice
+  '/sales/salesInvoice/models/salesInvoice.model.js',
+  '/sales/salesInvoice/models/salesInvoiceItem.model.js',
+  // shared
+  '/shared/form/form.model.js',
+  // auth
+  '/auth/models/modelHasPermission.model.js',
+  '/auth/models/modelHasRole.model.js',
+  '/auth/models/permission.model.js',
+  '/auth/models/role.model.js',
+  '/auth/models/roleHasPermission.model.js',
+];
+tenantModelsDir.forEach((modelDir) => {
+  const model = require(path.join(modulesDir, modelDir))(tenantSequelize, Sequelize.DataTypes);
+  db.tenant[model.name] = model;
+});
 
 Object.keys(db.main).forEach((modelName) => {
   if (db.main[modelName].associate) {

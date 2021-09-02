@@ -1,8 +1,8 @@
-const setupTestDb = require('../../../../utils/setupTestDB');
-const { Customer } = require('../../../../../src/models');
-const updateSalesInvoice = require('../../../../../src/services/v1/salesInvoice/update.service');
+const setupTestDbTenant = require('../../../../../tests/utils/setupTestDbTenant');
+const { Customer } = require('../../../../models');
+const updateSalesInvoice = require('./update.service');
 
-setupTestDb();
+setupTestDbTenant();
 
 describe('updateSalesInvoice service', () => {
   let salesInvoice;

@@ -1,10 +1,10 @@
-const setupTestDb = require('../../../../utils/setupTestDB');
-const { SalesInvoice, Customer, Form } = require('../../../../../src/models');
-const createApproveSalesInvoice = require('../../../../../src/services/v1/salesInvoice/createApprove.service');
+const setupTestDbTenant = require('../../../../../tests/utils/setupTestDbTenant');
+const { SalesInvoice, Customer, Form } = require('../../../../models');
+const createRejectSalesInvoice = require('./createApprove.service');
 
-setupTestDb();
+setupTestDbTenant();
 
-describe('createApproveSalesInvoice service', () => {
+describe('createRejectSalesInvoice service', () => {
   let salesInvoice;
   let customer;
   beforeEach(async () => {
@@ -19,28 +19,28 @@ describe('createApproveSalesInvoice service', () => {
       approvalReason: 'example reason',
     };
 
-    it('should throw error if salesInvoice is already rejected', async () => {
+    it('should throw error if salesInvoice is already approved', async () => {
       salesInvoice.form.update({
-        approvalStatus: -1,
+        approvalStatus: 1,
       });
-      await expect(createApproveSalesInvoice(createApproveSalesInvoiceDto)).rejects.toThrow();
+      await expect(createRejectSalesInvoice(createApproveSalesInvoiceDto)).rejects.toThrow();
     });
   });
 
-  describe('success approve create', () => {
+  describe('success reject create', () => {
     const createApproveSalesInvoiceDto = {
       approvalBy: 1,
       approvalReason: 'example reason',
     };
 
     beforeEach(async () => {
-      salesInvoice = await createApproveSalesInvoice(salesInvoice.id, createApproveSalesInvoiceDto);
+      salesInvoice = await createRejectSalesInvoice(salesInvoice.id, createApproveSalesInvoiceDto);
     });
 
     it('has correct form data', () => {
       expect(salesInvoice.form.approvalReason).toEqual(createApproveSalesInvoiceDto.approvalReason);
       expect(salesInvoice.form.approvalBy).toEqual(createApproveSalesInvoiceDto.approvalBy);
-      expect(salesInvoice.form.approvalStatus).toEqual(1);
+      expect(salesInvoice.form.approvalStatus).toEqual(-1);
     });
   });
 });

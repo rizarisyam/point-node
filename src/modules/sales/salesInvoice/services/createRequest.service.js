@@ -1,4 +1,4 @@
-const { SalesInvoice, Form } = require('../../../models').tenant;
+const { SalesInvoice, Form } = require('../../../../models').tenant;
 
 module.exports = async function createSalesInvoice(createSalesInvoiceDto) {
   const salesInvoice = await SalesInvoice.create(createSalesInvoiceDto.salesInvoice);
