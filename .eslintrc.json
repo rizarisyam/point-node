@@ -17,5 +17,13 @@
     "security/detect-object-injection": "off",
     "security/detect-non-literal-fs-filename": "off",
     "no-use-before-define": "off"
+  },
+  "settings": {
+    "import/resolver": {
+      "alias": [
+        ["@root", "./"],
+        ["@src", "./src"]
+      ]
+    }
   }
 }

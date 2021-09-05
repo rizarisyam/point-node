@@ -6,6 +6,7 @@ const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require(`${__dirname}/../config/database.js`)[env];
+const tenantModels = require('./tenantModels');
 const db = {
   main: {},
   tenant: {}
@@ -38,25 +39,8 @@ fs
       db.main[model.name] = model;
   });
 
-const modulesDir = `${__dirname}/../modules`;
-const tenantModelsDir = [
-  // master
-  '/master/models/customer.model.js',
-  '/master/models/user.model.js',
-  // sales/salesInvoice
-  '/sales/salesInvoice/models/salesInvoice.model.js',
-  '/sales/salesInvoice/models/salesInvoiceItem.model.js',
-  // shared
-  '/shared/form/form.model.js',
-  // auth
-  '/auth/models/modelHasPermission.model.js',
-  '/auth/models/modelHasRole.model.js',
-  '/auth/models/permission.model.js',
-  '/auth/models/role.model.js',
-  '/auth/models/roleHasPermission.model.js',
-];
-tenantModelsDir.forEach((modelDir) => {
-  const model = require(path.join(modulesDir, modelDir))(tenantSequelize, Sequelize.DataTypes);
+tenantModels.modelPaths.forEach((modelPath) => {
+  const model = require(modelPath)(tenantSequelize, Sequelize.DataTypes);
   db.tenant[model.name] = model;
 });
 

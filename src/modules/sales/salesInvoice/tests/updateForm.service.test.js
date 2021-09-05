@@ -1,10 +1,10 @@
-const setupTestDbTenant = require('../../../../../tests/utils/setupTestDbTenant');
-const { Customer } = require('../../../../models');
-const updateSalesInvoice = require('./update.service');
+const setupTestDbTenant = require('@root/tests/utils/setupTestDbTenant');
+const { Customer } = require('@src/models');
+const updateFormSalesInvoice = require('../services/updateForm.salesInvoice.service');
 
 setupTestDbTenant();
 
-describe('updateSalesInvoice service', () => {
+describe('updateFormSalesInvoice service', () => {
   let salesInvoice;
   let customer;
   beforeEach(async () => {
@@ -21,14 +21,14 @@ describe('updateSalesInvoice service', () => {
       salesInvoice.form.update({
         approvalStatus: 1,
       });
-      await expect(updateSalesInvoice(updateSalesInvoiceDto)).rejects.toThrow();
+      await expect(updateFormSalesInvoice(updateSalesInvoiceDto)).rejects.toThrow();
     });
 
     it('should throw error if salesInvoice is already rejected', async () => {
       salesInvoice.form.update({
         approvalStatus: -1,
       });
-      await expect(updateSalesInvoice(updateSalesInvoiceDto)).rejects.toThrow();
+      await expect(updateFormSalesInvoice(updateSalesInvoiceDto)).rejects.toThrow();
     });
   });
 
@@ -38,7 +38,7 @@ describe('updateSalesInvoice service', () => {
     };
 
     beforeEach(async () => {
-      salesInvoice = await updateSalesInvoice(salesInvoice.id, updateSalesInvoiceDto);
+      salesInvoice = await updateFormSalesInvoice(salesInvoice.id, updateSalesInvoiceDto);
     });
 
     it('has correct customer data', () => {

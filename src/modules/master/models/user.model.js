@@ -15,13 +15,21 @@ module.exports = (sequelize, DataTypes) => {
         scope: { modelType: 'User' },
       });
     }
+
+    async isPermitted(requiredPermissions) {
+      const modelHasPermissions = await this.getModelHasPermissions({
+        include: sequelize.models.Permission,
+      });
+      const permissions = modelHasPermissions.map((modelHasPermission) => modelHasPermission.Permission.name);
+      return requiredPermissions.every((requiredPermission) => permissions.includes(requiredPermission));
+    }
   }
   User.init(
     {
       name: {
         type: DataTypes.STRING,
       },
-      firstame: {
+      firstName: {
         type: DataTypes.STRING,
       },
       lastName: {

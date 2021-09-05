@@ -17,9 +17,11 @@ module.exports = (sequelize, DataTypes) => {
     {
       permissionId: {
         type: DataTypes.INTEGER,
+        primaryKey: true,
       },
       modelId: {
         type: DataTypes.INTEGER,
+        primaryKey: true,
       },
       modelType: {
         type: DataTypes.STRING,
@@ -31,6 +33,7 @@ module.exports = (sequelize, DataTypes) => {
       modelName: 'ModelHasPermission',
       tableName: 'model_has_permissions',
       underscored: true,
+      timestamps: false,
     }
   );
   return ModelHasPermission;
