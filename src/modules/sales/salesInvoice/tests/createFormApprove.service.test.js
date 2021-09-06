@@ -33,7 +33,7 @@ describe('createFormApproveSalesInvoice service', () => {
       approvalReason: 'example reason',
     };
 
-    it('should throw error reject by unwanted user', async () => {
+    it('should throw error forbidden by unwanted user', async () => {
       await expect(createFormApproveSalesInvoice(hacker, form.id, createFormApproveSalesInvoiceDto)).rejects.toThrow(
         errorForbidden
       );

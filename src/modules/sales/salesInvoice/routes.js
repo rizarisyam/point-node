@@ -1,10 +1,18 @@
 const express = require('express');
+const { celebrate } = require('celebrate');
 const auth = require('@src/modules/auth/services/auth.service');
+const requestValidations = require('./requestValidations');
 const controller = require('./controller');
 
 const router = express.Router();
 
-router.route('/').post(auth('create Form'), controller.createFormRequestSalesInvoice);
+router
+  .route('/')
+  .post(
+    auth('create Form'),
+    celebrate(requestValidations.createFormRequestSalesInvoice),
+    controller.createFormRequestSalesInvoice
+  );
 
 router.route('/:formId').put(auth('update Form'), controller.updateFormSalesInvoice);
 

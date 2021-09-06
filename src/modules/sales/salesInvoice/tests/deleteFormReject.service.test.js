@@ -34,7 +34,7 @@ describe('deleteFormRejectSalesInvoice service', () => {
       cancellationApprovalReason: 'example reason',
     };
 
-    it('should throw error reject by unwanted user', async () => {
+    it('should throw error forbidden by unwanted user', async () => {
       await expect(deleteFormRejectSalesInvoice(hacker, form.id, deleteFormRejectSalesInvoiceDto)).rejects.toThrow(
         errorForbidden
       );
