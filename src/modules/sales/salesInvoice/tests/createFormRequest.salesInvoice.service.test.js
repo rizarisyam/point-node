@@ -56,9 +56,9 @@ describe('Create Request Sales Invoice Service', () => {
     });
 
     it('creates form with correct form data', () => {
-      // SI + nomor urut form (001) + bulan created form (07) + tahun created form (21)
+      // SI + tahun created form (21) + bulan created form (07) + nomor urut form (001)
       expect(salesInvoice.form).toBeDefined();
-      expect(salesInvoice.form.number).toEqual('SI0010721');
+      expect(salesInvoice.form.number).toEqual('SI2107001');
       expect(salesInvoice.form.approvalStatus).toEqual(0); // pending
     });
 

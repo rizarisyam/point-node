@@ -14,16 +14,16 @@ router
     controller.createFormRequestSalesInvoice
   );
 
-router.route('/:formId').put(auth('update Form'), controller.updateFormSalesInvoice);
+router.route('/:formId').put(auth('update sales invoice'), controller.updateFormSalesInvoice);
 
-router.route('/:formId/create-approve').put(auth('manage Form'), controller.createFormApproveSalesInvoice);
+router.route('/:formId/create-approve').put(auth('approve sales invoice'), controller.createFormApproveSalesInvoice);
 
-router.route('/:formId/create-reject').put(auth('manage Form'), controller.createFormRejectSalesInvoice);
+router.route('/:formId/create-reject').put(auth('approve sales invoice'), controller.createFormRejectSalesInvoice);
 
-router.route('/:formId').delete(auth('delete Form'), controller.deleteFormRequestSalesInvoice);
+router.route('/:formId').delete(auth('delete sales invoice'), controller.deleteFormRequestSalesInvoice);
 
-router.route('/:formId/delete-approve').put(auth('manage Form'), controller.deleteFormApproveSalesInvoice);
+router.route('/:formId/delete-approve').put(auth('approve sales invoice'), controller.deleteFormApproveSalesInvoice);
 
-router.route('/:formId/delete-reject').put(auth('manage Form'), controller.deleteFormRejectSalesInvoice);
+router.route('/:formId/delete-reject').put(auth('approve sales invoice'), controller.deleteFormRejectSalesInvoice);
 
 module.exports = router;

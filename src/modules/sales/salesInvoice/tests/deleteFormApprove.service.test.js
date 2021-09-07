@@ -40,11 +40,12 @@ describe('deleteFormApproveSalesInvoice service', () => {
       );
     });
 
-    it('should throw error if salesInvoice is already approved', async () => {
+    it('should throw error if form salesInvoice not in cancellation request status', async () => {
       salesInvoice.form.update({
-        approvalStatus: 1,
+        cancellationStatus: null,
       });
-      await expect(deleteFormApproveSalesInvoice(deleteFormApproveSalesInvoiceDto)).rejects.toThrow();
+
+      await expect(deleteFormApproveSalesInvoice(approver, form.id, deleteFormApproveSalesInvoiceDto)).rejects.toThrow();
     });
   });
 

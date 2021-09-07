@@ -10,11 +10,12 @@ setupTestDbTenant();
 
 describe('createFormApproveSalesInvoice service', () => {
   // eslint-disable-next-line one-var
-  let salesInvoice, form, maker, approver, hacker, customer;
+  let salesInvoice, form, maker, approver, hacker, customer, superAdmin;
   beforeEach(async () => {
     maker = await User.create({});
     approver = await User.create({});
     hacker = await User.create({});
+    superAdmin = await User.create({});
     customer = await Customer.create({});
     salesInvoice = await SalesInvoice.create({
       customerId: customer.id,
@@ -29,7 +30,6 @@ describe('createFormApproveSalesInvoice service', () => {
 
   describe('validation', () => {
     const createFormApproveSalesInvoiceDto = {
-      approvalBy: 1,
       approvalReason: 'example reason',
     };
 
@@ -37,6 +37,14 @@ describe('createFormApproveSalesInvoice service', () => {
       await expect(createFormApproveSalesInvoice(hacker, form.id, createFormApproveSalesInvoiceDto)).rejects.toThrow(
         errorForbidden
       );
+    });
+
+    it('not throw error if approve by super admin', async () => {
+      salesInvoice = await createFormApproveSalesInvoice(superAdmin, form.id, createFormApproveSalesInvoiceDto);
+
+      expect(form.approvalReason).toEqual(createFormApproveSalesInvoiceDto.approvalReason);
+      expect(form.approvalBy).toEqual(superAdmin.id);
+      expect(form.approvalStatus).toEqual(1); // approved
     });
 
     it('should throw error if salesInvoice is already rejected', async () => {
@@ -60,7 +68,23 @@ describe('createFormApproveSalesInvoice service', () => {
     it('has correct form data', () => {
       expect(form.approvalReason).toEqual(createFormApproveSalesInvoiceDto.approvalReason);
       expect(form.approvalBy).toEqual(createFormApproveSalesInvoiceDto.approvalBy);
-      expect(form.approvalStatus).toEqual(1);
+      expect(form.approvalStatus).toEqual(1); // approved
+    });
+
+    it('create journal of this sales invoice on ledger and sub ledger', () => {
+      /**
+       * Journal Table
+       * -------------------------------------------
+       * Account                  | Debit | Credit |
+       * -------------------------------------------
+       * 1. Account Receivable    |   v   |        | Master Supplier
+       * 2. Sales Income          |       |   v    |
+       * 3. Inventories           |       |   v    | Master Item
+       * 4. Cogs                  |   v   |        |
+       * 5. Income Tax Payable    |       |   v    |.
+       */
+
+      expect(form.journals.count).not.toEqual(0);
     });
   });
 });

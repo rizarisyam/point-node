@@ -24,7 +24,7 @@ const createFormRequestSalesInvoice = {
       value: Joi.number().positive().default(0),
     }),
     customerId: Joi.number().required(),
-    typeOfTax: Joi.string().valid('include', 'exclude', 'non').default('non'),
+    typeOfTax: Joi.string().valid('include', 'exclude', 'non').required(),
     notes: Joi.string().default(''),
   }),
 };

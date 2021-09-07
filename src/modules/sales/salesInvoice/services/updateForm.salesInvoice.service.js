@@ -1,4 +1,4 @@
-const { SalesInvoice } = require('../../../../models').tenant;
+const { SalesInvoice } = require('@src/models').tenant;
 
 module.exports = async function updateFormSalesInvoice(maker, formId, updateFormSalesInvoiceDto) {
   const form = await SalesInvoice.findOne({ where: { id: formId } });

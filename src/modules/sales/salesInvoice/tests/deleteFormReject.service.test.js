@@ -10,11 +10,12 @@ setupTestDbTenant();
 
 describe('deleteFormRejectSalesInvoice service', () => {
   // eslint-disable-next-line one-var
-  let salesInvoice, form, maker, approver, hacker, customer;
+  let salesInvoice, form, maker, approver, hacker, customer, superAdmin;
   beforeEach(async () => {
     maker = await User.create({});
     approver = await User.create({});
     hacker = await User.create({});
+    superAdmin = await User.create({});
     customer = await Customer.create({});
     salesInvoice = await SalesInvoice.create({
       customerId: customer.id,
@@ -30,7 +31,6 @@ describe('deleteFormRejectSalesInvoice service', () => {
 
   describe('validation', () => {
     const deleteFormRejectSalesInvoiceDto = {
-      cancellationApprovalBy: 1,
       cancellationApprovalReason: 'example reason',
     };
 
@@ -40,18 +40,12 @@ describe('deleteFormRejectSalesInvoice service', () => {
       );
     });
 
-    it('should throw error if salesInvoice is already approved', async () => {
-      salesInvoice.form.update({
-        approvalStatus: 1,
-      });
-      await expect(deleteFormRejectSalesInvoice(approver, form.id, deleteFormRejectSalesInvoiceDto)).rejects.toThrow();
-    });
+    it('not throw error if reject by super admin', async () => {
+      salesInvoice = await deleteFormRejectSalesInvoice(superAdmin, form.id, deleteFormRejectSalesInvoiceDto);
 
-    it('should throw error if salesInvoice is already rejected', async () => {
-      salesInvoice.form.update({
-        approvalStatus: -1,
-      });
-      await expect(deleteFormRejectSalesInvoice(approver, form.id, deleteFormRejectSalesInvoiceDto)).rejects.toThrow();
+      expect(form.approvalReason).toEqual(deleteFormRejectSalesInvoiceDto.approvalReason);
+      expect(form.approvalBy).toEqual(superAdmin.id);
+      expect(form.approvalStatus).toEqual(-1);
     });
 
     it('should throw error if form salesInvoice not in cancellation request status', async () => {

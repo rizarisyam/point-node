@@ -1,4 +1,4 @@
-const { Form } = require('../../../../models').tenant;
+const { Form } = require('@src/models').tenant;
 
 module.exports = async function deleteFormRequestSalesInvoice(maker, formId, deleteFormRequestSalesInvoiceDto) {
   const form = await Form.findOne({ where: { id: formId } });

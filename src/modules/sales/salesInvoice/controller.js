@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const catchAsync = require('../../../utils/catchAsync');
+const catchAsync = require('@src/utils/catchAsync');
 const createFormRequestSalesInvoiceService = require('./services/createFormRequest.salesInvoice.service');
 const createFormApproveSalesInvoiceService = require('./services/createFormApprove.salesInvoice.service');
 const createFormRejectSalesInvoiceService = require('./services/createFormReject.salesInvoice.service');

@@ -41,18 +41,8 @@ describe('deleteFormRequestSalesInvoice service', () => {
       );
     });
 
-    it('should throw error if salesInvoice is already approved', async () => {
-      salesInvoice.form.update({
-        approvalStatus: 1,
-      });
-      await expect(deleteFormRequestSalesInvoice(hacker, form.id, deleteFormRequestSalesInvoiceDto)).rejects.toThrow();
-    });
-
-    it('should throw error if salesInvoice is already rejected', async () => {
-      salesInvoice.form.update({
-        approvalStatus: -1,
-      });
-      await expect(deleteFormRequestSalesInvoice(hacker, form.id, deleteFormRequestSalesInvoiceDto)).rejects.toThrow();
+    it('cannot be delete if already have reference id', () => {
+      // TODO
     });
   });
 
