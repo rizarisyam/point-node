@@ -10,7 +10,7 @@ router.get('/status', (req, res) => {
 
 const defaultRoutes = [
   {
-    path: '/sales/salesInvoice',
+    path: '/sales/sales-invoice',
     route: salesInvoiceRoute,
   },
 ];

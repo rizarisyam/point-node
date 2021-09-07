@@ -1,6 +1,10 @@
+const httpStatus = require('http-status');
 const setupTestDbTenant = require('@root/tests/utils/setupTestDbTenant');
-const { User } = require('@src/models').tenant;
+const { User, Form, Branch, BranchUser, Warehouse, WarehouseUser } = require('@src/models').tenant;
+const ApiError = require('@src/utils/ApiError');
 const createRequestSalesInvoiceService = require('../services/createFormRequest.salesInvoice.service');
+
+const errorForbidden = new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
 
 setupTestDbTenant();
 
@@ -40,6 +44,22 @@ const validCreateSalesInvoiceDto = {
 };
 
 describe('Create Request Sales Invoice Service', () => {
+  describe('validations', () => {
+    it('can not create when requested by user that does not have branch default', async () => {
+      const branch = await Branch.create({});
+      const user = await User.create({});
+      await BranchUser.create({ branch_id: branch.id, user_id: user.id, is_default: false });
+      const formReference = await Form.create({ branch_id: branch.id });
+      validCreateSalesInvoiceDto.form_id = formReference.id;
+
+      await expect(createRequestSalesInvoiceService(user, validCreateSalesInvoiceDto)).rejects.toThrow(errorForbidden);
+    });
+
+    it('can not create when requested by user that does not have warehouse default', async () => {
+      // TODO
+    });
+  });
+
   describe('when success', () => {
     let salesInvoice;
     let user;
