@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const moment = require('moment');
 const config = require('../../../config/config');
 
+const DEFAULT_EXPIRES = () => moment().add(30, 'minutes');
+
 /**
  * Generate token
  * @param {number} userId
@@ -9,7 +11,7 @@ const config = require('../../../config/config');
  * @param {string} [secret]
  * @returns {string} Jwt Token
  */
-const generateToken = (userId, expires, secret = config.jwt.secret) => {
+const generateToken = (userId, expires = DEFAULT_EXPIRES(), secret = config.jwt.secret) => {
   const payload = {
     sub: userId,
     iat: moment().unix(),

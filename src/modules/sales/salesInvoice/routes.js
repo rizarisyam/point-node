@@ -9,8 +9,8 @@ const router = express.Router();
 router
   .route('/')
   .post(
-    auth('create Form'),
     celebrate(requestValidations.createFormRequestSalesInvoice),
+    auth('create Form'),
     controller.createFormRequestSalesInvoice
   );
 

@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const setupTestDbTenant = require('@root/tests/utils/setupTestDbTenant');
-const { User, Form, Branch, BranchUser, Warehouse, WarehouseUser } = require('@src/models').tenant;
+const { User, Form, Branch, BranchUser, Warehouse, WarehouseUser, InvoiceItem } = require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 const createRequestSalesInvoiceService = require('../services/createFormRequest.salesInvoice.service');
 
@@ -56,7 +56,9 @@ describe('Create Request Sales Invoice Service', () => {
     });
 
     it('can not create when requested by user that does not have warehouse default', async () => {
-      // TODO
+      const user = await User.create({});
+      const salesInvoiceItem = await InvoiceItem.create({});
+      await expect(createRequestSalesInvoiceService(user, validCreateSalesInvoiceDto)).rejects.toThrow(errorForbidden);
     });
   });
 

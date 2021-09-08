@@ -1,6 +1,7 @@
 const express = require('express');
 const config = require('../config/config');
 const salesInvoiceRoute = require('../modules/sales/salesInvoice/routes');
+const authRoute = require('../modules/auth/routes');
 
 const router = express.Router();
 
@@ -12,6 +13,10 @@ const defaultRoutes = [
   {
     path: '/sales/sales-invoice',
     route: salesInvoiceRoute,
+  },
+  {
+    path: '/auth',
+    route: authRoute,
   },
 ];
 
