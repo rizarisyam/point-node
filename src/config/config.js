@@ -1,6 +1,6 @@
 const dotenv = require('dotenv');
 const path = require('path');
-const Joi = require('joi');
+const { Joi } = require('celebrate');
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
@@ -8,6 +8,7 @@ const envVarsSchema = Joi.object()
   .keys({
     NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
     PORT: Joi.number().default(3000),
+    MAIN_POINT_URL: Joi.string().required('Point main app url'),
     DATABASE_USERNAME: Joi.string().required().description('Main database username'),
     DATABASE_PASSWORD: Joi.string().required().description('Main database password'),
     DATABASE_NAME: Joi.string().required().description('Main database name'),
@@ -50,6 +51,7 @@ if (error) {
 module.exports = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
+  mainPointUrl: envVars.MAIN_POINT_URL,
   database: {
     username: envVars.DATABASE_USERNAME,
     password: envVars.DATABASE_PASSWORD,

@@ -1,0 +1,58 @@
+[
+    {
+        "scope": "https://api.point.red:443",
+        "method": "POST",
+        "path": "/api/v1/auth/fetch",
+        "body": {
+            "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZDM3MzJiOTBmZjczMGJlZTY5MzM1YmUyNmE5MzA1YTE3YTcyZTNmZGQ3ZDFkZjdkYmE0ZmE0M2UyZmQzZjFjNjUyNzcwNjY1NzQ4ODI1YmYiLCJpYXQiOjE2MzEwNTg4MDEsIm5iZiI6MTYzMTA1ODgwMSwiZXhwIjoxNjYyNTk0ODAxLCJzdWIiOiIyNTk5Iiwic2NvcGVzIjpbXX0.nCVMImlvxukKhul_NXnLi84dljBniXhIPYtMOMBl_0AoiQtffQ9pDtHq0JXisYkohMsWbhpPu2S1lTCbhWhlYJfjtVAyU8-hTOw1prNZYiU42rmn_2A8QJT10wOpo5YSUyX7Je0bBh7mRccXShbohwL4hcoyMBA4tmw0BOpMXfzR0YigDaT3bsCWz5IoqTQgcNk3VC3Ga6UqnBlu_IA_N_qxLYz7CYGuLyY2iyaZyr9TS3oy16bJagUEJWLc7YAmglNsb8PktfktdSuY_HRV2JkJjMqrzVQKV87H79lmfe-OVLaiYXiLYoD6LRkKXnu5A2EhVgRtxDatZANhuMdrhtXsTdGkt8ETB-H_sqyi-ms-HpRzleDXx0caI8O9nZwFO2kS1w7eM1j2kLcIaw3rKGmmIV9XFrTXBbF5Sx75cFnjfjahZFpzJ2JhYOn4qUEXAD8xbCAqDR9eseeqv0bjMS6YHy0_T6o4bQSgPPrBcV9LVy4kXAInTZ4zTy4g36CogUqlWqfd4R9882BkwWXT9myJpJ4oMUWmaTduB0PGDX2lc_UM2nrjtJnGuRSWmIf2rv9iJoOM1wCmImPcjyoc4FOzvlDbW06J_m_b35EUbjN12nsJH1smcOxm9HIRdQTUyo4G2cLo7CQ49xcy5JTkOt2f4DnXBto3HpVqDDqdU6s"
+        },
+        "status": 200,
+        "response": {
+            "data": {
+                "id": 2599,
+                "name": "demodemo",
+                "first_name": "demo",
+                "last_name": "demo",
+                "address": null,
+                "phone": null,
+                "email": "bosgagitu@gmail.com",
+                "phone_confirmation_code": null,
+                "phone_confirmed": 0,
+                "email_confirmation_code": "eyJpdiI6Ild1T1lwOG90eEQwdjZNUj",
+                "email_confirmed": 0,
+                "created_at": "2021-08-14T08:22:31.000000Z",
+                "updated_at": "2021-08-14T08:22:31.000000Z",
+                "full_name": "demo demo"
+            }
+        },
+        "rawHeaders": [
+            "Server",
+            "nginx/1.10.3 (Ubuntu)",
+            "Content-Type",
+            "application/json",
+            "Transfer-Encoding",
+            "chunked",
+            "Connection",
+            "close",
+            "Cache-Control",
+            "no-cache, private",
+            "Date",
+            "Wed, 08 Sep 2021 23:06:46 GMT",
+            "X-RateLimit-Limit",
+            "300",
+            "X-RateLimit-Remaining",
+            "299",
+            "Access-Control-Allow-Origin",
+            "*",
+            "Access-Control-Allow-Methods",
+            "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers",
+            "Tenant, Authorization, Content-Type, X-Requested-With, Origin, Timezone",
+            "Access-Control-Allow-Credentials",
+            "true",
+            "Access-Control-Max-Age",
+            "86400"
+        ],
+        "responseIsBinary": false
+    }
+]

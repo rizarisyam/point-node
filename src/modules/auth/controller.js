@@ -2,13 +2,13 @@
 
 const httpStatus = require('http-status');
 const catchAsync = require('@src/utils/catchAsync');
-const generateTokenService = require('./services/generateToken.service');
+const getTokenService = require('./services/getToken.service');
 
-const generateToken = catchAsync(async (req, res) => {
-  const jwtoken = await generateTokenService(req.body);
+const getToken = catchAsync(async (req, res) => {
+  const jwtoken = await getTokenService(req.body);
   res.status(httpStatus.OK).send({ token: jwtoken });
 });
 
 module.exports = {
-  generateToken,
+  getToken,
 };

@@ -5,6 +5,6 @@ const controller = require('./controller');
 
 const router = express.Router();
 
-router.route('/generate-token').post(celebrate(requestValidations.generateToken), controller.generateToken);
+router.route('/get-token').post(celebrate(requestValidations.getToken), controller.getToken);
 
 module.exports = router;
