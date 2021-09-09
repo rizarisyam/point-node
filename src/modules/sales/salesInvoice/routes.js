@@ -10,7 +10,7 @@ router
   .route('/')
   .post(
     celebrate(requestValidations.createFormRequestSalesInvoice),
-    auth('create Form'),
+    auth('create sales invoice'),
     controller.createFormRequestSalesInvoice
   );
 
