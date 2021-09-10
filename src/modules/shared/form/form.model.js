@@ -2,20 +2,36 @@ const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
   class Form extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate({ tenant: models }) {
-      // define association here
-      this.belongsTo(models.User, { as: 'createdByUser', foreignKey: 'createdBy' });
-      this.belongsTo(models.User, { as: 'updatedByUser', foreignKey: 'updatedBy' });
-      this.belongsTo(models.User, { as: 'requestApprovalToUser', foreignKey: 'requestApprovalTo' });
-      this.belongsTo(models.User, { as: 'approvalByUser', foreignKey: 'approvalBy' });
-      this.belongsTo(models.User, { as: 'requestCancellationToUser', foreignKey: 'requestCancellationTo' });
-      this.belongsTo(models.User, { as: 'requestCancellationByUser', foreignKey: 'requestCancellationBy' });
+      this.belongsTo(models.User, { as: 'createdByUser', foreignKey: 'createdBy', onDelete: 'RESTRICT' });
+
+      this.belongsTo(models.User, { as: 'updatedByUser', foreignKey: 'updatedBy', onDelete: 'RESTRICT' });
+
+      this.belongsTo(models.User, { as: 'requestApprovalToUser', foreignKey: 'requestApprovalTo', onDelete: 'RESTRICT' });
+
+      this.belongsTo(models.User, { as: 'approvalByUser', foreignKey: 'approvalBy', onDelete: 'RESTRICT' });
+
+      this.belongsTo(models.User, {
+        as: 'requestCancellationToUser',
+        foreignKey: 'requestCancellationTo',
+        onDelete: 'RESTRICT',
+      });
+
+      this.belongsTo(models.User, {
+        as: 'requestCancellationByUser',
+        foreignKey: 'requestCancellationBy',
+        onDelete: 'RESTRICT',
+      });
+
+      this.belongsTo(models.Branch, { onDelete: 'RESTRICT' });
+
       this.belongsTo(models.SalesInvoice, { foreignKey: 'formableId', constraints: false });
+    }
+
+    getFormable(options) {
+      if (!this.formableType) return Promise.resolve(null);
+      const mixinMethodName = `get${this.formableType}`;
+      return this[mixinMethodName](options);
     }
   }
   Form.init(
@@ -46,6 +62,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       done: {
         type: DataTypes.BOOLEAN,
+        defaultValue: false,
       },
       // "increment" is already used by sequelize
       incrementNumber: {

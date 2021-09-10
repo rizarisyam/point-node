@@ -11,6 +11,7 @@ const createFormRequestSalesInvoice = {
       quantity: Joi.number().positive().required(),
       itemUnitId: Joi.number().required(),
       allocationId: Joi.number().required(),
+      price: Joi.number().required(),
       discount: Joi.object({
         percent: Joi.number().min(0).max(1).positive().default(0),
         value: Joi.number().positive().default(0),

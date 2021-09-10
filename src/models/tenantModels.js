@@ -3,6 +3,8 @@ const path = require('path');
 const modulesDir = `${__dirname}/../modules`;
 const modelPaths = [
   // master
+  '/master/models/branch.model.js',
+  '/master/models/branchUser.model.js',
   '/master/models/customer.model.js',
   '/master/models/user.model.js',
   // sales/salesInvoice
