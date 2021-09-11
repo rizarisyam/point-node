@@ -23,8 +23,9 @@ module.exports = (sequelize, DataTypes) => {
       hooks: {},
       sequelize,
       modelName: 'BranchUser',
-      tableName: 'branch_users',
+      tableName: 'branch_user',
       underscored: true,
     }
   );
+  return BranchUser;
 };

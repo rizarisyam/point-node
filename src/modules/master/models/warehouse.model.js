@@ -44,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
       },
       archivedAt: {
-        DataTypes: DataTypes.DATE,
+        type: DataTypes.DATE,
       },
     },
     {
@@ -55,4 +55,5 @@ module.exports = (sequelize, DataTypes) => {
       underscored: true,
     }
   );
+  return Warehouse;
 };

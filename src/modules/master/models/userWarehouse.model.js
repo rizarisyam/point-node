@@ -24,8 +24,9 @@ module.exports = (sequelize, DataTypes) => {
       hooks: {},
       sequelize,
       modelName: 'UserWarehouse',
-      tableName: 'user_warehouses',
+      tableName: 'user_warehouse',
       underscored: true,
     }
   );
+  return UserWarehouse;
 };

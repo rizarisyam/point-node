@@ -4,7 +4,8 @@
  */
 
 const httpStatus = require('http-status');
-const { SalesInvoice, Form, Customer, BranchUser, UserWarehouse } = require('@src/models').tenant;
+const { SalesInvoice, Form, Customer, BranchUser, UserWarehouse, SalesInvoiceItem, DeliveryNoteItem } =
+  require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 
 /**
@@ -17,20 +18,19 @@ module.exports = async function createFormRequestSalesInvoice(maker, createSales
   const currentDate = new Date();
   const { formId: formReferenceId } = createSalesInvoiceDto;
   const formReference = await Form.findBy({ where: { id: formReferenceId } });
+  const reference = await formReference.getFormable();
 
-  await validate(maker, formReference);
+  await validate(maker, formReference, reference);
 
-  const salesInvoiceData = await buildSalesInvoiceData(createSalesInvoiceDto);
-  const salesInvoice = await SalesInvoice.create(salesInvoiceData);
-  const formData = await buildFormData({ maker, createSalesInvoiceDto, salesInvoice, currentDate });
-  const form = await Form.create(formData);
+  const salesInvoice = await createSalesInvoice(reference, createSalesInvoiceDto);
+  const form = await createSalesInvoiceForm({ maker, salesInvoice, currentDate, createSalesInvoiceDto });
 
   return { form, salesInvoice };
 };
 
-async function validate(maker, formReference) {
+async function validate(maker, formReference, reference) {
   await validateBranchDefaultPermission(maker, formReference);
-  await validateWarehouseDefaultPermission(maker, formReference);
+  await validateWarehouseDefaultPermission(maker, reference);
 }
 
 async function validateBranchDefaultPermission(maker, formReference) {
@@ -46,8 +46,7 @@ async function validateBranchDefaultPermission(maker, formReference) {
   }
 }
 
-async function validateWarehouseDefaultPermission(maker, formReference) {
-  const reference = formReference.getFormable();
+async function validateWarehouseDefaultPermission(maker, reference) {
   const userWarehouse = await UserWarehouse.findOne({
     where: {
       userId: maker.id,
@@ -60,11 +59,28 @@ async function validateWarehouseDefaultPermission(maker, formReference) {
   }
 }
 
+async function createSalesInvoice(reference, createSalesInvoiceDto) {
+  const salesInvoiceData = await buildSalesInvoiceData(createSalesInvoiceDto);
+  const salesInvoice = await SalesInvoice.create(salesInvoiceData);
+  await addSalesInvoiceItems(salesInvoice, reference, createSalesInvoiceDto);
+
+  return salesInvoice;
+}
+
 async function buildSalesInvoiceData(createSalesInvoiceDto) {
-  const { dueDate, discount: discountSalesInvoice, typeOfTax, notes, customerId, items, discount } = createSalesInvoiceDto;
+  const {
+    dueDate,
+    discount: discountSalesInvoice,
+    typeOfTax,
+    notes,
+    customerId,
+    items,
+    discountPercent,
+    discountValue,
+  } = createSalesInvoiceDto;
 
   const subTotal = getSubTotal(items);
-  const taxBase = getTaxBase(subTotal, discount);
+  const taxBase = getTaxBase(subTotal, discountValue, discountPercent);
   const tax = getTax(taxBase, typeOfTax);
   const amount = getAmount(taxBase, tax);
   const customer = await getCustomer();
@@ -85,6 +101,46 @@ async function buildSalesInvoiceData(createSalesInvoiceDto) {
   };
 }
 
+async function addSalesInvoiceItems(salesInvoice, reference, createSalesInvoiceDto) {
+  const { items: itemPayloads } = createSalesInvoiceDto;
+  const salesInvoiceItems = await Promise.all(
+    itemPayloads.map(async (itemPayload) => {
+      await createSalesInvoiceItem(salesInvoice, reference, itemPayload);
+    })
+  );
+
+  return salesInvoiceItems;
+}
+
+async function createSalesInvoiceItem(salesInvoice, reference, itemPayload) {
+  const deliveryNoteItem = await DeliveryNoteItem.findOne({
+    id: itemPayload.deliveryNoteItemId,
+  });
+  const item = deliveryNoteItem.getItem();
+  return SalesInvoiceItem.create({
+    salesInvoiceId: salesInvoice.id,
+    deliveryNote: reference.id,
+    deliveryNoteItemId: deliveryNoteItem.id,
+    itemId: item.id,
+    itemName: item.name,
+    quantity: itemPayload.quantity,
+    price: itemPayload.price,
+    discountPercent: itemPayload.discountPercent,
+    discountValue: itemPayload.discountValue,
+    taxable: itemPayload.taxable,
+    unit: itemPayload.unit,
+    converter: itemPayload.converter,
+    allocationId: itemPayload.allocationId,
+  });
+}
+
+async function createSalesInvoiceForm({ maker, salesInvoice, currentDate, createSalesInvoiceDto }) {
+  const formData = await buildFormData({ maker, createSalesInvoiceDto, salesInvoice, currentDate });
+  const form = await Form.create(formData);
+
+  return form;
+}
+
 async function getSubTotal(items) {
   const subTotal = items.reduce(async (result, item) => {
     return result + getItemsPrice(item);
@@ -96,24 +152,25 @@ async function getSubTotal(items) {
 function getItemsPrice(item) {
   const itemPrice = item.price * item.quantity;
 
-  if (item.discount.value > 0) {
-    return itemPrice - item.discount.value;
+  if (item.discountValue > 0) {
+    return itemPrice - item.discountValue;
   }
 
-  if (item.discount.percent > 0) {
-    return itemPrice - itemPrice * item.discount.percent;
+  if (item.discountPercent > 0) {
+    const discountPercent = item.discountPercent / 100;
+    return itemPrice - itemPrice * discountPercent;
   }
 
   return itemPrice;
 }
 
-function getTaxBase(subTotal, discount) {
-  if (discount.value > 0) {
-    return subTotal - discount.value;
+function getTaxBase(subTotal, discountValue, discountPercent) {
+  if (discountValue > 0) {
+    return subTotal - discountValue;
   }
 
-  if (discount.percent > 0) {
-    return subTotal - subTotal * discount.percent;
+  if (discountPercent > 0) {
+    return subTotal - subTotal * discountPercent;
   }
 
   return subTotal;

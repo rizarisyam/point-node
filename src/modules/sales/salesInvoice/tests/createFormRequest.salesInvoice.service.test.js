@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const setupTestDbTenant = require('@root/tests/utils/setupTestDbTenant');
-const { User, Form, Branch, BranchUser, Warehouse, WarehouseUser, InvoiceItem } = require('@src/models').tenant;
+const { User, Form, Branch, BranchUser, Warehouse, WarehouseUser, InvoiceItem, SalesInvoiceItem } =
+  require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 const createRequestSalesInvoiceService = require('../services/createFormRequest.salesInvoice.service');
 
