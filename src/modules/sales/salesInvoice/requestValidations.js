@@ -8,6 +8,7 @@ const createFormRequestSalesInvoice = {
     formId: Joi.number().required(),
     items: Joi.array().items({
       itemId: Joi.number().required(),
+      itemReferenceId: Joi.number().required(),
       quantity: Joi.number().positive().required(),
       itemUnitId: Joi.number().required(),
       allocationId: Joi.number().required(),

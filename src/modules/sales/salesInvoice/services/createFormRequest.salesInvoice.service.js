@@ -17,7 +17,7 @@ const ApiError = require('@src/utils/ApiError');
 module.exports = async function createFormRequestSalesInvoice(maker, createSalesInvoiceDto) {
   const currentDate = new Date();
   const { formId: formReferenceId } = createSalesInvoiceDto;
-  const formReference = await Form.findBy({ where: { id: formReferenceId } });
+  const formReference = await Form.findOne({ where: { id: formReferenceId } });
   const reference = await formReference.getFormable();
 
   await validate(maker, formReference, reference);

@@ -1,34 +1,21 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class SalesInvoiceItem extends Model {
+  class DeliveryNoteItem extends Model {
     static associate({ tenant: models }) {
-      this.belongsTo(models.SalesInvoice, { onDelete: 'CASCADE' });
-
       this.belongsTo(models.DeliveryNote, { onDelete: 'CASCADE' });
 
-      this.belongsTo(models.DeliveryNoteItem, { onDelete: 'CASCADE' });
-
-      this.belongsTo(models.Item, { onDelete: 'RESTRICT' });
+      // this.belongsTo(models.Item, { onDelete: 'RESTRICT' });
 
       this.belongsTo(models.Allocation, { onDelete: 'RESTRICT' });
-
-      this.belongsTo(models.DeliveryNote, { foreignKey: 'deliveryNoteId', constraints: false });
-
-      this.belongsTo(models.PosBill, { foreignKey: 'deliveryNoteId', constraints: false });
-
-      this.belongsTo(models.SalesVisitation, { foreignKey: 'deliveryNoteId', constraints: false });
     }
   }
-  SalesInvoiceItem.init(
+  DeliveryNoteItem.init(
     {
-      salesInvoiceId: {
-        type: DataTypes.INTEGER,
-      },
       deliveryNoteId: {
         type: DataTypes.INTEGER,
       },
-      deliveryNoteItemId: {
+      deliveryOrderItemId: {
         type: DataTypes.INTEGER,
       },
       itemId: {
@@ -37,8 +24,23 @@ module.exports = (sequelize, DataTypes) => {
       itemName: {
         type: DataTypes.STRING,
       },
+      grossWeight: {
+        type: DataTypes.DECIMAL,
+      },
+      tareWeight: {
+        type: DataTypes.DECIMAL,
+      },
+      netWeight: {
+        type: DataTypes.DECIMAL,
+      },
       quantity: {
         type: DataTypes.DECIMAL,
+      },
+      expiryDate: {
+        type: DataTypes.DATE,
+      },
+      productionNumber: {
+        type: DataTypes.STRING,
       },
       price: {
         type: DataTypes.DECIMAL,
@@ -68,10 +70,11 @@ module.exports = (sequelize, DataTypes) => {
     {
       hooks: {},
       sequelize,
-      modelName: 'SalesInvoiceItem',
-      tableName: 'sales_invoice_items',
+      modelName: 'DeliveryNoteItem',
+      tableName: 'delivery_note_items',
       underscored: true,
+      timestamps: false,
     }
   );
-  return SalesInvoiceItem;
+  return DeliveryNoteItem;
 };

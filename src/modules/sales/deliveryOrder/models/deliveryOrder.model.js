@@ -1,24 +1,22 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class DeliveryNote extends Model {
+  class DeliveryOrder extends Model {
     static associate({ tenant: models }) {
       this.belongsTo(models.Customer, { onDelete: 'RESTRICT' });
 
       this.belongsTo(models.Warehouse, { onDelete: 'RESTRICT' });
-
-      this.hasMany(models.DeliveryNoteItem, { as: 'items' });
-
-      this.hasOne(models.Form, {
-        foreignKey: 'formableId',
-        constraints: false,
-        scope: { formableType: 'DeliveryNote' },
-      });
     }
   }
-  DeliveryNote.init(
+  DeliveryOrder.init(
     {
       customerId: {
+        type: DataTypes.INTEGER,
+      },
+      warehouseId: {
+        type: DataTypes.INTEGER,
+      },
+      salesOrderId: {
         type: DataTypes.INTEGER,
       },
       customerName: {
@@ -48,27 +46,15 @@ module.exports = (sequelize, DataTypes) => {
       shippingEmail: {
         type: DataTypes.STRING,
       },
-      warehouseId: {
-        type: DataTypes.INTEGER,
-      },
-      deliveryOrderId: {
-        type: DataTypes.INTEGER,
-      },
-      driver: {
-        type: DataTypes.STRING,
-      },
-      licensePlate: {
-        type: DataTypes.STRING,
-      },
     },
     {
       hooks: {},
       sequelize,
-      modelName: 'DeliveryNote',
-      tableName: 'delivery_notes',
+      modelName: 'DeliveryOrder',
+      tableName: 'delivery_orders',
       underscored: true,
       timestamps: false,
     }
   );
-  return DeliveryNote;
+  return DeliveryOrder;
 };

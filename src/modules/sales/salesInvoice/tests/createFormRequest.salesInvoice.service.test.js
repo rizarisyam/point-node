@@ -1,7 +1,21 @@
 const httpStatus = require('http-status');
+const faker = require('faker');
 const setupTestDbTenant = require('@root/tests/utils/setupTestDbTenant');
-const { User, Form, Branch, BranchUser, Warehouse, WarehouseUser, InvoiceItem, SalesInvoiceItem } =
-  require('@src/models').tenant;
+const {
+  User,
+  Form,
+  Branch,
+  BranchUser,
+  Warehouse,
+  WarehouseUser,
+  InvoiceItem,
+  SalesInvoiceItem,
+  DeliveryNote,
+  Customer,
+  DeliveryOrder,
+  DeliveryNoteItem,
+  Item,
+} = require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 const createRequestSalesInvoiceService = require('../services/createFormRequest.salesInvoice.service');
 
@@ -9,42 +23,121 @@ const errorForbidden = new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
 
 setupTestDbTenant();
 
-const validCreateSalesInvoiceDto = {
-  formId: 1,
-  items: [
-    {
-      itemId: 1,
-      quantity: 10,
-      itemUnitId: 1,
-      allocationId: 1,
-      discount: {
-        percent: 0.05,
-        value: 0,
-      },
-    },
-    {
-      itemId: 2,
-      quantity: 20,
-      itemUnitId: 2,
-      allocationId: 2,
-      discount: {
-        percent: 0.1,
-        value: 0,
-      },
-    },
-  ],
-  createdBy: 1,
-  dueDate: '2021-09-04T23:29:26.800Z',
-  discount: {
-    percent: 0.05,
-    value: 0,
-  },
-  customerId: 1,
-  typeOfTax: 'include',
-  notes: 'example form note',
-};
-
 describe('Create Request Sales Invoice Service', () => {
+  describe('test data', () => {
+    it('completes all data', async () => {
+      const maker = await User.create({
+        name: faker.name.findName(),
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName(),
+        email: faker.internet.email(),
+        password: faker.internet.password(),
+        emailConfirmationCode: faker.datatype.string(),
+        emailConfirmed: true,
+      });
+
+      const approver = await User.create({
+        name: faker.name.findName(),
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName(),
+        email: faker.internet.email(),
+        password: faker.internet.password(),
+        emailConfirmationCode: faker.datatype.string(),
+        emailConfirmed: true,
+      });
+
+      const branch = await Branch.create({
+        name: faker.company.companyName(),
+      });
+
+      // create relation between maker and branch for authorization
+      await BranchUser.create({
+        user_id: maker.id,
+        branchId: branch.id,
+      });
+
+      const customer = await Customer.create({
+        name: faker.name.findName(),
+        branchId: branch.id,
+      });
+
+      const warehouse = await Warehouse.create({
+        name: faker.company.companyName(),
+        branchId: branch.id,
+      });
+
+      const deliveryOrder = await DeliveryOrder.create({
+        customerId: customer.id,
+        warehouseId: warehouse.id,
+        customerName: customer.name,
+      });
+
+      const item = await Item.create({
+        code: faker.datatype.string(),
+        name: faker.commerce.productName(),
+        stock: 100,
+      });
+
+      const deliveryNote = await DeliveryNote.create({
+        customerId: customer.id,
+        customerName: customer.name,
+        warehouseId: warehouse.id,
+        deliveryOrderId: deliveryOrder.id,
+        driver: faker.name.findName(),
+        licensePlate: 'B1234AA',
+      });
+
+      const deliveryNoteItem = await DeliveryNoteItem.create({
+        deliveryNoteId: deliveryNote.id,
+        itemId: item.id,
+        itemName: item.name,
+        quantity: 20,
+        price: 10000,
+        unit: 'pcs',
+        converter: 1,
+      });
+
+      const formDeliveryNote = await Form.create({
+        branchId: branch.id,
+        date: new Date('2021-09-01'),
+        number: 'DN2109001',
+        incrementNumber: 1,
+        incrementGroup: 202109,
+        formableId: deliveryNote.id,
+        formableType: 'DeliveryNote',
+        createdBy: maker.id,
+        updatedBy: maker.id,
+        requestApprovalTo: approver.id,
+      });
+
+      const validCreateSalesInvoiceDto = {
+        formId: formDeliveryNote.id,
+        items: [
+          {
+            itemId: item.id,
+            itemReferenceId: deliveryNoteItem.id,
+            quantity: 10,
+            itemUnitId: 1,
+            allocationId: 1,
+            price: 100000,
+            discountPercent: 0,
+            discountValue: 0,
+          },
+        ],
+        createdBy: maker.id,
+        requestApprovalTo: approver.id,
+        dueDate: new Date('2021-09-15'),
+        discountPercent: 0,
+        discountValue: 0,
+        customerId: customer.id,
+        typeOfTax: 'include',
+        notes: 'example form note',
+      };
+
+      await createRequestSalesInvoiceService(maker, validCreateSalesInvoiceDto);
+    });
+  });
+
   describe('validations', () => {
     it('can not create when requested by user that does not have branch default', async () => {
       const branch = await Branch.create({});

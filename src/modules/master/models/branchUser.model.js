@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
   class BranchUser extends Model {
     static associate({ tenant: models }) {
       this.belongsTo(models.User, { onDelete: 'CASCADE' });
+
       this.belongsTo(models.Branch, { onDelete: 'CASCADE' });
     }
   }
@@ -25,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       modelName: 'BranchUser',
       tableName: 'branch_user',
       underscored: true,
+      timestamps: false,
     }
   );
   return BranchUser;

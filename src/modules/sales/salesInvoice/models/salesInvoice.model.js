@@ -3,24 +3,17 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class SalesInvoice extends Model {
     static associate({ tenant: models }) {
-      // define association here
-      this.belongsTo(models.User, { foreignKey: 'createdBy', onDelete: 'RESTRICT' });
+      this.belongsTo(models.User, { as: 'createdByUser', foreignKey: 'createdBy', onDelete: 'RESTRICT' });
+
       this.belongsTo(models.Form, { foreignKey: 'formId', onDelete: 'RESTRICT' });
+
       this.hasMany(models.SalesInvoiceItem, { as: 'items' });
+
       this.hasOne(models.Form, {
         foreignKey: 'formableId',
         constraints: false,
         scope: { formableType: 'SalesInvoice' },
       });
-    }
-
-    getFormable(options) {
-      if (!this.paymentMethodableId || !this.paymentMethodableType) {
-        return Promise.resolve(null);
-      }
-
-      const mixinMethodName = `get${this.paymentMethodableType}`;
-      return this[mixinMethodName](options);
     }
   }
   SalesInvoice.init(

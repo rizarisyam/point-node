@@ -26,6 +26,8 @@ module.exports = (sequelize, DataTypes) => {
       this.belongsTo(models.Branch, { onDelete: 'RESTRICT' });
 
       this.belongsTo(models.SalesInvoice, { foreignKey: 'formableId', constraints: false });
+
+      this.belongsTo(models.DeliveryNote, { foreignKey: 'formableId', constraints: false });
     }
 
     getFormable(options) {
