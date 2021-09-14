@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate({ tenant: models }) {
       this.belongsTo(models.DeliveryNote, { onDelete: 'CASCADE' });
 
-      // this.belongsTo(models.Item, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.Item, { onDelete: 'RESTRICT' });
 
       this.belongsTo(models.Allocation, { onDelete: 'RESTRICT' });
     }

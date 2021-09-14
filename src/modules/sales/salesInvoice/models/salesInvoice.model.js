@@ -30,15 +30,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL,
         defaultValue: 0,
       },
-      // taxBase = total - discount
-      taxBase: {
-        type: DataTypes.DECIMAL,
-        allowNull: false,
-      },
-      // include tax
-      // (taxBase * 100%) / 110
-      // exclude tax
-      // taxBase * 10%
       tax: {
         type: DataTypes.DECIMAL,
         allowNull: false,
@@ -49,12 +40,11 @@ module.exports = (sequelize, DataTypes) => {
           isIn: [['include', 'exclude', 'non']],
         },
       },
-      // amount || total = taxBase + tax
       amount: {
         type: DataTypes.DECIMAL,
       },
-      notes: {
-        type: DataTypes.TEXT,
+      remaining: {
+        type: DataTypes.DECIMAL,
       },
       customerId: {
         type: DataTypes.INTEGER,
@@ -79,6 +69,7 @@ module.exports = (sequelize, DataTypes) => {
       modelName: 'SalesInvoice',
       tableName: 'sales_invoices',
       underscored: true,
+      timestamps: false,
     }
   );
   return SalesInvoice;

@@ -4,7 +4,7 @@
  */
 
 const httpStatus = require('http-status');
-const { SalesInvoice, Form, Customer, BranchUser, UserWarehouse, SalesInvoiceItem, DeliveryNoteItem } =
+const { SalesInvoice, Form, Customer, BranchUser, UserWarehouse, SalesInvoiceItem, DeliveryNoteItem, ItemUnit } =
   require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 
@@ -15,7 +15,7 @@ const ApiError = require('@src/utils/ApiError');
  * @returns {Promise}
  */
 module.exports = async function createFormRequestSalesInvoice(maker, createSalesInvoiceDto) {
-  const currentDate = new Date();
+  const currentDate = new Date(Date.now());
   const { formId: formReferenceId } = createSalesInvoiceDto;
   const formReference = await Form.findOne({ where: { id: formReferenceId } });
   const reference = await formReference.getFormable();
@@ -23,9 +23,15 @@ module.exports = async function createFormRequestSalesInvoice(maker, createSales
   await validate(maker, formReference, reference);
 
   const salesInvoice = await createSalesInvoice(reference, createSalesInvoiceDto);
-  const form = await createSalesInvoiceForm({ maker, salesInvoice, currentDate, createSalesInvoiceDto });
+  const salesInvoiceForm = await createSalesInvoiceForm({
+    maker,
+    formReference,
+    createSalesInvoiceDto,
+    salesInvoice,
+    currentDate,
+  });
 
-  return { form, salesInvoice };
+  return { salesInvoiceForm, salesInvoice };
 };
 
 async function validate(maker, formReference, reference) {
@@ -37,12 +43,12 @@ async function validateBranchDefaultPermission(maker, formReference) {
   const branchUser = await BranchUser.findOne({
     where: {
       userId: maker.id,
-      branchId: formReference.id,
+      branchId: formReference.branchId,
       isDefault: true,
     },
   });
   if (!branchUser) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
 }
 
@@ -55,7 +61,7 @@ async function validateWarehouseDefaultPermission(maker, reference) {
     },
   });
   if (!userWarehouse) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
 }
 
@@ -68,32 +74,22 @@ async function createSalesInvoice(reference, createSalesInvoiceDto) {
 }
 
 async function buildSalesInvoiceData(createSalesInvoiceDto) {
-  const {
-    dueDate,
-    discount: discountSalesInvoice,
-    typeOfTax,
-    notes,
-    customerId,
-    items,
-    discountPercent,
-    discountValue,
-  } = createSalesInvoiceDto;
+  const { dueDate, typeOfTax, customerId, items, discountPercent, discountValue } = createSalesInvoiceDto;
 
   const subTotal = getSubTotal(items);
   const taxBase = getTaxBase(subTotal, discountValue, discountPercent);
   const tax = getTax(taxBase, typeOfTax);
   const amount = getAmount(taxBase, tax);
-  const customer = await getCustomer();
+  const customer = await getCustomer(customerId);
 
   return {
     dueDate,
-    discountPercent: discountSalesInvoice.percent,
-    discountValue: discountSalesInvoice.value,
-    taxBase,
+    discountPercent,
+    discountValue,
     tax,
     typeOfTax,
     amount,
-    notes,
+    remaining: amount,
     customerId,
     customerName: customer.name,
     customerAddress: customer.address,
@@ -113,14 +109,24 @@ async function addSalesInvoiceItems(salesInvoice, reference, createSalesInvoiceD
 }
 
 async function createSalesInvoiceItem(salesInvoice, reference, itemPayload) {
-  const deliveryNoteItem = await DeliveryNoteItem.findOne({
-    id: itemPayload.deliveryNoteItemId,
-  });
-  const item = deliveryNoteItem.getItem();
+  let referenceItem;
+  switch (reference.constructor.name) {
+    case 'DeliveryNote':
+      referenceItem = await DeliveryNoteItem.findOne({
+        where: {
+          id: itemPayload.referenceItemId,
+        },
+      });
+      break;
+    default:
+  }
+  const item = await referenceItem.getItem();
+  const itemUnit = await ItemUnit.findOne({ where: { id: itemPayload.itemUnitId } });
+
   return SalesInvoiceItem.create({
     salesInvoiceId: salesInvoice.id,
-    deliveryNote: reference.id,
-    deliveryNoteItemId: deliveryNoteItem.id,
+    deliveryNoteId: reference.id,
+    deliveryNoteItemId: referenceItem.id,
     itemId: item.id,
     itemName: item.name,
     quantity: itemPayload.quantity,
@@ -128,21 +134,21 @@ async function createSalesInvoiceItem(salesInvoice, reference, itemPayload) {
     discountPercent: itemPayload.discountPercent,
     discountValue: itemPayload.discountValue,
     taxable: itemPayload.taxable,
-    unit: itemPayload.unit,
-    converter: itemPayload.converter,
-    allocationId: itemPayload.allocationId,
+    unit: itemUnit.label,
+    converter: itemUnit.converter,
+    // allocationId: itemPayload.allocationId,
   });
 }
 
-async function createSalesInvoiceForm({ maker, salesInvoice, currentDate, createSalesInvoiceDto }) {
-  const formData = await buildFormData({ maker, createSalesInvoiceDto, salesInvoice, currentDate });
+async function createSalesInvoiceForm({ maker, formReference, createSalesInvoiceDto, salesInvoice, currentDate }) {
+  const formData = await buildFormData({ maker, formReference, createSalesInvoiceDto, salesInvoice, currentDate });
   const form = await Form.create(formData);
 
   return form;
 }
 
-async function getSubTotal(items) {
-  const subTotal = items.reduce(async (result, item) => {
+function getSubTotal(items) {
+  const subTotal = items.reduce((result, item) => {
     return result + getItemsPrice(item);
   }, 0);
 
@@ -150,18 +156,17 @@ async function getSubTotal(items) {
 }
 
 function getItemsPrice(item) {
-  const itemPrice = item.price * item.quantity;
-
+  let perItemPrice = item.price;
   if (item.discountValue > 0) {
-    return itemPrice - item.discountValue;
+    perItemPrice -= item.discountValue;
   }
-
   if (item.discountPercent > 0) {
     const discountPercent = item.discountPercent / 100;
-    return itemPrice - itemPrice * discountPercent;
+    perItemPrice -= perItemPrice * discountPercent;
   }
+  const totalItemPrice = perItemPrice * item.quantity;
 
-  return itemPrice;
+  return totalItemPrice;
 }
 
 function getTaxBase(subTotal, discountValue, discountPercent) {
@@ -170,7 +175,7 @@ function getTaxBase(subTotal, discountValue, discountPercent) {
   }
 
   if (discountPercent > 0) {
-    return subTotal - subTotal * discountPercent;
+    return subTotal - subTotal * (discountPercent / 100);
   }
 
   return subTotal;
@@ -178,7 +183,7 @@ function getTaxBase(subTotal, discountValue, discountPercent) {
 
 function getTax(taxBase, typeOfTax) {
   if (typeOfTax === 'include') {
-    return (taxBase * 1) / 110;
+    return (taxBase * 10) / 11;
   }
 
   if (typeOfTax === 'exclude') {
@@ -209,6 +214,7 @@ async function buildFormData({ maker, formReference, createSalesInvoiceDto, sale
     number: formNumber,
     notes,
     createdBy: maker.id,
+    updatedBy: maker.id,
     incrementNumber,
     incrementGroup,
     formableId: salesInvoice.id,
@@ -223,17 +229,17 @@ async function getFormIncrement(currentDate) {
     where: {
       formableType: 'SalesInvoice',
       incrementGroup,
-      order: [['increment', 'DESC']],
     },
+    order: [['increment', 'DESC']],
   });
 
   return {
     incrementGroup,
-    increment: lastForm.increment + 1,
+    incrementNumber: lastForm ? lastForm.incrementNumber + 1 : 1,
   };
 }
 
-async function generateFormNumber(currentDate, incrementNumber) {
+function generateFormNumber(currentDate, incrementNumber) {
   // Form number format
   // SI + created year form (00) + created month form (00) + form increment (000)
   // 2021/12/01 -> SI2112001

@@ -8,6 +8,7 @@ const modelPaths = [
   '/master/models/branchUser.model.js',
   '/master/models/customer.model.js',
   '/master/models/item.model.js',
+  '/master/models/itemUnit.model.js',
   '/master/models/user.model.js',
   '/master/models/userWarehouse.model.js',
   '/master/models/warehouse.model.js',

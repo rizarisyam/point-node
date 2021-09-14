@@ -26,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       modelName: 'UserWarehouse',
       tableName: 'user_warehouse',
       underscored: true,
+      timestamps: false,
     }
   );
   return UserWarehouse;

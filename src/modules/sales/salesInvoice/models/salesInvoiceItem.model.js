@@ -71,6 +71,7 @@ module.exports = (sequelize, DataTypes) => {
       modelName: 'SalesInvoiceItem',
       tableName: 'sales_invoice_items',
       underscored: true,
+      timestamps: false,
     }
   );
   return SalesInvoiceItem;

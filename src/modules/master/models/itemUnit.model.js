@@ -1,27 +1,31 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Branch extends Model {
+  class ItemUnit extends Model {
     static associate({ tenant: models }) {
       this.belongsTo(models.User, { as: 'createdByUser', foreignKey: 'createdBy', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.User, { as: 'updatedByUser', foreignKey: 'updatedBy', onDelete: 'RESTRICT' });
 
-      this.belongsTo(models.User, { as: 'archivedByUser', foreignKey: 'archivedBy', onDelete: 'RESTRICT' });
-
-      this.belongsToMany(models.User, { foreignKey: 'branchId', otherKey: 'userId', through: models.BranchUser });
+      this.belongsTo(models.Item, { onDelete: 'CASCADE' });
     }
   }
-  Branch.init(
+  ItemUnit.init(
     {
+      label: {
+        type: DataTypes.STRING,
+      },
       name: {
         type: DataTypes.STRING,
       },
-      address: {
-        type: DataTypes.TEXT,
+      converter: {
+        type: DataTypes.DECIMAL,
       },
-      phone: {
-        type: DataTypes.STRING,
+      disabled: {
+        type: DataTypes.BOOLEAN,
+      },
+      itemId: {
+        type: DataTypes.INTEGER,
       },
       createdBy: {
         type: DataTypes.INTEGER,
@@ -29,20 +33,14 @@ module.exports = (sequelize, DataTypes) => {
       updatedBy: {
         type: DataTypes.INTEGER,
       },
-      archivedBy: {
-        type: DataTypes.INTEGER,
-      },
-      archivedAt: {
-        type: DataTypes.DATE,
-      },
     },
     {
       hooks: {},
       sequelize,
-      modelName: 'Branch',
-      tableName: 'branches',
+      modelName: 'ItemUnit',
+      tableName: 'item_units',
       underscored: true,
     }
   );
-  return Branch;
+  return ItemUnit;
 };

@@ -14,7 +14,7 @@
     "dev": "cross-env NODE_ENV=development nodemon src/index.js",
     "test": "jest -i --colors --verbose --detectOpenHandles",
     "test:watch": "jest -i --watchAll",
-    "coverage": "jest -i --coverage",
+    "coverage": "jest -i --coverage --detectOpenHandles",
     "coverage:coveralls": "jest -i --coverage --coverageReporters=text-lcov | coveralls",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

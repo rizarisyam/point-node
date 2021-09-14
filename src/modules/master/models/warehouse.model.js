@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
 
       this.belongsTo(models.User, { as: 'archivedByUser', foreignKey: 'archivedBy', onDelete: 'RESTRICT' });
 
-      this.belongsToMany(models.User, { through: models.UserWarehouse });
+      this.belongsToMany(models.User, { foreignKey: 'warehouseId', otherKey: 'userId', through: models.UserWarehouse });
     }
   }
   Warehouse.init(

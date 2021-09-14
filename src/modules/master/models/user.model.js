@@ -9,9 +9,9 @@ module.exports = (sequelize, DataTypes) => {
         scope: { modelType: 'User' },
       });
 
-      this.belongsToMany(models.Branch, { through: models.BranchUser });
+      this.belongsToMany(models.Branch, { foreignKey: 'userId', otherKey: 'branchId', through: models.BranchUser });
 
-      this.belongsToMany(models.Warehouse, { through: models.UserWarehouse });
+      this.belongsToMany(models.Warehouse, { foreignKey: 'userId', otherKey: 'warehouseId', through: models.UserWarehouse });
     }
 
     async isPermitted(requiredPermissions) {

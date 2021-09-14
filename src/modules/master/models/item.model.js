@@ -42,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
       taxable: {
         type: DataTypes.BOOLEAN,
       },
-      requiredProductionNumber: {
+      requireProductionNumber: {
         type: DataTypes.BOOLEAN,
       },
       requireExpiryDate: {

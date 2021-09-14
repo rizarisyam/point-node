@@ -97,6 +97,7 @@ module.exports = (sequelize, DataTypes) => {
       // -1 = rejected
       approvalStatus: {
         type: DataTypes.TINYINT,
+        defaultValue: 0,
       },
       requestCancellationTo: {
         type: DataTypes.INTEGER,

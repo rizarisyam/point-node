@@ -2,7 +2,15 @@ const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
   class Customer extends Model {
-    static associate() {}
+    static associate({ tenant: models }) {
+      this.belongsTo(models.Branch, { onDelete: 'RESTRICT' });
+
+      this.belongsTo(models.User, { as: 'createdByUser', foreignKey: 'createdBy', onDelete: 'RESTRICT' });
+
+      this.belongsTo(models.User, { as: 'updatedByUser', foreignKey: 'createdBy', onDelete: 'RESTRICT' });
+
+      this.belongsTo(models.User, { as: 'archivedByUser', foreignKey: 'createdBy', onDelete: 'RESTRICT' });
+    }
   }
   Customer.init(
     {
