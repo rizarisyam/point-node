@@ -1,5 +1,5 @@
 const setupTestDbTenant = require('../../../../../tests/utils/setupTestDbTenant');
-const { User, Permission, ModelHasPermission } = require('../../../../models').tenant;
+const { User, Permission, RoleHasPermission, ModelHasRole, Role } = require('../../../../models').tenant;
 
 setupTestDbTenant();
 
@@ -29,6 +29,15 @@ describe('User Model', () => {
         address: 'Jakarta',
         phone: '085209090909',
       });
+      const role = await Role.create({
+        name: 'super_admin',
+        guardName: 'api',
+      });
+      await ModelHasRole.create({
+        roleId: role.id,
+        modelType: 'App\\Model\\Master\\User',
+        modelId: user.id,
+      });
       const [createUserPermission, updateUserPermission, deleteUserPermission] = await Promise.all([
         Permission.create({
           name: 'create user',
@@ -44,27 +53,24 @@ describe('User Model', () => {
         }),
       ]);
       await Promise.all([
-        ModelHasPermission.create({
+        RoleHasPermission.create({
           permissionId: createUserPermission.id,
-          modelId: user.id,
-          modelType: 'User',
+          roleId: role.id,
         }),
-        ModelHasPermission.create({
+        RoleHasPermission.create({
           permissionId: updateUserPermission.id,
-          modelId: user.id,
-          modelType: 'User',
+          roleId: role.id,
         }),
-        ModelHasPermission.create({
+        RoleHasPermission.create({
           permissionId: deleteUserPermission.id,
-          modelId: user.id,
-          modelType: 'User',
+          roleId: role.id,
         }),
       ]);
       const isPermitted = await user.isPermitted(['create user', 'update user', 'delete user']);
       expect(isPermitted).toBeTruthy();
     });
 
-    it('return true if user not permitted', async () => {
+    it('return false if user not permitted', async () => {
       const user = await User.create({
         email: 'john.doe@mail.com',
         name: 'John Doe',
@@ -73,20 +79,27 @@ describe('User Model', () => {
         address: 'Jakarta',
         phone: '085209090909',
       });
-      const [createUserPermission] = await Promise.all([
-        Permission.create({
-          name: 'create users',
-          guardName: 'api',
-        }),
-        Permission.create({
-          name: 'update users',
-          guardName: 'api',
-        }),
-      ]);
-      await ModelHasPermission.create({
-        permissionId: createUserPermission.id,
+      const role = await Role.create({
+        name: 'super_admin',
+        guardName: 'api',
+      });
+      await ModelHasRole.create({
+        roleId: role.id,
+        modelType: 'App\\Model\\Master\\User',
         modelId: user.id,
-        modelType: 'User',
+      });
+      const isPermitted = await user.isPermitted(['create user', 'update user']);
+      expect(isPermitted).toBeFalsy();
+    });
+
+    it('return false if user not have role', async () => {
+      const user = await User.create({
+        email: 'john.doe@mail.com',
+        name: 'John Doe',
+        firstName: 'John',
+        lastName: 'Doe',
+        address: 'Jakarta',
+        phone: '085209090909',
       });
       const isPermitted = await user.isPermitted(['create user', 'update user']);
       expect(isPermitted).toBeFalsy();

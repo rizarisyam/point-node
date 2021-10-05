@@ -1,3 +1,4 @@
+const allocation = require('./allocation');
 const branch = require('./branch');
 const branchUser = require('./branchUser');
 const customer = require('./customer');
@@ -12,6 +13,7 @@ const userWarehouse = require('./userWarehouse');
 const warehouse = require('./warehouse');
 
 const factory = {
+  allocation,
   branch,
   branchUser,
   customer,

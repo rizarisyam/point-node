@@ -17,7 +17,8 @@
     "security/detect-object-injection": "off",
     "security/detect-non-literal-fs-filename": "off",
     "no-use-before-define": "off",
-    "jest/no-standalone-expect": "off"
+    "jest/no-standalone-expect": "off",
+    "no-param-reassign": "off"
   },
   "settings": {
     "import/resolver": {

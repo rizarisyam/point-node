@@ -6,24 +6,104 @@ const controller = require('./controller');
 
 const router = express.Router();
 
+// GET ALL SALES INVOICE
+router.route('/').get(auth('read sales invoice'), controller.getAllSalesInvoice);
+
+// GET ALL FORM REFERENCE
+router.route('/form-references').get(auth(), controller.getAllFormReferenceSalesInvoice);
+
+// GET ONE SALES INVOICE
+router
+  .route('/:salesInvoiceId')
+  .get(
+    celebrate(requestValidations.requireAuth),
+    celebrate(requestValidations.requireSalesInvoiceId),
+    auth('read sales invoice'),
+    controller.getOneSalesInvoice
+  );
+
+// REQUEST CREATING SALES INVOICE
 router
   .route('/')
   .post(
+    celebrate(requestValidations.requireAuth),
     celebrate(requestValidations.createFormRequestSalesInvoice),
     auth('create sales invoice'),
     controller.createFormRequestSalesInvoice
   );
 
-router.route('/:formId').put(auth('update sales invoice'), controller.updateFormSalesInvoice);
+// APPROVE CREATING SALES INVOICE
+router
+  .route('/:salesInvoiceId/approve')
+  .post(
+    celebrate(requestValidations.requireAuth),
+    celebrate(requestValidations.requireSalesInvoiceId),
+    auth('approve sales invoice'),
+    controller.createFormApproveSalesInvoice
+  );
 
-router.route('/:formId/create-approve').put(auth('approve sales invoice'), controller.createFormApproveSalesInvoice);
+// APPROVE USING EMAIL TOKEN
+router
+  .route('/approve-with-token')
+  .post(celebrate(requestValidations.createFormApproveByTokenSalesInvoice), controller.createFormApproveByTokenSalesInvoice);
 
-router.route('/:formId/create-reject').put(auth('approve sales invoice'), controller.createFormRejectSalesInvoice);
+// REJECT CREATING SALES INVOICE
+router
+  .route('/:salesInvoiceId/reject')
+  .post(
+    celebrate(requestValidations.requireAuth),
+    celebrate(requestValidations.requireSalesInvoiceId),
+    celebrate(requestValidations.createFormRejectSalesInvoice),
+    auth('approve sales invoice'),
+    controller.createFormRejectSalesInvoice
+  );
 
-router.route('/:formId').delete(auth('delete sales invoice'), controller.deleteFormRequestSalesInvoice);
+// REJECT USING EMAIL TOKEN
+router
+  .route('/reject-with-token')
+  .post(celebrate(requestValidations.createFormRejectByTokenSalesInvoice), controller.createFormRejectByTokenSalesInvoice);
 
-router.route('/:formId/delete-approve').put(auth('approve sales invoice'), controller.deleteFormApproveSalesInvoice);
+// REQUEST DELETING SALES INVOICE
+router
+  .route('/:salesInvoiceId')
+  .delete(
+    celebrate(requestValidations.requireAuth),
+    celebrate(requestValidations.requireSalesInvoiceId),
+    celebrate(requestValidations.deleteFormRequestSalesInvoice),
+    auth('delete sales invoice'),
+    controller.deleteFormRequestSalesInvoice
+  );
 
-router.route('/:formId/delete-reject').put(auth('approve sales invoice'), controller.deleteFormRejectSalesInvoice);
+// APPROVE DELETING SALES INVOICE
+router
+  .route('/:salesInvoiceId/cancellation-approve')
+  .post(
+    celebrate(requestValidations.requireAuth),
+    celebrate(requestValidations.requireSalesInvoiceId),
+    auth('approve sales invoice'),
+    controller.deleteFormApproveSalesInvoice
+  );
+
+// REJECT DELETING SALES INVOICE
+router
+  .route('/:salesInvoiceId/cancellation-reject')
+  .post(
+    celebrate(requestValidations.requireAuth),
+    celebrate(requestValidations.requireSalesInvoiceId),
+    celebrate(requestValidations.deleteFormRejectSalesInvoice),
+    auth('approve sales invoice'),
+    controller.deleteFormRejectSalesInvoice
+  );
+
+// UPDATE FORM SALES INVOICE
+router
+  .route('/:salesInvoiceId')
+  .patch(
+    celebrate(requestValidations.requireAuth),
+    celebrate(requestValidations.requireSalesInvoiceId),
+    celebrate(requestValidations.updateFormSalesInvoice),
+    auth('update sales invoice'),
+    controller.updateFormSalesInvoice
+  );
 
 module.exports = router;

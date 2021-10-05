@@ -1,24 +1,30 @@
-/**
- * This service has responsibility to create Form Sales Invoice and Sales Invoice itself
- * This service must be triggered by maker that has permission "create sales invoice".
- */
-
 const httpStatus = require('http-status');
-const { SalesInvoice, Form, Customer, BranchUser, UserWarehouse, SalesInvoiceItem, DeliveryNoteItem, ItemUnit } =
-  require('@src/models').tenant;
+let {
+  SalesInvoice,
+  Form,
+  Customer,
+  BranchUser,
+  UserWarehouse,
+  SalesInvoiceItem,
+  DeliveryNoteItem,
+  ItemUnit,
+  SalesVisitationDetail,
+} = require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
+const sendApprovalEmail = require('./sendApprovalEmail.salesInvoice');
 
-/**
- * Create Sales Invoice
- * @param {string} maker
- * @param {object} createSalesInvoiceDto
- * @returns {Promise}
- */
-module.exports = async function createFormRequestSalesInvoice(maker, createSalesInvoiceDto) {
+module.exports = async function createFormRequestSalesInvoice({ currentTenantDatabase, maker, createSalesInvoiceDto }) {
+  setTenantDatabase(currentTenantDatabase);
   const currentDate = new Date(Date.now());
   const { formId: formReferenceId } = createSalesInvoiceDto;
   const formReference = await Form.findOne({ where: { id: formReferenceId } });
-  const reference = await formReference.getFormable();
+
+  let reference;
+  if (formReference.number.startsWith('DN')) {
+    reference = await formReference.getFormable();
+  } else if (formReference.number.startsWith('SV')) {
+    reference = await formReference.getSalesVisitation();
+  }
 
   await validate(maker, formReference, reference);
 
@@ -31,11 +37,24 @@ module.exports = async function createFormRequestSalesInvoice(maker, createSales
     currentDate,
   });
 
+  await formReference.update({ done: true });
+
+  await sendApprovalEmail({
+    currentTenantDatabase,
+    maker,
+    salesInvoiceForm,
+    formReference,
+    salesInvoice,
+    createSalesInvoiceDto,
+  });
+
   return { salesInvoiceForm, salesInvoice };
 };
 
 async function validate(maker, formReference, reference) {
-  await validateBranchDefaultPermission(maker, formReference);
+  if (!formReference.number.startsWith('SV')) {
+    await validateBranchDefaultPermission(maker, formReference);
+  }
   await validateWarehouseDefaultPermission(maker, reference);
 }
 
@@ -66,20 +85,20 @@ async function validateWarehouseDefaultPermission(maker, reference) {
 }
 
 async function createSalesInvoice(reference, createSalesInvoiceDto) {
-  const salesInvoiceData = await buildSalesInvoiceData(createSalesInvoiceDto);
+  const salesInvoiceData = await buildSalesInvoiceData(reference, createSalesInvoiceDto);
   const salesInvoice = await SalesInvoice.create(salesInvoiceData);
   await addSalesInvoiceItems(salesInvoice, reference, createSalesInvoiceDto);
 
   return salesInvoice;
 }
 
-async function buildSalesInvoiceData(createSalesInvoiceDto) {
+async function buildSalesInvoiceData(reference, createSalesInvoiceDto) {
   const { dueDate, typeOfTax, customerId, items, discountPercent, discountValue } = createSalesInvoiceDto;
 
   const subTotal = getSubTotal(items);
   const taxBase = getTaxBase(subTotal, discountValue, discountPercent);
   const tax = getTax(taxBase, typeOfTax);
-  const amount = getAmount(taxBase, tax);
+  const amount = getAmount(taxBase, tax, typeOfTax);
   const customer = await getCustomer(customerId);
 
   return {
@@ -92,8 +111,10 @@ async function buildSalesInvoiceData(createSalesInvoiceDto) {
     remaining: amount,
     customerId,
     customerName: customer.name,
-    customerAddress: customer.address,
-    customerPhone: customer.phone,
+    customerAddress: customer.address || '',
+    customerPhone: customer.phone || '',
+    referenceableId: reference.id,
+    referenceableType: reference.getMorphType(),
   };
 }
 
@@ -118,10 +139,20 @@ async function createSalesInvoiceItem(salesInvoice, reference, itemPayload) {
         },
       });
       break;
+    case 'SalesVisitation':
+      referenceItem = await SalesVisitationDetail.findOne({
+        where: {
+          id: itemPayload.referenceItemId,
+        },
+      });
+      break;
     default:
   }
   const item = await referenceItem.getItem();
-  const itemUnit = await ItemUnit.findOne({ where: { id: itemPayload.itemUnitId } });
+  const itemUnit = await ItemUnit.findOne({ where: { name: itemPayload.itemUnit } });
+  if (!itemUnit) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Item unit ${itemPayload.itemUnit} not found`);
+  }
 
   return SalesInvoiceItem.create({
     salesInvoiceId: salesInvoice.id,
@@ -136,7 +167,7 @@ async function createSalesInvoiceItem(salesInvoice, reference, itemPayload) {
     taxable: itemPayload.taxable,
     unit: itemUnit.label,
     converter: itemUnit.converter,
-    // allocationId: itemPayload.allocationId,
+    allocationId: itemPayload?.allocationId,
   });
 }
 
@@ -183,7 +214,7 @@ function getTaxBase(subTotal, discountValue, discountPercent) {
 
 function getTax(taxBase, typeOfTax) {
   if (typeOfTax === 'include') {
-    return (taxBase * 10) / 11;
+    return (taxBase * 10) / 110;
   }
 
   if (typeOfTax === 'exclude') {
@@ -193,8 +224,12 @@ function getTax(taxBase, typeOfTax) {
   return 0;
 }
 
-function getAmount(taxBase, tax) {
-  return taxBase + tax;
+function getAmount(taxBase, tax, typeOfTax) {
+  if (typeOfTax === 'exclude') {
+    return taxBase + tax;
+  }
+
+  return taxBase;
 }
 
 async function getCustomer(customerId) {
@@ -240,9 +275,6 @@ async function getFormIncrement(currentDate) {
 }
 
 function generateFormNumber(currentDate, incrementNumber) {
-  // Form number format
-  // SI + created year form (00) + created month form (00) + form increment (000)
-  // 2021/12/01 -> SI2112001
   const monthValue = getMonthFormattedString(currentDate);
   const yearValue = getYearFormattedString(currentDate);
   const orderNumber = `000${incrementNumber}`.slice(-3);
@@ -257,4 +289,18 @@ function getYearFormattedString(currentDate) {
 function getMonthFormattedString(currentDate) {
   const month = currentDate.getMonth() + 1;
   return `0${month}`.slice(-2);
+}
+
+function setTenantDatabase(currentTenantDatabase) {
+  ({
+    SalesInvoice,
+    Form,
+    Customer,
+    BranchUser,
+    UserWarehouse,
+    SalesInvoiceItem,
+    DeliveryNoteItem,
+    ItemUnit,
+    SalesVisitationDetail,
+  } = currentTenantDatabase);
 }

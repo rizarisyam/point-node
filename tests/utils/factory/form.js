@@ -16,7 +16,7 @@ async function create({
     incrementNumber,
     incrementGroup,
     formableId: reference.id,
-    formableType: reference.constructor.name,
+    formableType: 'SalesDeliveryNote',
     createdBy,
     updatedBy,
     requestApprovalTo,

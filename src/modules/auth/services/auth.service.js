@@ -2,18 +2,25 @@ const passport = require('passport');
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
 
-const verifyCallback = (req, resolve, reject, requiredRights) => async (err, user, info) => {
-  if (err || info || !user) {
+const verifyCallback = (req, resolve, reject, requiredRights) => async (err, payload, info) => {
+  if (err || info || !payload) {
     return reject(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
   }
-  req.user = user;
+
+  const { User } = req.currentTenantDatabase;
+  const user = await User.findOne({ where: { id: payload.sub } });
+  if (!user) {
+    return reject(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
+  }
+
   if (requiredRights.length) {
     const hasRequiredRights = await user.isPermitted(requiredRights);
-    if (!hasRequiredRights || req.params.userId !== user.id) {
+    if (!hasRequiredRights) {
       return reject(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
     }
   }
 
+  req.user = user;
   resolve();
 };
 

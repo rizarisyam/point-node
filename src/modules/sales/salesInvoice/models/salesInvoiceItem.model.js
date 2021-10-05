@@ -9,15 +9,39 @@ module.exports = (sequelize, DataTypes) => {
 
       this.belongsTo(models.DeliveryNoteItem, { onDelete: 'CASCADE' });
 
-      this.belongsTo(models.Item, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.Item, { as: 'item', onDelete: 'RESTRICT' });
 
-      this.belongsTo(models.Allocation, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.Allocation, { as: 'allocation', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.DeliveryNote, { foreignKey: 'deliveryNoteId', constraints: false });
 
       this.belongsTo(models.PosBill, { foreignKey: 'deliveryNoteId', constraints: false });
 
       this.belongsTo(models.SalesVisitation, { foreignKey: 'deliveryNoteId', constraints: false });
+    }
+
+    getDiscountString() {
+      if (this.discountValue && this.discountValue > 0) {
+        return `${parseFloat(this.discountValue)}`;
+      }
+
+      if (this.discountPercent && this.discountPercent > 0) {
+        return `${parseFloat(this.discountPercent)} %`;
+      }
+
+      return '';
+    }
+
+    getTotalPrice() {
+      if (this.discountValue && this.discountValue > 0) {
+        return this.quantity * (this.price - this.discountValue);
+      }
+
+      if (this.discountPercent && this.discountPercent > 0) {
+        return this.quantity * this.price * this.discountPercent;
+      }
+
+      return this.quantity * this.price;
     }
   }
   SalesInvoiceItem.init(

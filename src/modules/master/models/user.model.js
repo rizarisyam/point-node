@@ -1,24 +1,46 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, projectCode) => {
   class User extends Model {
-    static associate({ tenant: models }) {
-      this.hasMany(models.ModelHasPermission, {
+    static associate({ [projectCode]: models }) {
+      this.hasOne(models.ModelHasRole, {
+        as: 'modelHasRole',
         foreignKey: 'modelId',
         constraints: false,
-        scope: { modelType: 'User' },
+        scope: { modelType: 'App\\Model\\Master\\User' },
       });
 
-      this.belongsToMany(models.Branch, { foreignKey: 'userId', otherKey: 'branchId', through: models.BranchUser });
+      this.belongsToMany(models.Branch, {
+        as: 'branches',
+        foreignKey: 'userId',
+        otherKey: 'branchId',
+        through: models.BranchUser,
+      });
 
-      this.belongsToMany(models.Warehouse, { foreignKey: 'userId', otherKey: 'warehouseId', through: models.UserWarehouse });
+      this.belongsToMany(models.Warehouse, {
+        as: 'warehouses',
+        foreignKey: 'userId',
+        otherKey: 'warehouseId',
+        through: models.UserWarehouse,
+      });
     }
 
     async isPermitted(requiredPermissions) {
-      const modelHasPermissions = await this.getModelHasPermissions({
-        include: sequelize.models.Permission,
+      const role = await this.getModelHasRole();
+      if (!role) {
+        return false;
+      }
+
+      const roleHasPermissions = await sequelize.models.RoleHasPermission.findAll({
+        where: {
+          roleId: role.roleId,
+        },
+        include: [{ model: sequelize.models.Permission, as: 'permission' }],
       });
-      const permissions = modelHasPermissions.map((modelHasPermission) => modelHasPermission.Permission.name);
+      const permissions = roleHasPermissions.map((roleHasPermission) => {
+        return roleHasPermission.permission.name;
+      });
+
       return requiredPermissions.every((requiredPermission) => permissions.includes(requiredPermission));
     }
   }
@@ -44,6 +66,12 @@ module.exports = (sequelize, DataTypes) => {
       },
       branchId: {
         type: DataTypes.INTEGER,
+      },
+      fullName: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          return `${this.firstName} ${this.lastName}`;
+        },
       },
     },
     {

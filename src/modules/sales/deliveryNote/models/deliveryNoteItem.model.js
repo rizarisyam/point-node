@@ -7,7 +7,9 @@ module.exports = (sequelize, DataTypes) => {
 
       this.belongsTo(models.Item, { onDelete: 'RESTRICT' });
 
-      this.belongsTo(models.Allocation, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.Allocation, { as: 'allocation', onDelete: 'RESTRICT' });
+
+      this.belongsTo(models.DeliveryOrderItem, { as: 'deliveryOrderItem' });
     }
   }
   DeliveryNoteItem.init(

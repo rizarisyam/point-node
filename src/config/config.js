@@ -9,6 +9,7 @@ const envVarsSchema = Joi.object()
     NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
     PORT: Joi.number().default(3000),
     MAIN_POINT_URL: Joi.string().required('Point main app url'),
+    WEBSITE_URL: Joi.string().required('Website url'),
     DATABASE_USERNAME: Joi.string().required().description('Main database username'),
     DATABASE_PASSWORD: Joi.string().required().description('Main database password'),
     DATABASE_NAME: Joi.string().required().description('Main database name'),
@@ -52,6 +53,7 @@ module.exports = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   mainPointUrl: envVars.MAIN_POINT_URL,
+  websiteUrl: envVars.WEBSITE_URL,
   database: {
     username: envVars.DATABASE_USERNAME,
     password: envVars.DATABASE_PASSWORD,
@@ -86,6 +88,10 @@ module.exports = {
     refreshExpirationDays: envVars.JWT_REFRESH_EXPIRATION_DAYS,
     resetPasswordExpirationMinutes: envVars.JWT_RESET_PASSWORD_EXPIRATION_MINUTES,
     verifyEmailExpirationMinutes: envVars.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES,
+  },
+  redis: {
+    host: envVars.REDIS_HOST,
+    port: envVars.REDIS_PORT,
   },
   email: {
     smtp: {

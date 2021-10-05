@@ -3,17 +3,27 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class DeliveryNote extends Model {
     static associate({ tenant: models }) {
-      this.belongsTo(models.Customer, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.Customer, { as: 'customer', onDelete: 'RESTRICT' });
 
-      this.belongsTo(models.Warehouse, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.Warehouse, { as: 'warehouse', onDelete: 'RESTRICT' });
+
+      this.belongsTo(models.DeliveryOrder, { as: 'deliveryOrder', onDelete: 'RESTRICT' });
+
+      this.hasMany(models.DeliveryNoteItem, { as: 'itemsQuery' });
 
       this.hasMany(models.DeliveryNoteItem, { as: 'items' });
 
       this.hasOne(models.Form, {
+        as: 'form',
         foreignKey: 'formableId',
         constraints: false,
-        scope: { formableType: 'DeliveryNote' },
+        scope: { formable_type: 'SalesDeliveryNote' },
       });
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    getMorphType() {
+      return 'SalesDeliveryNote';
     }
   }
   DeliveryNote.init(

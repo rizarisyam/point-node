@@ -1,5 +1,5 @@
 const setupTestDbTenant = require('@root/tests/utils/setupTestDbTenant');
-const { Customer } = require('@src/models');
+const { Customer } = require('@src/models').tenant;
 const updateFormSalesInvoice = require('../services/updateForm.salesInvoice.service');
 
 setupTestDbTenant();

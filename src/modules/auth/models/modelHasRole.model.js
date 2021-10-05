@@ -1,24 +1,21 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, projectCode) => {
   class ModelHasRole extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate({ tenant: models }) {
-      // define association here
+    static associate({ [projectCode]: models }) {
       this.belongsTo(models.Role);
+      this.belongsTo(models.User, { foreignKey: 'modelId', constraints: false });
     }
   }
   ModelHasRole.init(
     {
       roleId: {
         type: DataTypes.INTEGER,
+        primaryKey: true,
       },
       modelId: {
         type: DataTypes.INTEGER,
+        primaryKey: true,
       },
       modelType: {
         type: DataTypes.STRING,
@@ -30,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       modelName: 'ModelHasRole',
       tableName: 'model_has_roles',
       underscored: true,
+      timestamps: false,
     }
   );
   return ModelHasRole;

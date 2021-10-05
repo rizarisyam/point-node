@@ -16,6 +16,7 @@ const generateCreateSalesInvoiceDto = ({
   maker,
   approver,
   customer,
+  allocation,
 }) => ({
   formId: formDeliveryNote.id,
   items: [
@@ -23,8 +24,8 @@ const generateCreateSalesInvoiceDto = ({
       itemId: item.id,
       referenceItemId: deliveryNoteItem.id,
       quantity: 10,
-      itemUnitId: itemUnit.id,
-      allocationId: 1,
+      itemUnit: itemUnit.name,
+      allocationId: allocation.id,
       price: 10000,
       discountPercent: 0,
       discountValue: 0,
@@ -56,7 +57,8 @@ describe('Create Request Sales Invoice Service', () => {
       const item = await factory.item.create();
       const itemUnit = await factory.itemUnit.create({ item, createdBy: maker.id });
       const deliveryNote = await factory.deliveryNote.create({ customer, warehouse, deliveryOrder });
-      const deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item });
+      const allocation = await factory.allocation.create({ branch });
+      const deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item, allocation });
       const formDeliveryNote = await factory.form.create({
         branch,
         reference: deliveryNote,
@@ -68,6 +70,7 @@ describe('Create Request Sales Invoice Service', () => {
       const createSalesInvoiceDto = generateCreateSalesInvoiceDto({
         formDeliveryNote,
         item,
+        allocation,
         deliveryNoteItem,
         itemUnit,
         maker,
@@ -94,7 +97,8 @@ describe('Create Request Sales Invoice Service', () => {
       const item = await factory.item.create();
       const itemUnit = await factory.itemUnit.create({ item, createdBy: maker.id });
       const deliveryNote = await factory.deliveryNote.create({ customer, warehouse, deliveryOrder });
-      const deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item });
+      const allocation = await factory.allocation.create({ branch });
+      const deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item, allocation });
       const formDeliveryNote = await factory.form.create({
         branch,
         reference: deliveryNote,
@@ -106,6 +110,7 @@ describe('Create Request Sales Invoice Service', () => {
       const createSalesInvoiceDto = generateCreateSalesInvoiceDto({
         formDeliveryNote,
         item,
+        allocation,
         deliveryNoteItem,
         itemUnit,
         maker,
@@ -121,10 +126,10 @@ describe('Create Request Sales Invoice Service', () => {
 
   describe('when typeOfTax is non', () => {
     // eslint-disable-next-line prettier/prettier, one-var
-    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoiceForm, salesInvoice;
+    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, allocation, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoiceForm, salesInvoice;
     beforeEach(async () => {
       // eslint-disable-next-line prettier/prettier, no-multi-assign
-      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoiceForm = salesInvoice = null;
+      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = allocation = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoiceForm = salesInvoice = null;
 
       maker = await factory.user.create();
       approver = await factory.user.create();
@@ -137,7 +142,8 @@ describe('Create Request Sales Invoice Service', () => {
       item = await factory.item.create();
       itemUnit = await factory.itemUnit.create({ item, createdBy: maker.id });
       deliveryNote = await factory.deliveryNote.create({ customer, warehouse, deliveryOrder });
-      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item });
+      allocation = await factory.allocation.create({ branch });
+      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item, allocation });
       formDeliveryNote = await factory.form.create({
         branch,
         reference: deliveryNote,
@@ -154,6 +160,7 @@ describe('Create Request Sales Invoice Service', () => {
         maker,
         approver,
         customer,
+        allocation,
       });
     });
 
@@ -201,14 +208,21 @@ describe('Create Request Sales Invoice Service', () => {
       expect(salesInvoice.amount).toEqual(100000); // 10.000 * 10
       expect(salesInvoice.dueDate).toEqual(createSalesInvoiceDto.dueDate);
     });
+
+    it('updates form reference to done', async () => {
+      ({ salesInvoiceForm, salesInvoice } = await createRequestSalesInvoiceService(maker, createSalesInvoiceDto));
+
+      await formDeliveryNote.reload();
+      expect(formDeliveryNote.done).toBeTruthy();
+    });
   });
 
   describe('when typeOfTax is include', () => {
     // eslint-disable-next-line prettier/prettier, one-var
-    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
+    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, allocation, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
     beforeEach(async () => {
       // eslint-disable-next-line prettier/prettier, no-multi-assign
-      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
+      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = allocation = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
 
       maker = await factory.user.create();
       approver = await factory.user.create();
@@ -221,7 +235,8 @@ describe('Create Request Sales Invoice Service', () => {
       item = await factory.item.create();
       itemUnit = await factory.itemUnit.create({ item, createdBy: maker.id });
       deliveryNote = await factory.deliveryNote.create({ customer, warehouse, deliveryOrder });
-      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item });
+      allocation = await factory.allocation.create({ branch });
+      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item, allocation });
       formDeliveryNote = await factory.form.create({
         branch,
         reference: deliveryNote,
@@ -233,6 +248,7 @@ describe('Create Request Sales Invoice Service', () => {
       createSalesInvoiceDto = generateCreateSalesInvoiceDto({
         formDeliveryNote,
         item,
+        allocation,
         deliveryNoteItem,
         itemUnit,
         maker,
@@ -248,9 +264,9 @@ describe('Create Request Sales Invoice Service', () => {
 
       expect(salesInvoice.typeOfTax).toEqual('include');
       const subTotal = 100000; // 10.000 * 10
-      const taxBase = subTotal - 0; // without sales invoice discount
-      const tax = (taxBase * 10) / 11; // include
-      const amount = taxBase + tax;
+      const taxBase = subTotal - 0; // without sales invoice discount | 10.0000
+      const tax = (taxBase * 10) / 110; // include | 9090,909090909091
+      const amount = subTotal; // include not need to add tax to amount | 100.000
       expect(salesInvoice.tax).toEqual(tax);
       expect(salesInvoice.amount).toEqual(amount);
       expect(salesInvoice.dueDate).toEqual(createSalesInvoiceDto.dueDate);
@@ -259,10 +275,10 @@ describe('Create Request Sales Invoice Service', () => {
 
   describe('when typeOfTax is exclude', () => {
     // eslint-disable-next-line prettier/prettier, one-var
-    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
+    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, allocation, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
     beforeEach(async () => {
       // eslint-disable-next-line prettier/prettier, no-multi-assign
-      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
+      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = allocation = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
 
       maker = await factory.user.create();
       approver = await factory.user.create();
@@ -275,7 +291,8 @@ describe('Create Request Sales Invoice Service', () => {
       item = await factory.item.create();
       itemUnit = await factory.itemUnit.create({ item, createdBy: maker.id });
       deliveryNote = await factory.deliveryNote.create({ customer, warehouse, deliveryOrder });
-      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item });
+      allocation = await factory.allocation.create({ branch });
+      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item, allocation });
       formDeliveryNote = await factory.form.create({
         branch,
         reference: deliveryNote,
@@ -287,6 +304,7 @@ describe('Create Request Sales Invoice Service', () => {
       createSalesInvoiceDto = generateCreateSalesInvoiceDto({
         formDeliveryNote,
         item,
+        allocation,
         deliveryNoteItem,
         itemUnit,
         maker,
@@ -302,9 +320,9 @@ describe('Create Request Sales Invoice Service', () => {
 
       expect(salesInvoice.typeOfTax).toEqual('exclude');
       const subTotal = 100000; // 10.000 * 10
-      const taxBase = subTotal - 0; // without sales invoice discount
-      const tax = taxBase * 0.1; // exclude
-      const amount = taxBase + tax;
+      const taxBase = subTotal - 0; // without sales invoice discount | 100.000
+      const tax = taxBase * 0.1; // exclude | 10.000
+      const amount = taxBase + tax; // 110.000
       expect(salesInvoice.tax).toEqual(tax);
       expect(salesInvoice.amount).toEqual(amount);
       expect(salesInvoice.dueDate).toEqual(createSalesInvoiceDto.dueDate);
@@ -313,10 +331,10 @@ describe('Create Request Sales Invoice Service', () => {
 
   describe('when item has discount value', () => {
     // eslint-disable-next-line prettier/prettier, one-var
-    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
+    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, allocation, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
     beforeEach(async () => {
       // eslint-disable-next-line prettier/prettier, no-multi-assign
-      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
+      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = allocation = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
 
       maker = await factory.user.create();
       approver = await factory.user.create();
@@ -329,7 +347,8 @@ describe('Create Request Sales Invoice Service', () => {
       item = await factory.item.create();
       itemUnit = await factory.itemUnit.create({ item, createdBy: maker.id });
       deliveryNote = await factory.deliveryNote.create({ customer, warehouse, deliveryOrder });
-      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item });
+      allocation = await factory.allocation.create({ branch });
+      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item, allocation });
       formDeliveryNote = await factory.form.create({
         branch,
         reference: deliveryNote,
@@ -341,6 +360,7 @@ describe('Create Request Sales Invoice Service', () => {
       createSalesInvoiceDto = generateCreateSalesInvoiceDto({
         formDeliveryNote,
         item,
+        allocation,
         deliveryNoteItem,
         itemUnit,
         maker,
@@ -368,10 +388,10 @@ describe('Create Request Sales Invoice Service', () => {
 
   describe('when item has discount percent', () => {
     // eslint-disable-next-line prettier/prettier, one-var
-    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
+    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, allocation, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
     beforeEach(async () => {
       // eslint-disable-next-line prettier/prettier, no-multi-assign
-      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
+      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = allocation = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
 
       maker = await factory.user.create();
       approver = await factory.user.create();
@@ -384,7 +404,8 @@ describe('Create Request Sales Invoice Service', () => {
       item = await factory.item.create();
       itemUnit = await factory.itemUnit.create({ item, createdBy: maker.id });
       deliveryNote = await factory.deliveryNote.create({ customer, warehouse, deliveryOrder });
-      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item });
+      allocation = await factory.allocation.create({ branch });
+      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item, allocation });
       formDeliveryNote = await factory.form.create({
         branch,
         reference: deliveryNote,
@@ -396,6 +417,7 @@ describe('Create Request Sales Invoice Service', () => {
       createSalesInvoiceDto = generateCreateSalesInvoiceDto({
         formDeliveryNote,
         item,
+        allocation,
         deliveryNoteItem,
         itemUnit,
         maker,
@@ -423,10 +445,10 @@ describe('Create Request Sales Invoice Service', () => {
 
   describe('when sales invoice has discount value', () => {
     // eslint-disable-next-line prettier/prettier, one-var
-    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
+    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, allocation, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
     beforeEach(async () => {
       // eslint-disable-next-line prettier/prettier, no-multi-assign
-      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
+      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = allocation = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
 
       maker = await factory.user.create();
       approver = await factory.user.create();
@@ -439,7 +461,8 @@ describe('Create Request Sales Invoice Service', () => {
       item = await factory.item.create();
       itemUnit = await factory.itemUnit.create({ item, createdBy: maker.id });
       deliveryNote = await factory.deliveryNote.create({ customer, warehouse, deliveryOrder });
-      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item });
+      allocation = await factory.allocation.create({ branch });
+      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item, allocation });
       formDeliveryNote = await factory.form.create({
         branch,
         reference: deliveryNote,
@@ -451,6 +474,7 @@ describe('Create Request Sales Invoice Service', () => {
       createSalesInvoiceDto = generateCreateSalesInvoiceDto({
         formDeliveryNote,
         item,
+        allocation,
         deliveryNoteItem,
         itemUnit,
         maker,
@@ -478,10 +502,10 @@ describe('Create Request Sales Invoice Service', () => {
 
   describe('when sales invoice has discount percent', () => {
     // eslint-disable-next-line prettier/prettier, one-var
-    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
+    let maker, approver, branch, customer, warehouse, deliveryOrder,item, itemUnit, deliveryNote, allocation, deliveryNoteItem, formDeliveryNote, createSalesInvoiceDto, salesInvoice;
     beforeEach(async () => {
       // eslint-disable-next-line prettier/prettier, no-multi-assign
-      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
+      maker = approver = branch = customer = warehouse = deliveryOrder = item = itemUnit = deliveryNote = allocation = deliveryNoteItem = formDeliveryNote = createSalesInvoiceDto = salesInvoice = null;
 
       maker = await factory.user.create();
       approver = await factory.user.create();
@@ -494,7 +518,8 @@ describe('Create Request Sales Invoice Service', () => {
       item = await factory.item.create();
       itemUnit = await factory.itemUnit.create({ item, createdBy: maker.id });
       deliveryNote = await factory.deliveryNote.create({ customer, warehouse, deliveryOrder });
-      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item });
+      allocation = await factory.allocation.create({ branch });
+      deliveryNoteItem = await factory.deliveryNoteItem.create({ deliveryNote, item, allocation });
       formDeliveryNote = await factory.form.create({
         branch,
         reference: deliveryNote,
@@ -506,6 +531,7 @@ describe('Create Request Sales Invoice Service', () => {
       createSalesInvoiceDto = generateCreateSalesInvoiceDto({
         formDeliveryNote,
         item,
+        allocation,
         deliveryNoteItem,
         itemUnit,
         maker,

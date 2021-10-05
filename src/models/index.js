@@ -19,6 +19,7 @@ const mainSequelize = new Sequelize(
  configDbMain.password,
  configDbMain
 );
+
 const configDbTenant = config.databases.tenant;
 const tenantSequelize = new Sequelize(
   configDbTenant.database,
@@ -40,7 +41,7 @@ fs
   });
 
 tenantModels.modelPaths.forEach((modelPath) => {
-  const model = require(modelPath)(tenantSequelize, Sequelize.DataTypes);
+  const model = require(modelPath)(tenantSequelize, Sequelize.DataTypes, 'tenant');
   db.tenant[model.name] = model;
 });
 

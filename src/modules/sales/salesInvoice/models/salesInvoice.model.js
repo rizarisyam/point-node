@@ -1,19 +1,41 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, projectCode) => {
   class SalesInvoice extends Model {
-    static associate({ tenant: models }) {
-      this.belongsTo(models.User, { as: 'createdByUser', foreignKey: 'createdBy', onDelete: 'RESTRICT' });
-
-      this.belongsTo(models.Form, { foreignKey: 'formId', onDelete: 'RESTRICT' });
-
+    static associate({ [projectCode]: models }) {
       this.hasMany(models.SalesInvoiceItem, { as: 'items' });
 
+      this.belongsTo(models.Customer, { as: 'customer' });
+
+      this.belongsTo(models.DeliveryNote, { as: 'salesDeliveryNote', foreignKey: 'referenceableId', constraints: false });
+
+      this.belongsTo(models.SalesVisitation, { as: 'salesVisitation', foreignKey: 'referenceableId', constraints: false });
+
       this.hasOne(models.Form, {
+        as: 'form',
         foreignKey: 'formableId',
         constraints: false,
-        scope: { formableType: 'SalesInvoice' },
+        scope: { formable_type: 'SalesInvoice' },
       });
+    }
+
+    getReferenceable(options) {
+      const referenceableTypes = ['SalesDeliveryNote', 'SalesVisitation'];
+      if (!referenceableTypes.includes(this.referenceableType)) return Promise.resolve(null);
+      const mixinMethodName = `get${this.referenceableType}`;
+      return this[mixinMethodName](options);
+    }
+
+    getDiscountString() {
+      if (this.discountValue && this.discountValue > 0) {
+        return `${this.discountValue}`;
+      }
+
+      if (this.discountPercent && this.discountPercent > 0) {
+        return `${this.discountPercent} %`;
+      }
+
+      return '';
     }
   }
   SalesInvoice.init(
@@ -59,6 +81,14 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       customerPhone: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      referenceableId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      referenceableType: {
         type: DataTypes.STRING,
         allowNull: false,
       },

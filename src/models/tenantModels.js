@@ -1,4 +1,7 @@
+/* eslint-disable */
 const path = require('path');
+const Sequelize = require('sequelize');
+const config = require(`${__dirname}/../config/config.js`);
 
 const modulesDir = `${__dirname}/../modules`;
 const modelPaths = [
@@ -12,29 +15,95 @@ const modelPaths = [
   '/master/models/user.model.js',
   '/master/models/userWarehouse.model.js',
   '/master/models/warehouse.model.js',
+  // accounting
+  '/accounting/models/journal.model.js',
   // auth
   '/auth/models/modelHasPermission.model.js',
   '/auth/models/modelHasRole.model.js',
   '/auth/models/permission.model.js',
   '/auth/models/role.model.js',
   '/auth/models/roleHasPermission.model.js',
+  // inventory
+  '/inventory/models/inventory.model.js',
   // sales/deliveryNote
   '/sales/deliveryNote/models/deliveryNote.model.js',
   '/sales/deliveryNote/models/deliveryNoteItem.model.js',
   // sales/deliveryOrder
   '/sales/deliveryOrder/models/deliveryOrder.model.js',
+  '/sales/deliveryOrder/models/deliveryOrderItem.model.js',
   // sales/salesInvoice
   '/sales/salesInvoice/models/salesInvoice.model.js',
   '/sales/salesInvoice/models/salesInvoiceItem.model.js',
+  // sales/salesOrder
+  '/sales/salesOrder/models/salesOrder.model.js',
+  '/sales/salesOrder/models/salesOrderItem.model.js',
   // pos
   '/pos/models/posBill.model.js',
   // plugin/pinpoint
   '/plugin/pinPoint/salesVisitation.model.js',
+  '/plugin/pinPoint/salesVisitationDetail.model.js',
   // shared
   '/shared/form/form.model.js',
+  '/shared/settingJournal/settingJournal.model.js',
 ].map((modelPath) => path.join(modulesDir, modelPath));
+
+async function loadAllTenantProjectDatabase (db) {
+  const { Project } = db.main;
+  const projects = await Project.findAll();
+  projects.forEach((project) => {
+    addOrFindNewProjectDatabase(db, project.code)
+  });
+}
+
+function addOrFindNewProjectDatabase (db, projectCode) {
+  if (db[projectCode]) {
+    return db[projectCode]
+  }
+  
+  db[projectCode] = {};
+  const configDbTenant = generateConfigNewDatabase(projectCode)
+  const newDatabaseSequelize = new Sequelize(
+    configDbTenant.database,
+    configDbTenant.username,
+    configDbTenant.password,
+    configDbTenant
+  );
+
+  modelPaths.forEach((modelPath) => {
+    const model = require(modelPath)(newDatabaseSequelize, Sequelize.DataTypes, projectCode);
+    db[projectCode][model.name] = model;
+  });
+
+  Object.keys(db[projectCode]).forEach((modelName) => {
+    if (db[projectCode][modelName].associate) {
+      db[projectCode][modelName].associate(db);
+    }
+  });
+
+  db[projectCode].sequelize = newDatabaseSequelize
+
+  return db[projectCode];
+}
+
+function generateConfigNewDatabase (projectCode) {
+  const databaseName = `point_${projectCode}`
+  return {
+    username: config.tenantDatabase.username,
+    password: config.tenantDatabase.password,
+    database: databaseName,
+    host: config.tenantDatabase.host,
+    port: config.tenantDatabase.port,
+    dialect: 'mysql',
+    dialectOptions: {
+      bigNumberStrings: true,
+    },
+  }
+}
 
 module.exports = {
   modelPaths,
   modulesDir,
+  loadAllTenantProjectDatabase,
+  addOrFindNewProjectDatabase,
 };
+/* eslint-enable */

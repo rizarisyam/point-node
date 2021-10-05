@@ -1,16 +1,9 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, projectCode) => {
   class ModelHasPermission extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate({ tenant: models }) {
-      // define association here
+    static associate({ [projectCode]: models }) {
       this.belongsTo(models.Permission);
-      this.belongsTo(models.User, { foreignKey: 'modelId', constraints: false });
     }
   }
   ModelHasPermission.init(

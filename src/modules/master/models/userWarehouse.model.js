@@ -1,8 +1,8 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, projectCode) => {
   class UserWarehouse extends Model {
-    static associate({ tenant: models }) {
+    static associate({ [projectCode]: models }) {
       this.belongsTo(models.User, { onDelete: 'CASCADE' });
 
       this.belongsTo(models.Warehouse, { onDelete: 'CASCADE' });

@@ -1,8 +1,8 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, projectCode) => {
   class Item extends Model {
-    static associate({ tenant: models }) {
+    static associate({ [projectCode]: models }) {
       this.belongsTo(models.User, { as: 'createdByUser', foreignKey: 'createdBy', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.User, { as: 'updatedByUser', foreignKey: 'updatedBy', onDelete: 'RESTRICT' });
@@ -11,6 +11,19 @@ module.exports = (sequelize, DataTypes) => {
 
       // TODO: Add ChartOfAccount model
       // this.belongsTo(models.ChartOfAccount, { onDelete: 'RESTRICT' });
+    }
+
+    async calculateCogs() {
+      const { Inventory, Journal } = sequelize.models;
+      const qty = await Inventory.sum('quantity', { where: { itemId: this.id } });
+      const valueDebit = await Journal.sum('debit', { where: { journalableId: this.id } });
+      const valueCredit = await Journal.sum('credit', { where: { journalableId: this.id } });
+
+      if (qty < 0) {
+        return 0;
+      }
+
+      return (valueDebit - valueCredit) / qty;
     }
   }
   Item.init(

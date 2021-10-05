@@ -1,6 +1,6 @@
 const { DeliveryNoteItem } = require('@src/models').tenant;
 
-async function create({ deliveryNote, item }) {
+async function create({ deliveryNote, item, allocation }) {
   const deliveryNoteItem = await DeliveryNoteItem.create({
     deliveryNoteId: deliveryNote.id,
     itemId: item.id,
@@ -9,6 +9,7 @@ async function create({ deliveryNote, item }) {
     price: 10000,
     unit: 'pcs',
     converter: 1,
+    allocationId: allocation.id,
   });
 
   return deliveryNoteItem;

@@ -3,11 +3,18 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class SalesVisitation extends Model {
     static associate({ tenant: models }) {
-      this.belongsTo(models.Form, { onDelete: 'CASCADE' });
+      this.belongsTo(models.Form, { as: 'form', onDelete: 'CASCADE' });
 
-      this.belongsTo(models.Customer, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.Customer, { as: 'customer', onDelete: 'RESTRICT' });
 
-      this.belongsTo(models.Warehouse, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.Warehouse, { as: 'warehouse', onDelete: 'RESTRICT' });
+
+      this.hasMany(models.SalesVisitationDetail, { as: 'items' });
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    getMorphType() {
+      return 'SalesVisitation';
     }
   }
   SalesVisitation.init(

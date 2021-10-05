@@ -1,15 +1,38 @@
-/**
- * This service has responsibility to reject created Sales Invoice.
- * This service must be triggered by user that has permission "delete sales invoice".
- */
+const httpStatus = require('http-status');
+let { SalesInvoice } = require('@src/models').tenant;
+const ApiError = require('@src/utils/ApiError');
 
-const { Form } = require('@src/models').tenant;
+module.exports = async function createFormRejectSalesInvoice({
+  currentTenantDatabase,
+  approver,
+  salesInvoiceId,
+  createFormRejectSalesInvoiceDto,
+}) {
+  setTenantDatabase(currentTenantDatabase);
+  const salesInvoice = await SalesInvoice.findOne({ where: { id: salesInvoiceId } });
+  const form = await salesInvoice.getForm();
 
-module.exports = async function createFormRejectSalesInvoice(approver, formId, createFormRejectSalesInvoiceDto) {
-  const formSalesInvoice = await Form.findOne({ where: { id: formId } });
-  formSalesInvoice.update({
+  if (form.requestApprovalTo !== approver.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+  }
+
+  if (form.approvalStatus !== 0) {
+    return { salesInvoice };
+  }
+
+  const { reason: approvalReason } = createFormRejectSalesInvoiceDto;
+
+  const updatedForm = await form.update({
     approvalStatus: -1,
+    approvalBy: approver.id,
+    approvalAt: new Date(),
+    approvalReason,
   });
+  salesInvoice.dataValues.form = updatedForm;
 
-  return formSalesInvoice;
+  return { salesInvoice };
 };
+
+function setTenantDatabase(currentTenantDatabase) {
+  ({ SalesInvoice } = currentTenantDatabase);
+}
