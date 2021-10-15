@@ -1,7 +1,4 @@
-const setupTestDbTenant = require('../../../../../tests/utils/setupTestDbTenant');
 const { User, Permission, RoleHasPermission, ModelHasRole, Role } = require('../../../../models').tenant;
-
-setupTestDbTenant();
 
 describe('User Model', () => {
   describe('#create', () => {

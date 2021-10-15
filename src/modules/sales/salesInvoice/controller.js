@@ -1,34 +1,16 @@
 const httpStatus = require('http-status');
 const catchAsync = require('@src/utils/catchAsync');
-const getAllSalesInvoiceService = require('./services/getAll.salesInvoice.service');
-const getAllReferenceFormSalesInvoiceService = require('./services/getAllReferenceForm.salesInvoice.service');
-const createFormRequestSalesInvoiceService = require('./services/createFormRequest.salesInvoice.service');
-const createFormApproveSalesInvoiceService = require('./services/createFormApprove.salesInvoice.service');
-const createFormApproveByTokenSalesInvoiceService = require('./services/createFormApproveByToken.salesInvoice.service');
-const createFormRejectSalesInvoiceService = require('./services/createFormReject.salesInvoice.service');
-const createFormRejectByTokenSalesInvoiceService = require('./services/createFormRejectByToken.salesInvoice.service');
-const updateFormSalesInvoiceServiceService = require('./services/updateForm.salesInvoice.service');
-const deleteFormRequestSalesInvoiceService = require('./services/deleteFormRequest.salesInvoice.service');
-const deleteFormApproveSalesInvoiceService = require('./services/deleteFormApprove.salesInvoice.service');
-const deleteFormRejectSalesInvoiceService = require('./services/deleteFormReject.salesInvoice.service');
-const getOneSalesInvoiceService = require('./services/getOne.salesInvoice.service');
+const apiServices = require('./services/apis');
 
-const getAllSalesInvoice = catchAsync(async (req, res) => {
+const findAll = catchAsync(async (req, res) => {
   const { currentTenantDatabase, query: queries } = req;
-  const { total, salesInvoices } = await getAllSalesInvoiceService({ currentTenantDatabase, queries });
+  const { total, salesInvoices } = await new apiServices.FindAll(currentTenantDatabase, queries).call();
   res.status(httpStatus.OK).send({
     data: salesInvoices,
-    links: {
-      first: '',
-      last: '',
-      next: '',
-      prev: '',
-    },
     meta: {
       current_page: parseInt(queries.page || 1, 10),
       from: 1,
       last_page: Math.ceil(total / parseInt(queries.limit, 10)) || 1,
-      path: '',
       per_page: parseInt(queries.limit || 10, 10),
       to: 1,
       total,
@@ -36,22 +18,15 @@ const getAllSalesInvoice = catchAsync(async (req, res) => {
   });
 });
 
-const getAllFormReferenceSalesInvoice = catchAsync(async (req, res) => {
+const findAllReferenceForm = catchAsync(async (req, res) => {
   const { currentTenantDatabase, query: queries } = req;
-  const { total, formReferences } = await getAllReferenceFormSalesInvoiceService({ currentTenantDatabase, queries });
+  const { total, formReferences } = await new apiServices.FindAllReferenceForm(currentTenantDatabase, queries).call();
   res.status(httpStatus.OK).send({
     data: formReferences,
-    links: {
-      first: '',
-      last: '',
-      next: '',
-      prev: '',
-    },
     meta: {
       current_page: parseInt(queries.page, 10),
       from: 1,
       last_page: Math.ceil(total / parseInt(queries.limit, 10)),
-      path: '',
       per_page: parseInt(queries.limit, 10),
       to: 1,
       total,
@@ -59,136 +34,173 @@ const getAllFormReferenceSalesInvoice = catchAsync(async (req, res) => {
   });
 });
 
-const getOneSalesInvoice = catchAsync(async (req, res) => {
+const findOne = catchAsync(async (req, res) => {
   const {
     currentTenantDatabase,
     params: { salesInvoiceId },
   } = req;
-  const { salesInvoice } = await getOneSalesInvoiceService({ currentTenantDatabase, salesInvoiceId });
+  const { salesInvoice } = await new apiServices.FindOne(currentTenantDatabase, salesInvoiceId).call();
   res.status(httpStatus.OK).send({ data: salesInvoice });
 });
 
-const createFormRequestSalesInvoice = catchAsync(async (req, res) => {
-  const { currentTenantDatabase, user: maker, body: createSalesInvoiceDto } = req;
-  const salesInvoice = await createFormRequestSalesInvoiceService({ currentTenantDatabase, maker, createSalesInvoiceDto });
+const createFormRequest = catchAsync(async (req, res) => {
+  const { currentTenantDatabase, user: maker, body: createFormRequestDto } = req;
+  const salesInvoice = await new apiServices.CreateFormRequest(currentTenantDatabase, {
+    maker,
+    createFormRequestDto,
+  }).call();
+
   res.status(httpStatus.CREATED).send({ data: salesInvoice });
 });
 
-const createFormApproveSalesInvoice = catchAsync(async (req, res) => {
+const createFormApprove = catchAsync(async (req, res) => {
   const {
     currentTenantDatabase,
     user: approver,
     params: { salesInvoiceId },
   } = req;
-  const { salesInvoice } = await createFormApproveSalesInvoiceService({ currentTenantDatabase, approver, salesInvoiceId });
+  const { salesInvoice } = await new apiServices.CreateFormApprove(currentTenantDatabase, {
+    approver,
+    salesInvoiceId,
+  }).call();
   res.status(httpStatus.OK).send({ data: salesInvoice });
 });
 
-const createFormApproveByTokenSalesInvoice = catchAsync(async (req, res) => {
+const createFormApproveByToken = catchAsync(async (req, res) => {
   const {
     currentTenantDatabase,
     body: { token },
   } = req;
 
-  const { salesInvoice } = await createFormApproveByTokenSalesInvoiceService({ currentTenantDatabase, token });
-  res.status(httpStatus.OK).send({ data: salesInvoice });
+  const { salesInvoice, project } = await new apiServices.CreateFormApproveByToken(currentTenantDatabase, token).call();
+  res.status(httpStatus.OK).send({ data: salesInvoice, meta: { projectName: project.name } });
 });
 
-const createFormRejectSalesInvoice = catchAsync(async (req, res) => {
+const createFormReject = catchAsync(async (req, res) => {
   const {
     currentTenantDatabase,
     user: approver,
     params: { salesInvoiceId },
-    body: createFormRejectSalesInvoiceDto,
+    body: createFormRejectDto,
   } = req;
-  const salesInvoice = await createFormRejectSalesInvoiceService({
-    currentTenantDatabase,
+  const salesInvoice = await new apiServices.CreateFormReject(currentTenantDatabase, {
     approver,
     salesInvoiceId,
-    createFormRejectSalesInvoiceDto,
-  });
-  res.status(httpStatus.OK).send({ salesInvoice });
+    createFormRejectDto,
+  }).call();
+  res.status(httpStatus.OK).send({ data: salesInvoice });
 });
 
-const createFormRejectByTokenSalesInvoice = catchAsync(async (req, res) => {
+const createFormRejectByToken = catchAsync(async (req, res) => {
   const {
     currentTenantDatabase,
     body: { token },
   } = req;
 
-  const { salesInvoice } = await createFormRejectByTokenSalesInvoiceService({ currentTenantDatabase, token });
+  const { salesInvoice, project } = await new apiServices.CreateFormRejectByToken(currentTenantDatabase, token).call();
+  res.status(httpStatus.OK).send({ data: salesInvoice, meta: { projectName: project.name } });
+});
+
+const updateForm = catchAsync(async (req, res) => {
+  const {
+    currentTenantDatabase,
+    user: maker,
+    params: { salesInvoiceId },
+    body: updateFormDto,
+  } = req;
+  const { salesInvoice } = await new apiServices.UpdateForm(currentTenantDatabase, {
+    maker,
+    salesInvoiceId,
+    updateFormDto,
+  }).call();
   res.status(httpStatus.OK).send({ data: salesInvoice });
 });
 
-const updateFormSalesInvoice = catchAsync(async (req, res) => {
+const deleteFormRequest = catchAsync(async (req, res) => {
   const {
     currentTenantDatabase,
     user: maker,
     params: { salesInvoiceId },
-    body: updateFormSalesInvoiceDto,
+    body: deleteFormRequestDto,
   } = req;
-  const { salesInvoice } = await updateFormSalesInvoiceServiceService({
-    currentTenantDatabase,
+  const { salesInvoice } = await new apiServices.DeleteFormRequest(currentTenantDatabase, {
     maker,
     salesInvoiceId,
-    updateFormSalesInvoiceDto,
-  });
-  res.status(httpStatus.OK).send({ data: { salesInvoice } });
+    deleteFormRequestDto,
+  }).call();
+  res.status(httpStatus.OK).send({ data: salesInvoice });
 });
 
-const deleteFormRequestSalesInvoice = catchAsync(async (req, res) => {
-  const {
-    currentTenantDatabase,
-    user: maker,
-    params: { salesInvoiceId },
-    body: deleteFormRequestSalesInvoiceDto,
-  } = req;
-  const { salesInvoice } = await deleteFormRequestSalesInvoiceService({
-    currentTenantDatabase,
-    maker,
-    salesInvoiceId,
-    deleteFormRequestSalesInvoiceDto,
-  });
-  res.status(httpStatus.OK).send({ salesInvoice });
-});
-
-const deleteFormApproveSalesInvoice = catchAsync(async (req, res) => {
+const deleteFormApprove = catchAsync(async (req, res) => {
   const {
     currentTenantDatabase,
     user: approver,
     params: { salesInvoiceId },
   } = req;
-  const { salesInvoice } = await deleteFormApproveSalesInvoiceService({ currentTenantDatabase, approver, salesInvoiceId });
-  res.status(httpStatus.OK).send({ salesInvoice });
-});
-
-const deleteFormRejectSalesInvoice = catchAsync(async (req, res) => {
-  const {
-    currentTenantDatabase,
-    user: approver,
-    params: { salesInvoiceId },
-    body: deleteFormRejectSalesInvoiceDto,
-  } = req;
-  const { salesInvoice } = await deleteFormRejectSalesInvoiceService({
-    currentTenantDatabase,
+  const { salesInvoice } = await new apiServices.DeleteFormApprove(currentTenantDatabase, {
     approver,
     salesInvoiceId,
-    deleteFormRejectSalesInvoiceDto,
+  }).call();
+  res.status(httpStatus.OK).send({ data: salesInvoice });
+});
+
+const deleteFormReject = catchAsync(async (req, res) => {
+  const {
+    currentTenantDatabase,
+    user: approver,
+    params: { salesInvoiceId },
+    body: deleteFormRejectDto,
+  } = req;
+  const { salesInvoice } = await new apiServices.DeleteFormReject(currentTenantDatabase, {
+    approver,
+    salesInvoiceId,
+    deleteFormRejectDto,
+  }).call();
+  res.status(httpStatus.OK).send({ data: salesInvoice });
+});
+
+const getReport = catchAsync(async (req, res) => {
+  const { currentTenantDatabase, query: queries } = req;
+  const { salesInvoices, minDate, maxDate } = await new apiServices.GetReport(currentTenantDatabase, queries).call();
+  res.status(httpStatus.OK).send({
+    data: salesInvoices,
+    meta: {
+      filter: {
+        min_date: minDate,
+        max_date: maxDate,
+      },
+    },
   });
-  res.status(httpStatus.OK).send({ salesInvoice });
+});
+
+const sendInvoiceToCustomer = catchAsync(async (req, res) => {
+  const {
+    currentTenantDatabase,
+    params: { salesInvoiceId },
+    body: sendInvoiceToCustomerDto,
+  } = req;
+
+  await new apiServices.SendInvoiceToCustomer(currentTenantDatabase, {
+    salesInvoiceId,
+    sendInvoiceToCustomerDto,
+  }).call();
+
+  res.status(httpStatus.OK).send({ message: 'invoice is queued to send to customer' });
 });
 
 module.exports = {
-  getAllSalesInvoice,
-  getAllFormReferenceSalesInvoice,
-  getOneSalesInvoice,
-  createFormRequestSalesInvoice,
-  createFormApproveSalesInvoice,
-  createFormApproveByTokenSalesInvoice,
-  createFormRejectSalesInvoice,
-  createFormRejectByTokenSalesInvoice,
-  updateFormSalesInvoice,
-  deleteFormRequestSalesInvoice,
-  deleteFormApproveSalesInvoice,
-  deleteFormRejectSalesInvoice,
+  findAll,
+  findAllReferenceForm,
+  findOne,
+  createFormRequest,
+  createFormApprove,
+  createFormApproveByToken,
+  createFormReject,
+  createFormRejectByToken,
+  updateForm,
+  deleteFormRequest,
+  deleteFormApprove,
+  deleteFormReject,
+  getReport,
+  sendInvoiceToCustomer,
 };

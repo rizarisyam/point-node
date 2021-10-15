@@ -3,7 +3,7 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class SettingJournal extends Model {
     static associate({ tenant: models }) {
-      // this.belongsTo(models.ChartOfAccount, { onDelete: 'SET NULL' });
+      this.belongsTo(models.ChartOfAccount, { onDelete: 'SET NULL' });
     }
   }
   SettingJournal.init(

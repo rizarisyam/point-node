@@ -3,6 +3,7 @@ const setupDatabase = require('@src/middlewares/setupDatabase');
 const config = require('../config/config');
 const salesInvoiceRoute = require('../modules/sales/salesInvoice/routes');
 const authRoute = require('../modules/auth/routes');
+const settingRoute = require('../modules/setting/routes');
 
 const router = express.Router();
 
@@ -18,6 +19,10 @@ const defaultRoutes = [
   {
     path: '/auth',
     route: authRoute,
+  },
+  {
+    path: '/setting',
+    route: settingRoute,
   },
 ];
 

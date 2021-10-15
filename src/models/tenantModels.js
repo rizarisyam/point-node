@@ -17,6 +17,11 @@ const modelPaths = [
   '/master/models/warehouse.model.js',
   // accounting
   '/accounting/models/journal.model.js',
+  '/accounting/models/chartOfAccount.model.js',
+  '/accounting/models/chartOfAccountGroup.model.js',
+  '/accounting/models/chartOfAccountType.model.js',
+  '/accounting/models/journal.model.js',
+  '/accounting/models/journal.model.js',
   // auth
   '/auth/models/modelHasPermission.model.js',
   '/auth/models/modelHasRole.model.js',
@@ -45,6 +50,9 @@ const modelPaths = [
   // shared
   '/shared/form/form.model.js',
   '/shared/settingJournal/settingJournal.model.js',
+  // setting
+  '/setting/models/settingLogo.model.js',
+  '/setting/models/settingEndNote.model.js',
 ].map((modelPath) => path.join(modulesDir, modelPath));
 
 async function loadAllTenantProjectDatabase (db) {

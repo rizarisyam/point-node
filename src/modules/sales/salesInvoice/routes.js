@@ -7,10 +7,13 @@ const controller = require('./controller');
 const router = express.Router();
 
 // GET ALL SALES INVOICE
-router.route('/').get(auth('read sales invoice'), controller.getAllSalesInvoice);
+router.route('/').get(auth('read sales invoice'), controller.findAll);
 
 // GET ALL FORM REFERENCE
-router.route('/form-references').get(auth(), controller.getAllFormReferenceSalesInvoice);
+router.route('/form-references').get(auth(), controller.findAllReferenceForm);
+
+// GET REPORT BY ALLOCATION
+router.route('/report').get(auth('read sales invoice'), controller.getReport);
 
 // GET ONE SALES INVOICE
 router
@@ -19,7 +22,7 @@ router
     celebrate(requestValidations.requireAuth),
     celebrate(requestValidations.requireSalesInvoiceId),
     auth('read sales invoice'),
-    controller.getOneSalesInvoice
+    controller.findOne
   );
 
 // REQUEST CREATING SALES INVOICE
@@ -27,9 +30,9 @@ router
   .route('/')
   .post(
     celebrate(requestValidations.requireAuth),
-    celebrate(requestValidations.createFormRequestSalesInvoice),
+    celebrate(requestValidations.createFormRequest),
     auth('create sales invoice'),
-    controller.createFormRequestSalesInvoice
+    controller.createFormRequest
   );
 
 // APPROVE CREATING SALES INVOICE
@@ -39,13 +42,13 @@ router
     celebrate(requestValidations.requireAuth),
     celebrate(requestValidations.requireSalesInvoiceId),
     auth('approve sales invoice'),
-    controller.createFormApproveSalesInvoice
+    controller.createFormApprove
   );
 
 // APPROVE USING EMAIL TOKEN
 router
   .route('/approve-with-token')
-  .post(celebrate(requestValidations.createFormApproveByTokenSalesInvoice), controller.createFormApproveByTokenSalesInvoice);
+  .post(celebrate(requestValidations.createFormApproveByToken), controller.createFormApproveByToken);
 
 // REJECT CREATING SALES INVOICE
 router
@@ -53,15 +56,15 @@ router
   .post(
     celebrate(requestValidations.requireAuth),
     celebrate(requestValidations.requireSalesInvoiceId),
-    celebrate(requestValidations.createFormRejectSalesInvoice),
+    celebrate(requestValidations.createFormReject),
     auth('approve sales invoice'),
-    controller.createFormRejectSalesInvoice
+    controller.createFormReject
   );
 
 // REJECT USING EMAIL TOKEN
 router
   .route('/reject-with-token')
-  .post(celebrate(requestValidations.createFormRejectByTokenSalesInvoice), controller.createFormRejectByTokenSalesInvoice);
+  .post(celebrate(requestValidations.createFormRejectByToken), controller.createFormRejectByToken);
 
 // REQUEST DELETING SALES INVOICE
 router
@@ -69,9 +72,9 @@ router
   .delete(
     celebrate(requestValidations.requireAuth),
     celebrate(requestValidations.requireSalesInvoiceId),
-    celebrate(requestValidations.deleteFormRequestSalesInvoice),
+    celebrate(requestValidations.deleteFormRequest),
     auth('delete sales invoice'),
-    controller.deleteFormRequestSalesInvoice
+    controller.deleteFormRequest
   );
 
 // APPROVE DELETING SALES INVOICE
@@ -81,7 +84,7 @@ router
     celebrate(requestValidations.requireAuth),
     celebrate(requestValidations.requireSalesInvoiceId),
     auth('approve sales invoice'),
-    controller.deleteFormApproveSalesInvoice
+    controller.deleteFormApprove
   );
 
 // REJECT DELETING SALES INVOICE
@@ -90,9 +93,9 @@ router
   .post(
     celebrate(requestValidations.requireAuth),
     celebrate(requestValidations.requireSalesInvoiceId),
-    celebrate(requestValidations.deleteFormRejectSalesInvoice),
+    celebrate(requestValidations.deleteFormReject),
     auth('approve sales invoice'),
-    controller.deleteFormRejectSalesInvoice
+    controller.deleteFormReject
   );
 
 // UPDATE FORM SALES INVOICE
@@ -101,9 +104,13 @@ router
   .patch(
     celebrate(requestValidations.requireAuth),
     celebrate(requestValidations.requireSalesInvoiceId),
-    celebrate(requestValidations.updateFormSalesInvoice),
+    celebrate(requestValidations.updateForm),
     auth('update sales invoice'),
-    controller.updateFormSalesInvoice
+    controller.updateForm
   );
+
+router
+  .route('/:salesInvoiceId/send-invoice')
+  .post(celebrate(requestValidations.sendInvoice), auth(), controller.sendInvoiceToCustomer);
 
 module.exports = router;

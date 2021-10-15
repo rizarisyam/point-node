@@ -1,14 +1,12 @@
 const passport = require('passport');
 const httpStatus = require('http-status');
-const setupTestDbTenant = require('@root/tests/utils/setupTestDbTenant');
 const { User, Permission, ModelHasPermission } = require('@src/models').tenant;
+const currentTenantDatabase = require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 const auth = require('../../services/auth.service');
 
 const errorForbidden = new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
 const errorUnauthorized = new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
-
-setupTestDbTenant();
 
 describe('Auth - Auth Service', () => {
   let req;
@@ -29,8 +27,13 @@ describe('Auth - Auth Service', () => {
     req.params = {
       userId: user.id,
     };
+    const payload = {
+      sub: user.id,
+    };
+
+    req.currentTenantDatabase = currentTenantDatabase;
     passport.authenticate = jest.fn((authType, options, callback) => () => {
-      callback(null, user, null);
+      callback(null, payload, null);
     });
 
     await auth('create user')(req, res, next);
@@ -67,12 +70,16 @@ describe('Auth - Auth Service', () => {
     req.params = {
       userId: user.id,
     };
+    const payload = {
+      sub: user.id,
+    };
+
+    req.currentTenantDatabase = currentTenantDatabase;
     passport.authenticate = jest.fn((authType, options, callback) => () => {
-      callback(null, user, null);
+      callback(null, payload, null);
     });
 
     await auth('create user')(req, res, next);
     expect(next).toBeCalledTimes(1);
-    expect(next).toBeCalledWith();
   });
 });

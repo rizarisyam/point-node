@@ -1,6 +1,19 @@
-module.exports = function reloadTenantDatabase() {
-  // eslint-disable-next-line global-require
-  const { tenant } = require('@src/models');
+const database = require('@src/models');
+const tenantModels = require('@src/models/tenantModels');
 
-  return tenant;
+const { Project } = database.main;
+
+module.exports = async function getCurrentTenantDatabase(tenantName) {
+  if (!tenantName) {
+    throw new Error('Tenant name is required');
+  }
+
+  const project = await Project.findOne({ where: { code: tenantName } });
+  if (!project) {
+    throw new Error('Tenant project is not exist');
+  }
+
+  const currentTenantDatabase = tenantModels.addOrFindNewProjectDatabase(database, project.code);
+
+  return currentTenantDatabase;
 };

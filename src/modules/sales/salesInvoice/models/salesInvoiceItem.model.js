@@ -3,11 +3,11 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class SalesInvoiceItem extends Model {
     static associate({ tenant: models }) {
-      this.belongsTo(models.SalesInvoice, { onDelete: 'CASCADE' });
+      this.belongsTo(models.SalesInvoice, { as: 'salesInvoice', onDelete: 'CASCADE' });
 
-      this.belongsTo(models.DeliveryNote, { onDelete: 'CASCADE' });
+      this.belongsTo(models.DeliveryNote, { as: 'deliveryNote', onDelete: 'CASCADE' });
 
-      this.belongsTo(models.DeliveryNoteItem, { onDelete: 'CASCADE' });
+      this.belongsTo(models.DeliveryNoteItem, { as: 'deliveryNoteItem', onDelete: 'CASCADE' });
 
       this.belongsTo(models.Item, { as: 'item', onDelete: 'RESTRICT' });
 

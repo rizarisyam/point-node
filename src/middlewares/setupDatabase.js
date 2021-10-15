@@ -10,12 +10,12 @@ module.exports = async function setupDatabase(req, res, next) {
     headers: { tenant },
   } = req;
   if (!tenant) {
-    next(new ApiError(httpStatus.BAD_REQUEST, 'Tenant headers is required'));
+    return next(new ApiError(httpStatus.BAD_REQUEST, 'Tenant headers is required'));
   }
 
   const project = await Project.findOne({ where: { code: tenant } });
   if (!project) {
-    next(new ApiError(httpStatus.NOT_FOUND, 'Tenant project is not exist'));
+    return next(new ApiError(httpStatus.NOT_FOUND, 'Tenant project is not exist'));
   }
 
   const currentTenantDatabase = tenantModels.addOrFindNewProjectDatabase(database, project.code);

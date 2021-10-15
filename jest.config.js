@@ -11,4 +11,6 @@ module.exports = {
     '@root/(.*)': '<rootDir>/$1',
     '@src/(.*)': '<rootDir>/src/$1',
   },
+  setupFilesAfterEnv: ['<rootDir>//tests/utils/setupJest.js'],
+  testTimeout: 20000,
 };

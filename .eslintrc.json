@@ -18,7 +18,10 @@
     "security/detect-non-literal-fs-filename": "off",
     "no-use-before-define": "off",
     "jest/no-standalone-expect": "off",
-    "no-param-reassign": "off"
+    "no-param-reassign": "off",
+    "class-methods-use-this": "off",
+    "one-var": "off",
+    "jest/no-done-callback": "off"
   },
   "settings": {
     "import/resolver": {

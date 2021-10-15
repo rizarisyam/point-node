@@ -7,6 +7,7 @@ async function create({ branch }) {
     name: faker.name.findName(),
     address: faker.address.streetAddress(),
     phone: faker.phone.phoneNumber(),
+    email: faker.internet.email(),
   });
 
   return customer;

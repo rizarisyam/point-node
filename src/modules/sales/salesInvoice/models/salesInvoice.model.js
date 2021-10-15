@@ -27,15 +27,31 @@ module.exports = (sequelize, DataTypes, projectCode) => {
     }
 
     getDiscountString() {
-      if (this.discountValue && this.discountValue > 0) {
-        return `${this.discountValue}`;
+      const discountValue = parseFloat(this.discountValue);
+      const discountPercent = parseFloat(this.discountPercent);
+
+      if (discountValue > 0) {
+        return `${discountValue}`;
       }
 
-      if (this.discountPercent && this.discountPercent > 0) {
-        return `${this.discountPercent} %`;
+      if (discountPercent > 0) {
+        return `${discountPercent} %`;
       }
 
       return '';
+    }
+
+    async getTotalDetails() {
+      const items = await this.getItems();
+      const subTotal = getSubTotal(items);
+      const taxBase = getTaxBase(subTotal, this.discountValue, this.discountPercent);
+
+      return {
+        subTotal,
+        taxBase,
+        tax: parseFloat(this.tax),
+        amount: parseFloat(this.amount),
+      };
     }
   }
   SalesInvoice.init(
@@ -104,3 +120,37 @@ module.exports = (sequelize, DataTypes, projectCode) => {
   );
   return SalesInvoice;
 };
+
+function getSubTotal(items) {
+  const subTotal = items.reduce((result, item) => {
+    return result + getItemsPrice(item);
+  }, 0);
+
+  return subTotal;
+}
+
+function getItemsPrice(item) {
+  let perItemPrice = item.price;
+  if (item.discountValue > 0) {
+    perItemPrice -= item.discountValue;
+  }
+  if (item.discountPercent > 0) {
+    const discountPercent = item.discountPercent / 100;
+    perItemPrice -= perItemPrice * discountPercent;
+  }
+  const totalItemPrice = perItemPrice * item.quantity;
+
+  return totalItemPrice;
+}
+
+function getTaxBase(subTotal, discountValue, discountPercent) {
+  if (discountValue > 0) {
+    return subTotal - discountValue;
+  }
+
+  if (discountPercent > 0) {
+    return subTotal - subTotal * (discountPercent / 100);
+  }
+
+  return subTotal;
+}

@@ -13,7 +13,7 @@ const requireSalesInvoiceId = {
   },
 };
 
-const createFormRequestSalesInvoice = {
+const createFormRequest = {
   body: Joi.object({
     formId: Joi.number().required(),
     items: Joi.array().items({
@@ -36,25 +36,25 @@ const createFormRequestSalesInvoice = {
   }),
 };
 
-const createFormRejectSalesInvoice = {
+const createFormReject = {
   body: Joi.object({
     reason: Joi.string().allow(null).default(''),
   }),
 };
 
-const deleteFormRequestSalesInvoice = {
+const deleteFormRequest = {
   body: Joi.object({
     reason: Joi.string().allow(null).default(''),
   }),
 };
 
-const deleteFormRejectSalesInvoice = {
+const deleteFormReject = {
   body: Joi.object({
     reason: Joi.string().allow(null).default(''),
   }),
 };
 
-const updateFormSalesInvoice = {
+const updateForm = {
   body: Joi.object({
     id: Joi.number().required(),
     items: Joi.array().items({
@@ -72,26 +72,34 @@ const updateFormSalesInvoice = {
   }),
 };
 
-const createFormApproveByTokenSalesInvoice = {
+const createFormApproveByToken = {
   body: Joi.object({
     token: Joi.string().required(),
   }),
 };
 
-const createFormRejectByTokenSalesInvoice = {
+const createFormRejectByToken = {
   body: Joi.object({
     token: Joi.string().required(),
+  }),
+};
+
+const sendInvoice = {
+  body: Joi.object({
+    email: Joi.string().email().required(),
+    message: Joi.string().allow(null).allow(''),
   }),
 };
 
 module.exports = {
   requireAuth,
-  createFormRequestSalesInvoice,
+  createFormRequest,
   requireSalesInvoiceId,
-  createFormRejectSalesInvoice,
-  deleteFormRequestSalesInvoice,
-  deleteFormRejectSalesInvoice,
-  updateFormSalesInvoice,
-  createFormApproveByTokenSalesInvoice,
-  createFormRejectByTokenSalesInvoice,
+  createFormReject,
+  deleteFormRequest,
+  deleteFormReject,
+  updateForm,
+  createFormApproveByToken,
+  createFormRejectByToken,
+  sendInvoice,
 };

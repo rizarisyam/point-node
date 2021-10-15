@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-let { SalesInvoice, Form, SalesInvoiceItem } = require('@src/models').tenant;
+let { SalesInvoice, Form, SalesInvoiceItem, Journal, Inventory } = require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 
 module.exports = async function updateFormSalesInvoice({
@@ -20,6 +20,8 @@ module.exports = async function updateFormSalesInvoice({
   const { form } = salesInvoice;
   validate(form, maker);
 
+  await deleteJournal(form);
+  await restoreStock(salesInvoice, form);
   await updateSalesInvoice(salesInvoice, updateFormSalesInvoiceDto);
   await updateSalesInvoiceForm({
     maker,
@@ -152,9 +154,36 @@ async function buildFormData({ maker, updateFormSalesInvoiceDto }) {
     requestApprovalTo,
     done: false,
     approvalStatus: 0,
+    cancellationStatus: null,
+    requestCancellationTo: null,
   };
 }
 
+async function deleteJournal(form) {
+  await Journal.destroy({ where: { formId: form.id } });
+}
+
+async function restoreStock(salesInvoice, form) {
+  const salesInvoiceItems = salesInvoice.items;
+  let updateItemsStock = [];
+  if (form.approvalStatus === 1 && form.cancellationStatus !== 1) {
+    updateItemsStock = salesInvoiceItems.map(async (salesInvoiceItem) => {
+      const item = await salesInvoiceItem.getItem();
+      const totalQuantityItem = parseFloat(item.quantity) * parseFloat(item.converter);
+
+      return item.update({
+        stock: parseFloat(item.stock) + totalQuantityItem,
+      });
+    });
+  }
+
+  await Promise.all([...updateItemsStock, deleteInventory(form)]);
+}
+
+function deleteInventory(form) {
+  return Inventory.destroy({ where: { formId: form.id } });
+}
+
 function setTenantDatabase(currentTenantDatabase) {
-  ({ SalesInvoice, Form, SalesInvoiceItem } = currentTenantDatabase);
+  ({ SalesInvoice, Form, SalesInvoiceItem, Journal, Inventory } = currentTenantDatabase);
 }
