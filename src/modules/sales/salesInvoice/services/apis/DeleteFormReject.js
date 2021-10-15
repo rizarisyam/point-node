@@ -14,12 +14,10 @@ class DeleteFormReject {
       where: { id: this.salesInvoiceId },
       include: [{ model: this.tenantDatabase.Form, as: 'form' }],
     });
+
+    validate(salesInvoice, this.approver);
+
     const { form } = salesInvoice;
-
-    if (form.requestApprovalTo !== this.approver.id) {
-      throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
-    }
-
     form.update({
       cancellationStatus: -1,
       cancellationApprovalAt: new Date(),
@@ -28,6 +26,19 @@ class DeleteFormReject {
     });
 
     return { salesInvoice };
+  }
+}
+
+function validate(salesInvoice, approver) {
+  if (!salesInvoice) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Sales invoice is not exist');
+  }
+  const { form } = salesInvoice;
+  if (form.requestApprovalTo !== approver.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+  }
+  if (form.cancellationStatus !== 0) {
+    throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Sales invoice is not requested to be delete');
   }
 }
 

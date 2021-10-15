@@ -16,9 +16,10 @@ class DeleteFormApprove {
         { model: this.tenantDatabase.SalesInvoiceItem, as: 'items' },
       ],
     });
-    const { form } = salesInvoice;
-    validate(form, this.approver);
 
+    validate(salesInvoice, this.approver);
+
+    const { form } = salesInvoice;
     await deleteJournal(this.tenantDatabase, form);
     await restoreStock(this.tenantDatabase, { salesInvoice, form });
     await updateForm(form, this.approver);
@@ -27,9 +28,19 @@ class DeleteFormApprove {
   }
 }
 
-function validate(form, approver) {
+function validate(salesInvoice, approver) {
+  if (!salesInvoice) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Sales invoice is not exist');
+  }
+  const { form } = salesInvoice;
   if (form.requestApprovalTo !== approver.id) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+  }
+  if (form.cancellationStatus !== 0) {
+    throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Sales invoice is not requested to be delete');
+  }
+  if (form.done) {
+    throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Can not delete already referenced sales invoice');
   }
 }
 

@@ -1,6 +1,6 @@
 [
     {
-        "scope": "https://api.point.red:443",
+        "scope": "http://point.test:80",
         "method": "POST",
         "path": "/api/v1/auth/fetch",
         "body": {

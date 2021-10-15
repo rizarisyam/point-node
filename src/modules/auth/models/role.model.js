@@ -1,8 +1,8 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes, projectCode) => {
+module.exports = (sequelize, DataTypes /* , projectCode */) => {
   class Role extends Model {
-    static associate() {}
+    static associate(/* { [projectCode]: models } */) {}
   }
   Role.init(
     {

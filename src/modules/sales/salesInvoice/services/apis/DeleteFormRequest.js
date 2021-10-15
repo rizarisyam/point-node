@@ -10,14 +10,14 @@ class DeleteFormRequest {
   }
 
   async call() {
-    const salesInvoice = await this.tenantDatabaseSalesInvoice.findOne({
-      where: { id: this.salesInvoiceIdsalesInvoiceId },
+    const salesInvoice = await this.tenantDatabase.SalesInvoice.findOne({
+      where: { id: this.salesInvoiceId },
       include: [{ model: this.tenantDatabase.Form, as: 'form' }],
     });
+
+    validate(salesInvoice, this.maker);
+
     const { form } = salesInvoice;
-
-    validate(form, this.maker);
-
     form.update({
       cancellationStatus: 0,
       requestCancellationBy: this.maker.id,
@@ -30,13 +30,16 @@ class DeleteFormRequest {
   }
 }
 
-function validate(form, maker) {
+function validate(salesInvoice, maker) {
+  if (!salesInvoice) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Sales invoice is not exist');
+  }
+  const { form } = salesInvoice;
   if (form.createdBy !== maker.id) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
-
   if (form.done === true) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Can not delete already referenced sales invoice');
   }
 }
 
