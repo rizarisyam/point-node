@@ -13,7 +13,7 @@ router.route('/logo').get(auth(), controller.getSettingLogo);
 
 // UPLOAD COMPANY LOGO
 router.route('/logo').post(
-  auth(),
+  auth('update setting'),
   multer({
     options: {
       limits: {

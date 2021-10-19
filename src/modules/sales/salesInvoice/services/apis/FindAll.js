@@ -7,7 +7,7 @@ class FindAll {
   }
 
   async call() {
-    const [queryLimit, queryPage] = [parseInt(this.queries.limit || 10, 10), parseInt(this.queries.page || 1, 10)];
+    const [queryLimit, queryPage] = [parseInt(this.queries.limit, 10) || 10, parseInt(this.queries.page, 10) || 1];
     const { count: total, rows: salesInvoices } = await this.tenantDatabase.SalesInvoice.findAndCountAll({
       where: generateFilter(this.queries),
       include: [
@@ -33,7 +33,9 @@ class FindAll {
     });
     parseSalesInvoiceNumberStringToFLoat(salesInvoices);
 
-    return { total, salesInvoices };
+    const totalPage = Math.ceil(total / parseInt(queryLimit, 10));
+
+    return { total, salesInvoices, maxItem: queryLimit, currentPage: queryPage, totalPage };
   }
 }
 

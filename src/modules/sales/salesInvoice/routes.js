@@ -12,7 +12,7 @@ router.route('/').get(auth('read sales invoice'), controller.findAll);
 // GET ALL FORM REFERENCE
 router.route('/form-references').get(auth(), controller.findAllReferenceForm);
 
-// GET REPORT BY ALLOCATION
+// GET REPORT
 router.route('/report').get(auth('read sales invoice'), controller.getReport);
 
 // GET ONE SALES INVOICE

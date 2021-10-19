@@ -87,7 +87,7 @@ const createFormRejectByToken = {
 const sendInvoice = {
   body: Joi.object({
     email: Joi.string().email().required(),
-    message: Joi.string().allow(null).allow(''),
+    message: Joi.string().allow(null),
   }),
 };
 

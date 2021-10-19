@@ -4,15 +4,16 @@ const apiServices = require('./services/apis');
 
 const findAll = catchAsync(async (req, res) => {
   const { currentTenantDatabase, query: queries } = req;
-  const { total, salesInvoices } = await new apiServices.FindAll(currentTenantDatabase, queries).call();
+  const { total, salesInvoices, maxItem, currentPage, totalPage } = await new apiServices.FindAll(
+    currentTenantDatabase,
+    queries
+  ).call();
   res.status(httpStatus.OK).send({
     data: salesInvoices,
     meta: {
-      current_page: parseInt(queries.page || 1, 10),
-      from: 1,
-      last_page: Math.ceil(total / parseInt(queries.limit, 10)) || 1,
-      per_page: parseInt(queries.limit || 10, 10),
-      to: 1,
+      current_page: currentPage,
+      last_page: totalPage,
+      per_page: maxItem,
       total,
     },
   });
@@ -20,15 +21,16 @@ const findAll = catchAsync(async (req, res) => {
 
 const findAllReferenceForm = catchAsync(async (req, res) => {
   const { currentTenantDatabase, query: queries } = req;
-  const { total, formReferences } = await new apiServices.FindAllReferenceForm(currentTenantDatabase, queries).call();
+  const { total, formReferences, maxItem, currentPage, totalPage } = await new apiServices.FindAllReferenceForm(
+    currentTenantDatabase,
+    queries
+  ).call();
   res.status(httpStatus.OK).send({
     data: formReferences,
     meta: {
-      current_page: parseInt(queries.page, 10),
-      from: 1,
-      last_page: Math.ceil(total / parseInt(queries.limit, 10)),
-      per_page: parseInt(queries.limit, 10),
-      to: 1,
+      current_page: currentPage,
+      last_page: totalPage,
+      per_page: maxItem,
       total,
     },
   });

@@ -32,6 +32,7 @@ class UpdateForm {
       form,
     });
 
+    await salesInvoice.reload();
     return { salesInvoice };
   }
 }
@@ -159,6 +160,7 @@ async function buildFormData({ maker, updateFormDto }) {
     requestApprovalTo,
     done: false,
     approvalStatus: 0,
+    approvalReason: null,
     cancellationStatus: null,
     requestCancellationTo: null,
   };
