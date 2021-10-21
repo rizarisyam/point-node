@@ -15,6 +15,7 @@ const verifyCallback = (req, resolve, reject, requiredRights) => async (err, pay
 
   if (requiredRights.length) {
     const hasRequiredRights = await user.isPermitted(requiredRights);
+    console.log(requiredRights);
     if (!hasRequiredRights) {
       return reject(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
     }
