@@ -50,7 +50,7 @@ const generateRecordFactories = async ({
   // create relation between maker and warehouse for authorization
   userWarehouse = await factory.userWarehouse.create({ user: maker, warehouse, isDefault: true, ...userWarehouse });
   deliveryOrder = await factory.deliveryOrder.create({ customer, warehouse, ...deliveryOrder });
-  item = await factory.item.create(item);
+  item = await factory.item.create();
   itemUnit = await factory.itemUnit.create({ item, createdBy: maker.id, ...itemUnit });
   deliveryNote = await factory.deliveryNote.create({ customer, warehouse, deliveryOrder, ...deliveryNote });
   allocation = await factory.allocation.create({ branch, ...allocation });
