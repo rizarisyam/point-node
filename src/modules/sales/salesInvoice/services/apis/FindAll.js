@@ -1,7 +1,7 @@
 const { Op } = require('sequelize');
 
 class FindAll {
-  constructor(tenantDatabase, queries) {
+  constructor(tenantDatabase, queries = {}) {
     this.tenantDatabase = tenantDatabase;
     this.queries = queries;
   }

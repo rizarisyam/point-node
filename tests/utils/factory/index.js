@@ -12,6 +12,7 @@ const user = require('./user');
 const userWarehouse = require('./userWarehouse');
 const warehouse = require('./warehouse');
 const salesInvoice = require('./salesInvoice');
+const salesInvoiceItem = require('./salesInvoiceItem');
 
 const factory = {
   allocation,
@@ -28,6 +29,7 @@ const factory = {
   userWarehouse,
   warehouse,
   salesInvoice,
+  salesInvoiceItem,
 };
 
 module.exports = factory;
