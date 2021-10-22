@@ -26,6 +26,14 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       return this[mixinMethodName](options);
     }
 
+    async setReferenceable(options) {
+      const referenceableTypes = ['SalesDeliveryNote', 'SalesVisitation'];
+      if (!referenceableTypes.includes(this.referenceableType)) return;
+
+      const mixinMethodName = `get${this.referenceableType}`;
+      this.dataValues.referenceable = await this[mixinMethodName](options);
+    }
+
     getDiscountString() {
       const discountValue = parseFloat(this.discountValue);
       const discountPercent = parseFloat(this.discountPercent);
@@ -63,14 +71,23 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       discountPercent: {
         type: DataTypes.DECIMAL,
         defaultValue: 0,
+        get() {
+          return parseFloat(this.getDataValue('discountPercent'));
+        },
       },
       discountValue: {
         type: DataTypes.DECIMAL,
         defaultValue: 0,
+        get() {
+          return parseFloat(this.getDataValue('discountValue'));
+        },
       },
       tax: {
         type: DataTypes.DECIMAL,
         allowNull: false,
+        get() {
+          return parseFloat(this.getDataValue('tax'));
+        },
       },
       typeOfTax: {
         type: DataTypes.STRING,
@@ -80,9 +97,15 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       amount: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('amount'));
+        },
       },
       remaining: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('remaining'));
+        },
       },
       customerId: {
         type: DataTypes.INTEGER,

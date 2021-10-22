@@ -22,29 +22,12 @@ class FindOne {
         { model: this.tenantDatabase.Customer, as: 'customer' },
       ],
     });
-    parseSalesInvoiceNumberStringToFLoat(salesInvoice);
-    const referenceable = await salesInvoice.getReferenceable({
+    await salesInvoice.setReferenceable({
       include: [{ model: this.tenantDatabase.Form, as: 'form' }],
     });
-    salesInvoice.dataValues.referenceable = referenceable;
 
     return { salesInvoice };
   }
-}
-
-function parseSalesInvoiceNumberStringToFLoat(salesInvoice) {
-  salesInvoice.amount = parseFloat(salesInvoice.amount);
-  salesInvoice.discountPercent = parseFloat(salesInvoice.discountPercent);
-  salesInvoice.discountValue = parseFloat(salesInvoice.discountValue);
-  salesInvoice.remaining = parseFloat(salesInvoice.remaining);
-  salesInvoice.tax = parseFloat(salesInvoice.tax);
-
-  salesInvoice.items.forEach((item) => {
-    item.price = parseFloat(item.price);
-    item.quantity = parseFloat(item.quantity);
-    item.discountPercent = parseFloat(item.discountPercent);
-    item.discountValue = parseFloat(item.discountValue);
-  });
 }
 
 module.exports = FindOne;
