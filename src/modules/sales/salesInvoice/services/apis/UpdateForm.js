@@ -83,6 +83,7 @@ async function updateItems(currentItems, updateItemsData) {
     return item.update({
       discountPercent: updateItem.discountPercent,
       discountValue: updateItem.discountValue,
+      price: updateItem.price,
     });
   });
 
