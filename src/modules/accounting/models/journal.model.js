@@ -1,8 +1,8 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, projectCode) => {
   class Journal extends Model {
-    static associate({ tenant: models }) {
+    static associate({ [projectCode]: models }) {
       // this.belongsTo(models.ChartOfAccount, { foreignKey: 'chartOfAccountId', onUpdate: 'CASCADE', onDelete: 'CASCADE' });
       this.belongsTo(models.Form, { foreignKey: 'formIdReference', onUpdate: 'CASCADE', onDelete: 'CASCADE' });
       this.belongsTo(models.Form, { foreignKey: 'formId', onUpdate: 'CASCADE', onDelete: 'CASCADE' });
