@@ -23,7 +23,7 @@ class CreateFormApprove {
     }
 
     await this.tenantDatabase.sequelize.transaction(async (transaction) => {
-      await updateStock(this.tenantDatabase, { transaction, salesInvoice, form });
+      await updateInventory(this.tenantDatabase, { transaction, salesInvoice, form });
       await updateJournal(this.tenantDatabase, { transaction, salesInvoice, form });
       await form.update(
         {
@@ -148,27 +148,6 @@ async function getSettingJournal(tenantDatabase, { feature, name }) {
   }
 
   return settingJournal;
-}
-
-async function updateStock(tenantDatabase, { transaction, salesInvoice, form }) {
-  const salesInvoiceItems = salesInvoice.items;
-  const updateItemsStock = salesInvoiceItems.map(async (salesInvoiceItem) => {
-    const item = await salesInvoiceItem.getItem();
-    const totalQuantityItem = parseFloat(salesInvoiceItem.quantity) * parseFloat(salesInvoiceItem.converter);
-    const updatedStock = parseFloat(item.stock) - totalQuantityItem;
-    if (updatedStock < 0) {
-      throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, `Insufficient ${item.name} stock`);
-    }
-
-    return item.update(
-      {
-        stock: updatedStock,
-      },
-      { transaction }
-    );
-  });
-
-  await Promise.all([...updateItemsStock, updateInventory(tenantDatabase, { transaction, salesInvoice, form })]);
 }
 
 async function updateInventory(tenantDatabase, { transaction, salesInvoice, form }) {

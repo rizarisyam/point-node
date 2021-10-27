@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const logger = require('@src/config/logger');
 const database = require('@src/models');
 const ApiError = require('@src/utils/ApiError');
 const tenantModels = require('@src/models/tenantModels');
@@ -25,8 +26,7 @@ module.exports = async function setupDatabase(req, res, next) {
 
     next();
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log(error);
+    logger.error(error);
     next(new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Service unavailable'));
   }
 };
