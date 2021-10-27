@@ -7,7 +7,7 @@ class FindAllReferenceForm {
   }
 
   async call() {
-    const [queryLimit, queryPage] = [parseInt(this.queries.limit, 10), parseInt(this.queries.page, 10)];
+    const [queryLimit, queryPage] = [parseInt(this.queries.limit, 10) || 10, parseInt(this.queries.page, 10) || 1];
     const { count: total, rows: formReferences } = await this.tenantDatabase.Form.findAndCountAll({
       where: generateFilters(this.queries),
       include: generateIncludes(this.tenantDatabase),
@@ -19,7 +19,9 @@ class FindAllReferenceForm {
     removeUnusedAttributes(formReferences);
     parseDeliveryNoteItemNumberStringToFLoat(formReferences);
 
-    return { total, formReferences };
+    const totalPage = Math.ceil(total / parseInt(queryLimit, 10));
+
+    return { total, formReferences, maxItem: queryLimit, currentPage: queryPage, totalPage };
   }
 }
 
@@ -50,7 +52,7 @@ function generateFilterFormType() {
 }
 
 function generateFilterLike(likeQueries) {
-  const filtersObject = JSON.parse(likeQueries);
+  const filtersObject = likeQueries ? JSON.parse(likeQueries) : {};
   const filterKeys = Object.keys(filtersObject);
 
   const result = filterKeys.map((key) => {

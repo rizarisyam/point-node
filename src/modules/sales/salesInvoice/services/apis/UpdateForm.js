@@ -32,6 +32,7 @@ class UpdateForm {
       form,
     });
 
+    await salesInvoice.reload();
     return { salesInvoice };
   }
 }
@@ -82,6 +83,7 @@ async function updateItems(currentItems, updateItemsData) {
     return item.update({
       discountPercent: updateItem.discountPercent,
       discountValue: updateItem.discountValue,
+      price: updateItem.price,
     });
   });
 
@@ -159,6 +161,7 @@ async function buildFormData({ maker, updateFormDto }) {
     requestApprovalTo,
     done: false,
     approvalStatus: 0,
+    approvalReason: null,
     cancellationStatus: null,
     requestCancellationTo: null,
   };

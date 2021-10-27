@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const htmlToPdf = require('html-pdf-node');
 const moment = require('moment');
+const logger = require('@src/config/logger');
 const { Project } = require('@src/models').main;
 const Mailer = require('@src/utils/Mailer');
 const getCurrentTenantDatabase = require('@src/utils/getCurrentTenantDatabase');
@@ -33,11 +34,9 @@ class ProcessSendInvoiceToCustomer {
         html: emailBody,
         attachments: [{ filename: `Sales Invoice - ${salesInvoiceForm.number}.pdf`, content: attachmentPdf }],
       }).call();
-      // eslint-disable-next-line no-console
-      console.log(`Sales invoice email sent, id: ${messageId}, email: ${to}, sales invoice: ${salesInvoiceForm.number}}`);
+      logger.info(`Sales invoice email sent, id: ${messageId}, email: ${to}, sales invoice: ${salesInvoiceForm.number}}`);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log(error);
+      logger.error(error);
     }
   }
 }

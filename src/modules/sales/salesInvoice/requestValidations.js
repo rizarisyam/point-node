@@ -62,6 +62,7 @@ const updateForm = {
       allocationId: Joi.number().allow(null),
       discountPercent: Joi.number().min(0).max(100).default(0),
       discountValue: Joi.number().min(0).default(0),
+      price: Joi.number().required(),
     }),
     requestApprovalTo: Joi.number().required(),
     dueDate: Joi.date().iso().min(moment().format('YYYY-MM-DD 00:00:00')).required(),
@@ -87,7 +88,7 @@ const createFormRejectByToken = {
 const sendInvoice = {
   body: Joi.object({
     email: Joi.string().email().required(),
-    message: Joi.string().allow(null).allow(''),
+    message: Joi.string().allow(null),
   }),
 };
 

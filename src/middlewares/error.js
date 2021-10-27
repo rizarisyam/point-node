@@ -1,8 +1,8 @@
 const { isCelebrateError } = require('celebrate');
 const httpStatus = require('http-status');
-const config = require('../config/config');
-const logger = require('../config/logger');
-const ApiError = require('../utils/ApiError');
+const logger = require('@src/config/logger');
+const config = require('@src/config/config');
+const ApiError = require('@src/utils/ApiError');
 
 const errorConverter = (err, req, res, next) => {
   let error = err;
@@ -40,9 +40,7 @@ const errorHandler = (err, req, res, next) => {
     ...(config.env === 'development' && { stack: err.stack }),
   };
 
-  if (config.env === 'development') {
-    logger.error(err);
-  }
+  logger.error(err);
 
   res.status(statusCode).send(response);
 };

@@ -1,5 +1,6 @@
 const BullWorker = require('bull');
 const config = require('@src/config/config');
+const logger = require('@src/config/logger');
 
 class Worker {
   constructor({ title, job, options = {} }) {
@@ -17,9 +18,8 @@ class Worker {
       newWorker.process(() => this.job());
 
       return newWorker;
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.log(e);
+    } catch (error) {
+      logger.error(error);
     }
   }
 }

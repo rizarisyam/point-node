@@ -43,7 +43,18 @@ yarn prettier:fix
 
 ## Todo
 - Deployment -> https://ourcodeworld.com/articles/read/977/how-to-deploy-a-node-js-application-on-aws-ec2-server
-- create migration for referenceable_id [int(10)] and referenceable_type [varchar] in sales invoice table
+- add new permission 'menu setting', 'update setting'
+```
+INSERT INTO `permissions` (`name`, `guard_name`) VALUES (`menu setting`, `api`, now(), now())
+
+INSERT INTO `permissions` (`name`, `guard_name`) VALUES (`update setting`, `api`, now(), now())
+```
+- create migration for alter sales invoice table
+```
+ALTER TABLE `sales_invoices`
+ADD [COLUMN] `referenceable_id` int(10) unsigned NOT NULL,
+ADD [COLUMN] `referenceable_type` varchar(191) NOT NULL
+```
 - create table setting logo
 ```
 CREATE TABLE `setting_logos` (

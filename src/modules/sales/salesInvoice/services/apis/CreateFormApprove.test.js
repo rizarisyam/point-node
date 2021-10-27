@@ -56,36 +56,6 @@ describe('Sales Invoice - CreateFormApprove', () => {
       const recordFactories = await generateRecordFactories();
       ({ salesInvoice, approver, formSalesInvoice } = recordFactories);
 
-      const chartOfAccountType = await tenantDatabase.ChartOfAccountType.create({
-        name: 'cash',
-        alias: 'kas',
-        isDebit: true,
-      });
-      const chartOfAccount = await tenantDatabase.ChartOfAccount.create({
-        typeId: chartOfAccountType.id,
-        position: '',
-        name: 'kas besar',
-        alias: 'kas besar',
-      });
-      await tenantDatabase.SettingJournal.create({
-        feature: 'sales',
-        name: 'account receivable',
-        description: 'account receivable',
-        chartOfAccountId: chartOfAccount.id,
-      });
-      await tenantDatabase.SettingJournal.create({
-        feature: 'sales',
-        name: 'sales income',
-        description: 'sales income',
-        chartOfAccountId: chartOfAccount.id,
-      });
-      await tenantDatabase.SettingJournal.create({
-        feature: 'sales',
-        name: 'income tax payable',
-        description: 'income tax payable',
-        chartOfAccountId: chartOfAccount.id,
-      });
-
       ({ salesInvoice } = await new CreateFormApprove(tenantDatabase, {
         approver,
         salesInvoiceId: salesInvoice.id,
@@ -95,12 +65,13 @@ describe('Sales Invoice - CreateFormApprove', () => {
     });
 
     it('update form status to approved', async () => {
-      expect(salesInvoice.form.approvalStatus).toEqual(1);
+      await formSalesInvoice.reload();
+      expect(formSalesInvoice.approvalStatus).toEqual(1);
     });
 
     it('create the journals', async () => {
       const journals = await tenantDatabase.Journal.findAll({ where: { formId: formSalesInvoice.id } });
-      expect(journals.length).toEqual(3);
+      expect(journals.length).toEqual(5);
     });
   });
 });
@@ -121,8 +92,21 @@ const generateRecordFactories = async ({
   deliveryNoteItem,
   formDeliveryNote,
   salesInvoice,
+  salesInvoiceItem,
   formSalesInvoice,
 } = {}) => {
+  const chartOfAccountType = await tenantDatabase.ChartOfAccountType.create({
+    name: 'cash',
+    alias: 'kas',
+    isDebit: true,
+  });
+  const chartOfAccount = await tenantDatabase.ChartOfAccount.create({
+    typeId: chartOfAccountType.id,
+    position: '',
+    name: 'kas besar',
+    alias: 'kas besar',
+  });
+
   maker = maker || (await factory.user.create());
   approver = approver || (await factory.user.create());
   branch = branch || (await factory.branch.create());
@@ -133,7 +117,7 @@ const generateRecordFactories = async ({
   // create relation between maker and warehouse for authorization
   userWarehouse = userWarehouse || (await factory.userWarehouse.create({ user: maker, warehouse, isDefault: true }));
   deliveryOrder = deliveryOrder || (await factory.deliveryOrder.create({ customer, warehouse }));
-  item = item || (await factory.item.create());
+  item = item || (await factory.item.create({ chartOfAccount }));
   itemUnit = itemUnit || (await factory.itemUnit.create({ item, createdBy: maker.id }));
   deliveryNote = deliveryNote || (await factory.deliveryNote.create({ customer, warehouse, deliveryOrder }));
   allocation = allocation || (await factory.allocation.create({ branch }));
@@ -155,6 +139,9 @@ const generateRecordFactories = async ({
       referenceable: deliveryNote,
       referenceableType: 'SalesDeliveryNote',
     }));
+  salesInvoiceItem =
+    salesInvoiceItem ||
+    (await factory.salesInvoiceItem.create({ salesInvoice, deliveryNote, deliveryNoteItem, item, allocation }));
   formSalesInvoice =
     formSalesInvoice ||
     (await factory.form.create({
@@ -167,6 +154,25 @@ const generateRecordFactories = async ({
       formableType: 'SalesInvoice',
       number: 'SI2109001',
     }));
+
+  await tenantDatabase.SettingJournal.create({
+    feature: 'sales',
+    name: 'account receivable',
+    description: 'account receivable',
+    chartOfAccountId: chartOfAccount.id,
+  });
+  await tenantDatabase.SettingJournal.create({
+    feature: 'sales',
+    name: 'sales income',
+    description: 'sales income',
+    chartOfAccountId: chartOfAccount.id,
+  });
+  await tenantDatabase.SettingJournal.create({
+    feature: 'sales',
+    name: 'income tax payable',
+    description: 'income tax payable',
+    chartOfAccountId: chartOfAccount.id,
+  });
 
   return {
     maker,
@@ -184,6 +190,7 @@ const generateRecordFactories = async ({
     deliveryNoteItem,
     formDeliveryNote,
     salesInvoice,
+    salesInvoiceItem,
     formSalesInvoice,
   };
 };

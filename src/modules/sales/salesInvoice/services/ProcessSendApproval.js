@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
+const logger = require('@src/config/logger');
 const config = require('@src/config/config');
 const tokenService = require('@src/modules/auth/services/token.service');
 const Mailer = require('@src/utils/Mailer');
@@ -41,8 +42,7 @@ class ProcessSendApproval {
         html: emailBody,
       }).call();
 
-      // eslint-disable-next-line no-console
-      console.log(
+      logger.info(
         `Sales invoice approval email sent, id: ${messageId}, email: ${to}, sales invoice: ${salesInvoiceForm.number}}`
       );
 
@@ -53,8 +53,7 @@ class ProcessSendApproval {
         options: { delay: 1000 * 60 * 1 }, // 1 minute
       }).call();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log(error);
+      logger.error(error);
     }
   }
 }

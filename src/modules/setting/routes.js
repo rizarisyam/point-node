@@ -9,11 +9,11 @@ const controller = require('./controller');
 const router = express.Router();
 
 // GET CURRENT LOGO
-router.route('/logo').get(auth(), controller.getSettingLogo);
+router.route('/logo').get(auth('menu setting'), controller.getSettingLogo);
 
 // UPLOAD COMPANY LOGO
 router.route('/logo').post(
-  auth(),
+  auth('update setting'),
   multer({
     options: {
       limits: {
@@ -26,9 +26,11 @@ router.route('/logo').post(
 );
 
 // GET SETTING END NOTE
-router.route('/end-note').get(auth(), controller.getSettingEndNote);
+router.route('/end-note').get(auth('menu setting'), controller.getSettingEndNote);
 
 // UPDATE SETTING END NOTE
-router.route('/end-note').post(celebrate(requestValidations.updateSettingendNote), auth(), controller.updateSettingEndNote);
+router
+  .route('/end-note')
+  .post(celebrate(requestValidations.updateSettingendNote), auth('update setting'), controller.updateSettingEndNote);
 
 module.exports = router;
