@@ -1,8 +1,8 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, projectCode) => {
   class SalesInvoiceItem extends Model {
-    static associate({ tenant: models }) {
+    static associate({ [projectCode]: models }) {
       this.belongsTo(models.SalesInvoice, { as: 'salesInvoice', onDelete: 'CASCADE' });
 
       this.belongsTo(models.DeliveryNote, { as: 'deliveryNote', onDelete: 'CASCADE' });
