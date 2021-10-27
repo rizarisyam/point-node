@@ -29,7 +29,7 @@ describe('Stock Correction - Create Form Request', () => {
     it('create form with correct date', () => {
       expect(stockCorrectionForm).toBeDefined();
       expect(stockCorrectionForm.number).toEqual('SC2101001');
-      expect(stockCorrectionForm.approvalStatus).toEqual(0);
+      expect(stockCorrectionForm.approvalStatus).toEqual(0); // pending
     });
 
     it('has correct stock correction data', () => {

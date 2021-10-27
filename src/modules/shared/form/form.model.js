@@ -31,6 +31,8 @@ module.exports = (sequelize, DataTypes) => {
 
       this.belongsTo(models.SalesOrder, { as: 'salesOrder', foreignKey: 'formableId', constraints: false });
 
+      this.belongsTo(models.StockCorrection, { as: 'stockCorrection', foreignKey: 'formableId', constraints: false });
+
       this.hasOne(models.SalesVisitation, { as: 'salesVisitation', foreignKey: 'formId' });
     }
 

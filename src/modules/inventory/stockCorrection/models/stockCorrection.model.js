@@ -1,9 +1,16 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, projectCode) => {
   class StockCorrection extends Model {
-    static associate({ tenant: models }) {
+    static associate({ [projectCode]: models }) {
       this.belongsTo(models.Warehouse, { as: 'warehouse', onUpdate: 'RESTRICT', onDelete: 'RESTRICT' });
+
+      this.hasOne(models.Form, {
+        as: 'form',
+        foreignKey: 'formableId',
+        constraints: false,
+        scope: { formable_type: 'StockCorrection' },
+      });
     }
   }
   StockCorrection.init(

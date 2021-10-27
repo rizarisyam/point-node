@@ -4,7 +4,7 @@ const ApiError = require('@src/utils/ApiError');
 const GetCurrentStock = require('./GetCurrentStock');
 
 class InsertInventoryRecord {
-  constructor(tenantDatabase, { form, warehouse, item, quantity, unit, converter, options }) {
+  constructor(tenantDatabase, { form, warehouse, item, quantity, unit, converter, options, transaction }) {
     this.tenantDatabase = tenantDatabase;
     this.form = form;
     this.warehouse = warehouse;
@@ -13,6 +13,7 @@ class InsertInventoryRecord {
     this.unit = unit;
     this.converter = converter;
     this.options = options;
+    this.transaction = transaction;
   }
 
   async call() {
@@ -23,6 +24,23 @@ class InsertInventoryRecord {
       warehouse: this.warehouse,
       form: this.form,
     });
+
+    const inventory = await this.tenantDatabase.Inventory.create(
+      {
+        formId: this.form.id,
+        warehouseId: this.warehouse.id,
+        itemId: this.item.id,
+        quantity: this.quantity * this.converter,
+        quantityReference: this.quantity,
+        unitReference: this.unit,
+        converterReference: this.converter,
+        ...(this.options.expiryDate && { expiryDate: this.options.expiryDate }),
+        ...(this.options.productionNumber && { productionNumber: this.options.productionNumber }),
+      },
+      ...(this.transaction && { transaction: this.transaction })
+    );
+
+    return { inventory };
   }
 }
 
