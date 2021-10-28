@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes, projectCode) => {
     static associate({ [projectCode]: models }) {
       this.belongsTo(models.DeliveryNote, { onDelete: 'CASCADE' });
 
-      this.belongsTo(models.Item, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.Item, { as: 'item', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.Allocation, { as: 'allocation', onDelete: 'RESTRICT' });
 

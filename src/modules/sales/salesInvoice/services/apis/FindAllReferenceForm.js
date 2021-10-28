@@ -83,6 +83,7 @@ function generateIncludes(tenantDatabase) {
               as: 'deliveryOrderItem',
               include: [{ model: tenantDatabase.SalesOrderItem, as: 'salesOrderItem' }],
             },
+            { model: tenantDatabase.Item, as: 'item' },
           ],
         },
         { model: tenantDatabase.Customer, as: 'customer' },
