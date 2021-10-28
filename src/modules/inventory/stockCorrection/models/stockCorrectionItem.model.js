@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       quantity: {
-        type: DataTypes.DECIMAL.UNSIGNED,
+        type: DataTypes.DECIMAL,
         allowNull: false,
       },
       expiryDate: {

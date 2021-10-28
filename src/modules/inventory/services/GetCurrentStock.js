@@ -26,7 +26,7 @@ class GetCurrentStock {
       return 0;
     }
 
-    return inventories[0].remaining;
+    return parseFloat(inventories[0].dataValues.remaining);
   }
 }
 
@@ -34,7 +34,7 @@ function generateFilter({ item, warehouse, date, options }) {
   const filter = {
     itemId: item.id,
     warehouseId: warehouse.id,
-    '$form.date$': { [Op.lt]: date },
+    '$form.date$': { [Op.lte]: date },
   };
   if (item.requireExpiryDate) {
     filter.expiryDate = options.expiryDate;

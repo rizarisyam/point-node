@@ -6,6 +6,7 @@ const deliveryNote = require('./deliveryNote');
 const deliveryNoteItem = require('./deliveryNoteItem');
 const deliveryOrder = require('./deliveryOrder');
 const form = require('./form');
+const inventory = require('./inventory');
 const item = require('./item');
 const itemUnit = require('./itemUnit');
 const user = require('./user');
@@ -23,6 +24,7 @@ const factory = {
   deliveryNoteItem,
   deliveryOrder,
   form,
+  inventory,
   item,
   itemUnit,
   user,

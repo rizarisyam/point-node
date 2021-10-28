@@ -13,7 +13,7 @@ global.beforeAll(async (done) => {
     await tenantSequelize.query('SET FOREIGN_KEY_CHECKS = 1', null);
   } catch (e) {
     // eslint-disable-next-line no-console
-    // console.log(e);
+    console.log(e);
   }
 
   done();
@@ -33,7 +33,7 @@ global.beforeEach(async () => {
     await setupTenantProject();
   } catch (e) {
     // eslint-disable-next-line no-console
-    // console.log(e);
+    console.log(e);
   }
 });
 
@@ -49,7 +49,7 @@ global.afterAll(async (done) => {
     await tenantSequelize.query('SET FOREIGN_KEY_CHECKS = 1', null);
   } catch (e) {
     // eslint-disable-next-line no-console
-    // console.log(e);
+    console.log(e);
   }
 
   done();

@@ -1,7 +1,6 @@
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
 const GetCurrentStock = require('@src/modules/inventory/services/GetCurrentStock');
-const InsertInventoryRecord = require('@src/modules/inventory/services/InsertInventoryRecord');
 
 class CreateFormRequest {
   constructor(tenantDatabase, { maker, createFormRequestDto }) {
@@ -27,18 +26,22 @@ class CreateFormRequest {
       });
       stockCorrectionForm = await createStockCorrectionForm(this.tenantDatabase, {
         maker: this.maker,
+        warehouse,
         stockCorrection,
         createFormRequestDto: this.createFormRequestDto,
         currentDate,
         transaction,
       });
-      await addStockCorrectionItem(tenantDatabase, {
+      await addStockCorrectionItem(this.tenantDatabase, {
         stockCorrection,
         stockCorrectionForm,
-        createFormRequestDto,
+        warehouse,
+        createFormRequestDto: this.createFormRequestDto,
         transaction,
       });
     });
+
+    return { stockCorrection, stockCorrectionForm };
   }
 }
 
@@ -74,41 +77,128 @@ async function validateWarehouseDefaultPermission(tenantDatabase, { makerId, war
 }
 
 async function createStockCorrection(tenantDatabase, { createFormRequestDto, transaction }) {
-  const stockCorrection = await this.tenantDatabase.StockCorrection.create(
+  const stockCorrection = await tenantDatabase.StockCorrection.create(
     {
       warehouseId: createFormRequestDto.warehouseId,
     },
     { transaction }
   );
 
-  return { stockCorrection };
+  return stockCorrection;
+}
+
+async function createStockCorrectionForm(
+  tenantDatabase,
+  { maker, warehouse, stockCorrection, createFormRequestDto, currentDate, transaction }
+) {
+  const formData = await buildFormData(tenantDatabase, {
+    maker,
+    warehouse,
+    createFormRequestDto,
+    stockCorrection,
+    currentDate,
+  });
+  const form = await tenantDatabase.Form.create(formData, { transaction });
+
+  return form;
+}
+
+async function buildFormData(tenantDatabase, { maker, warehouse, createFormRequestDto, stockCorrection, currentDate }) {
+  const { notes, requestApprovalTo } = createFormRequestDto;
+  const { incrementNumber, incrementGroup } = await getFormIncrement(tenantDatabase, currentDate);
+  const formNumber = generateFormNumber(currentDate, incrementNumber);
+  const approver = await tenantDatabase.User.findOne({ where: { id: requestApprovalTo } });
+  if (!approver) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Approver is not exist');
+  }
+
+  return {
+    branchId: warehouse.branchId,
+    date: new Date(),
+    number: formNumber,
+    notes,
+    createdBy: maker.id,
+    updatedBy: maker.id,
+    incrementNumber,
+    incrementGroup,
+    formableId: stockCorrection.id,
+    formableType: 'StockCorrection',
+    requestApprovalTo,
+  };
+}
+
+async function getFormIncrement(tenantDatabase, currentDate) {
+  const incrementGroup = `${currentDate.getFullYear()}${getMonthFormattedString(currentDate)}`;
+  const lastForm = await tenantDatabase.Form.findOne({
+    where: {
+      formableType: 'StockCorrection',
+      incrementGroup,
+    },
+    order: [['increment', 'DESC']],
+  });
+
+  return {
+    incrementGroup,
+    incrementNumber: lastForm ? lastForm.incrementNumber + 1 : 1,
+  };
+}
+
+function generateFormNumber(currentDate, incrementNumber) {
+  const monthValue = getMonthFormattedString(currentDate);
+  const yearValue = getYearFormattedString(currentDate);
+  const orderNumber = `000${incrementNumber}`.slice(-3);
+  return `SC${yearValue}${monthValue}${orderNumber}`;
+}
+
+function getYearFormattedString(currentDate) {
+  const fullYear = currentDate.getFullYear().toString();
+  return fullYear.slice(-2);
+}
+
+function getMonthFormattedString(currentDate) {
+  const month = currentDate.getMonth() + 1;
+  return `0${month}`.slice(-2);
 }
 
 async function addStockCorrectionItem(
   tenantDatabase,
   { stockCorrection, stockCorrectionForm, warehouse, createFormRequestDto, transaction }
 ) {
-  const { items: itemsRequest, dueDate } = createFormRequestDto;
-  await itemsRequest.maps(async (itemRequest) => {
-    const item = await tenantDatabase.Item.findOne({ where: { id: itemRequest.id } });
-    const { inventory } = await new InsertInventoryRecord(tenantDatabase, {
-      form: stockCorrectionForm.id,
-      warehouse,
-      item,
-      quantity,
-      unit,
-      converter,
-      options,
-      transaction,
-    });
+  const { items: itemsRequest } = createFormRequestDto;
+  const doAddStockCorrectionItem = itemsRequest.map(async (itemRequest) => {
+    if (itemRequest.converter !== 1) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Only can use smallest item unit');
+    }
+    const item = await tenantDatabase.Item.findOne({ where: { id: itemRequest.itemId } });
 
-    return tenantDatabase.StockCorrection.create({
-      stockCorrectionId: stockCorrection.id,
-      itemId: item.id,
-      quantity: itemRequest.stockCorrection,
-      unit: item.unitDefault,
-    });
+    const itemStock = await new GetCurrentStock(tenantDatabase, {
+      item,
+      date: stockCorrectionForm.date,
+      warehouse,
+      options: {
+        expiryDate: itemRequest.expiryDate,
+        productionNumber: itemRequest.productionNumber,
+      },
+    }).call();
+    if (itemStock + itemRequest.stockCorrection < 0) {
+      throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock can not be minus');
+    }
+    return tenantDatabase.StockCorrectionItem.create(
+      {
+        stockCorrectionId: stockCorrection.id,
+        itemId: item.id,
+        quantity: itemRequest.stockCorrection,
+        unit: itemRequest.unit,
+        converter: itemRequest.converter,
+        notes: itemRequest.notes,
+        ...(itemRequest.expiryDate && { expiryDate: itemRequest.expiryDate }),
+        ...(itemRequest.productionNumber && { productionNumber: itemRequest.productionNumber }),
+      },
+      { transaction }
+    );
   });
+
+  await Promise.all(doAddStockCorrectionItem);
 }
 
 module.exports = CreateFormRequest;

@@ -9,8 +9,6 @@ module.exports = (sequelize, DataTypes, projectCode) => {
 
       this.belongsTo(models.User, { as: 'archivedByUser', foreignKey: 'archivedBy', onDelete: 'RESTRICT' });
 
-      this.belongsTo(models.Unit, { as: 'unitByDefault', foreignKey: 'unitDefault' });
-
       // TODO: Add ChartOfAccount model
       // this.belongsTo(models.ChartOfAccount, { onDelete: 'RESTRICT' });
     }
