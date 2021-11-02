@@ -26,24 +26,9 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       return this[mixinMethodName](options);
     }
 
-    getDiscountString() {
-      const discountValue = parseFloat(this.discountValue);
-      const discountPercent = parseFloat(this.discountPercent);
-
-      if (discountValue > 0) {
-        return `${discountValue}`;
-      }
-
-      if (discountPercent > 0) {
-        return `${discountPercent} %`;
-      }
-
-      return '';
-    }
-
     async getTotalDetails() {
       const items = await this.getItems();
-      const subTotal = getSubTotal(items);
+      const subTotal = await getSubTotal(items);
       const taxBase = getTaxBase(subTotal, this.discountValue, this.discountPercent);
 
       return {
@@ -63,14 +48,23 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       discountPercent: {
         type: DataTypes.DECIMAL,
         defaultValue: 0,
+        get() {
+          return parseFloat(this.getDataValue('discountPercent'));
+        },
       },
       discountValue: {
         type: DataTypes.DECIMAL,
         defaultValue: 0,
+        get() {
+          return parseFloat(this.getDataValue('discountValue'));
+        },
       },
       tax: {
         type: DataTypes.DECIMAL,
         allowNull: false,
+        get() {
+          return parseFloat(this.getDataValue('tax'));
+        },
       },
       typeOfTax: {
         type: DataTypes.STRING,
@@ -80,9 +74,15 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       amount: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('amount'));
+        },
       },
       remaining: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('remaining'));
+        },
       },
       customerId: {
         type: DataTypes.INTEGER,
@@ -121,24 +121,17 @@ module.exports = (sequelize, DataTypes, projectCode) => {
   return SalesInvoice;
 };
 
-function getSubTotal(items) {
-  const subTotal = items.reduce((result, item) => {
-    return result + getItemsPrice(item);
+async function getSubTotal(items) {
+  const subTotal = await items.reduce(async (result, item) => {
+    const itemsPrice = await getItemsPrice(item);
+    return result + itemsPrice;
   }, 0);
 
   return subTotal;
 }
 
-function getItemsPrice(item) {
-  let perItemPrice = item.price;
-  if (item.discountValue > 0) {
-    perItemPrice -= item.discountValue;
-  }
-  if (item.discountPercent > 0) {
-    const discountPercent = item.discountPercent / 100;
-    perItemPrice -= perItemPrice * discountPercent;
-  }
-  const totalItemPrice = perItemPrice * item.quantity;
+async function getItemsPrice(item) {
+  const totalItemPrice = await item.getTotalPrice();
 
   return totalItemPrice;
 }

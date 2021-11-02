@@ -30,6 +30,8 @@ const modelPaths = [
   '/auth/models/roleHasPermission.model.js',
   // inventory
   '/inventory/models/inventory.model.js',
+  '/inventory/models/inventoryAudit.model.js',
+  '/inventory/models/inventoryAuditItem.model.js',
   // sales/deliveryNote
   '/sales/deliveryNote/models/deliveryNote.model.js',
   '/sales/deliveryNote/models/deliveryNoteItem.model.js',

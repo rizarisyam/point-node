@@ -1,5 +1,6 @@
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
+const GetCurrentStock = require('@src/modules/inventory/services/GetCurrentStock');
 const ProcessSendApprovalWorker = require('../../workers/ProcessSendApproval.worker');
 
 class CreateFormRequest {
@@ -12,37 +13,36 @@ class CreateFormRequest {
   async call() {
     const currentDate = new Date(Date.now());
     const { formId: formReferenceId } = this.createFormRequestDto;
-    const formReference = await this.tenantDatabase.Form.findOne({ where: { id: formReferenceId, done: false } });
-    if (!formReference) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Form reference without done status not found');
-    }
-    const reference = await getReference(formReference);
+    const { formReference, reference } = await getReference(this.tenantDatabase, formReferenceId);
 
     await validate(this.tenantDatabase, { maker: this.maker, formReference, reference });
 
-    const salesInvoice = await createSalesInvoice(this.tenantDatabase, {
-      reference,
-      createFormRequestDto: this.createFormRequestDto,
-    });
-    const salesInvoiceForm = await createSalesInvoiceForm(this.tenantDatabase, {
-      maker: this.maker,
-      formReference,
-      createFormRequestDto: this.createFormRequestDto,
-      salesInvoice,
-      currentDate,
+    let salesInvoice, salesInvoiceForm;
+    await this.tenantDatabase.sequelize.transaction(async (transaction) => {
+      ({ salesInvoice, salesInvoiceForm } = await processCreateSalesInvoice(this.tenantDatabase, {
+        reference,
+        formReference,
+        currentDate,
+        createFormRequestDto: this.createFormRequestDto,
+        maker: this.maker,
+        transaction,
+      }));
+
+      await formReference.update({ done: true }, { transaction });
     });
 
-    await formReference.update({ done: true });
-
-    const tenantName = this.tenantDatabase.sequelize.config.database.replace('point_', '');
-    const sendApprovalEmail = new ProcessSendApprovalWorker({ tenantName, salesInvoiceId: salesInvoice.id });
-    sendApprovalEmail.call();
+    await sendEmailToApprover(this.tenantDatabase, salesInvoice);
 
     return { salesInvoiceForm, salesInvoice };
   }
 }
 
-async function getReference(formReference) {
+async function getReference(tenantDatabase, formReferenceId) {
+  const formReference = await tenantDatabase.Form.findOne({ where: { id: formReferenceId, done: false } });
+  if (!formReference) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Form reference without done status not found');
+  }
+
   let reference;
   if (formReference.number.startsWith('DN')) {
     reference = await formReference.getFormable();
@@ -50,11 +50,13 @@ async function getReference(formReference) {
     reference = await formReference.getSalesVisitation();
   }
 
-  return reference;
+  return { formReference, reference };
 }
 
 async function validate(tenantDatabase, { maker, formReference, reference }) {
-  if (!formReference.number.startsWith('SV')) {
+  if (formReference.number.startsWith('SV')) {
+    await validateBranchDefaultPermissionSalesVisitation(tenantDatabase, { maker, reference });
+  } else {
     await validateBranchDefaultPermission(tenantDatabase, { maker, formReference });
   }
   await validateWarehouseDefaultPermission(tenantDatabase, { maker, reference });
@@ -65,6 +67,19 @@ async function validateBranchDefaultPermission(tenantDatabase, { maker, formRefe
     where: {
       userId: maker.id,
       branchId: formReference.branchId,
+      isDefault: true,
+    },
+  });
+  if (!branchUser) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+  }
+}
+
+async function validateBranchDefaultPermissionSalesVisitation(tenantDatabase, { maker, reference }) {
+  const branchUser = await tenantDatabase.BranchUser.findOne({
+    where: {
+      userId: maker.id,
+      branchId: reference.branchId,
       isDefault: true,
     },
   });
@@ -86,10 +101,31 @@ async function validateWarehouseDefaultPermission(tenantDatabase, { maker, refer
   }
 }
 
-async function createSalesInvoice(tenantDatabase, { reference, createFormRequestDto }) {
+async function processCreateSalesInvoice(
+  tenantDatabase,
+  { reference, formReference, currentDate, createFormRequestDto, maker, transaction }
+) {
+  const salesInvoice = await createSalesInvoice(tenantDatabase, {
+    reference,
+    createFormRequestDto,
+    transaction,
+  });
+  const salesInvoiceForm = await createSalesInvoiceForm(tenantDatabase, {
+    maker,
+    formReference,
+    createFormRequestDto,
+    salesInvoice,
+    currentDate,
+    transaction,
+  });
+
+  return { salesInvoice, salesInvoiceForm };
+}
+
+async function createSalesInvoice(tenantDatabase, { reference, createFormRequestDto, transaction }) {
   const salesInvoiceData = await buildSalesInvoiceData(tenantDatabase, { reference, createFormRequestDto });
-  const salesInvoice = await tenantDatabase.SalesInvoice.create(salesInvoiceData);
-  await addSalesInvoiceItems(tenantDatabase, { salesInvoice, reference, createFormRequestDto });
+  const salesInvoice = await tenantDatabase.SalesInvoice.create(salesInvoiceData, { transaction });
+  await addSalesInvoiceItems(tenantDatabase, { salesInvoice, reference, createFormRequestDto, transaction });
 
   return salesInvoice;
 }
@@ -116,24 +152,25 @@ async function buildSalesInvoiceData(tenantDatabase, { reference, createFormRequ
     customerAddress: customer.address || '',
     customerPhone: customer.phone || '',
     referenceableId: reference.id,
-    referenceableType: reference.getMorphType(),
+    referenceableType: reference.constructor.getMorphType(),
   };
 }
 
-async function addSalesInvoiceItems(tenantDatabase, { salesInvoice, reference, createFormRequestDto }) {
-  const { items: itemPayloads } = createFormRequestDto;
+async function addSalesInvoiceItems(tenantDatabase, { salesInvoice, reference, createFormRequestDto, transaction }) {
+  const { items: itemPayloads, dueDate: formDate } = createFormRequestDto;
   const salesInvoiceItems = await Promise.all(
     itemPayloads.map(async (itemPayload) => {
-      await createSalesInvoiceItem(tenantDatabase, { salesInvoice, reference, itemPayload });
+      await createSalesInvoiceItem(tenantDatabase, { salesInvoice, formDate, reference, itemPayload, transaction });
     })
   );
 
   return salesInvoiceItems;
 }
 
-async function createSalesInvoiceItem(tenantDatabase, { salesInvoice, reference, itemPayload }) {
+async function createSalesInvoiceItem(tenantDatabase, { salesInvoice, formDate, reference, itemPayload, transaction }) {
+  const referenceClassName = reference.constructor.name;
   let referenceItem;
-  switch (reference.constructor.name) {
+  switch (referenceClassName) {
     case 'DeliveryNote':
       referenceItem = await tenantDatabase.DeliveryNoteItem.findOne({
         where: {
@@ -156,21 +193,42 @@ async function createSalesInvoiceItem(tenantDatabase, { salesInvoice, reference,
     throw new ApiError(httpStatus.BAD_REQUEST, `Item unit ${itemPayload.itemUnit} not found`);
   }
 
-  return tenantDatabase.SalesInvoiceItem.create({
-    salesInvoiceId: salesInvoice.id,
-    deliveryNoteId: reference.id,
-    deliveryNoteItemId: referenceItem.id,
-    itemId: item.id,
-    itemName: item.name,
-    quantity: itemPayload.quantity,
-    price: itemPayload.price,
-    discountPercent: itemPayload.discountPercent,
-    discountValue: itemPayload.discountValue,
-    taxable: itemPayload.taxable,
-    unit: itemUnit.label,
-    converter: itemUnit.converter,
-    allocationId: itemPayload?.allocationId,
-  });
+  await checkStock(tenantDatabase, { item, date: formDate, warehouseId: reference.warehouseId, itemPayload });
+  return tenantDatabase.SalesInvoiceItem.create(
+    {
+      salesInvoiceId: salesInvoice.id,
+      referenceableId: reference.id,
+      referenceableType: reference.constructor.getMorphType(),
+      itemReferenceableId: referenceItem.id,
+      itemReferenceableType: referenceItem.constructor.getMorphType(),
+      itemId: item.id,
+      itemName: item.name,
+      quantity: itemPayload.quantity,
+      price: itemPayload.price,
+      discountPercent: itemPayload.discountPercent,
+      discountValue: itemPayload.discountValue,
+      taxable: itemPayload.taxable,
+      unit: itemUnit.label,
+      converter: itemUnit.converter,
+      allocationId: itemPayload.allocationId,
+      expiryDate: itemPayload.expiryDate,
+      productionNumber: itemPayload.productionNumber,
+    },
+    { transaction }
+  );
+}
+
+async function checkStock(tenantDatabase, { item, date, warehouseId, itemPayload }) {
+  const itemStock = await new GetCurrentStock(tenantDatabase, {
+    item,
+    date,
+    warehouseId,
+    options: { expiryDate: itemPayload.expiryDate, productionNumber: itemPayload.productionNumber },
+  }).call();
+  const targetStock = itemStock - itemPayload.quantity;
+  if (targetStock < 0) {
+    throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, `Insufficient ${item.name} stock`);
+  }
 }
 
 async function createSalesInvoiceForm(
@@ -300,6 +358,22 @@ function getYearFormattedString(currentDate) {
 function getMonthFormattedString(currentDate) {
   const month = currentDate.getMonth() + 1;
   return `0${month}`.slice(-2);
+}
+
+async function sendEmailToApprover(tenantDatabase, salesInvoice) {
+  const tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');
+  await new ProcessSendApprovalWorker({
+    tenantName,
+    salesInvoiceId: salesInvoice.id,
+    options: {
+      repeat: {
+        every: 1000 * 60 * 0.5,
+        limit: 7,
+      },
+    },
+  }).call();
+
+  // options: { delay: 1000 * 60 * 60 * 24 * 1 }, // 1 day
 }
 
 module.exports = CreateFormRequest;

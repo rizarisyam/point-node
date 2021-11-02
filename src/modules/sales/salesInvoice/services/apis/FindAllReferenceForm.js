@@ -17,7 +17,6 @@ class FindAllReferenceForm {
       subQuery: false,
     });
     removeUnusedAttributes(formReferences);
-    parseDeliveryNoteItemNumberStringToFLoat(formReferences);
 
     const totalPage = Math.ceil(total / parseInt(queryLimit, 10));
 
@@ -47,7 +46,15 @@ function generateFilters(queries) {
 
 function generateFilterFormType() {
   return {
-    [Op.or]: [{ number: { [Op.startsWith]: 'DN' } }, { number: { [Op.startsWith]: 'SV' } }],
+    [Op.or]: [
+      { number: { [Op.startsWith]: 'DN' } },
+      {
+        [Op.and]: [
+          { number: { [Op.startsWith]: 'SV' } },
+          { '$salesVisitation.payment_method$': { [Op.or]: ['tempo', 'cash'] } },
+        ],
+      },
+    ],
   };
 }
 
@@ -109,32 +116,11 @@ function generateIncludes(tenantDatabase) {
           model: tenantDatabase.SalesVisitationDetail,
           as: 'items',
           include: [{ model: tenantDatabase.Item, as: 'item' }],
+          required: true,
         },
       ],
     },
   ];
-}
-
-function parseDeliveryNoteItemNumberStringToFLoat(formReferences) {
-  formReferences.forEach((formReference) => {
-    if (formReference.salesDeliveryNote?.items) {
-      formReference.salesDeliveryNote.items.forEach((item) => {
-        item.price = parseFloat(item.price);
-        item.quantity = parseFloat(item.quantity);
-        item.discountPercent = parseFloat(item.discountPercent);
-        item.discountValue = parseFloat(item.discountValue);
-      });
-    }
-
-    if (formReference.salesVisitation?.items) {
-      formReference.salesVisitation.items.forEach((item) => {
-        item.price = parseFloat(item.price);
-        item.quantity = parseFloat(item.quantity);
-        item.discountPercent = parseFloat(item.discountPercent);
-        item.discountValue = parseFloat(item.discountValue);
-      });
-    }
-  });
 }
 
 function removeUnusedAttributes(formReferences) {

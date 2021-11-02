@@ -84,6 +84,7 @@ async function updateItems(currentItems, updateItemsData) {
       discountPercent: updateItem.discountPercent,
       discountValue: updateItem.discountValue,
       price: updateItem.price,
+      allocationId: updateItem.allocationId,
     });
   });
 
@@ -107,7 +108,7 @@ function getItemsPrice(item) {
     discount = item.discountValue;
   }
   perItemPrice -= discount;
-  const totalItemPrice = perItemPrice * parseFloat(item.quantity);
+  const totalItemPrice = perItemPrice * item.quantity;
 
   return totalItemPrice;
 }
@@ -177,10 +178,10 @@ async function restoreStock(tenantDatabase, { salesInvoice, form }) {
   if (form.approvalStatus === 1 && form.cancellationStatus !== 1) {
     updateItemsStock = salesInvoiceItems.map(async (salesInvoiceItem) => {
       const item = await salesInvoiceItem.getItem();
-      const totalQuantityItem = parseFloat(item.quantity) * parseFloat(item.converter);
+      const totalQuantityItem = item.quantity * item.converter;
 
       return item.update({
-        stock: parseFloat(item.stock) + totalQuantityItem,
+        stock: item.stock + totalQuantityItem,
       });
     });
   }

@@ -12,8 +12,7 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       this.hasMany(models.SalesVisitationDetail, { as: 'items' });
     }
 
-    // eslint-disable-next-line class-methods-use-this
-    getMorphType() {
+    static getMorphType() {
       return 'SalesVisitation';
     }
   }

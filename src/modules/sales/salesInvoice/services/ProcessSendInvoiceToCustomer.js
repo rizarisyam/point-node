@@ -6,6 +6,7 @@ const logger = require('@src/config/logger');
 const { Project } = require('@src/models').main;
 const Mailer = require('@src/utils/Mailer');
 const getCurrentTenantDatabase = require('@src/utils/getCurrentTenantDatabase');
+const currencyFormat = require('@src/utils/currencyFormat');
 
 class ProcessSendInvoiceToCustomer {
   constructor(tenantName, salesInvoiceId, sendInvoiceToCustomerDto) {
@@ -77,10 +78,10 @@ async function generateAttachmentPdf(tenantDatabase, { salesInvoiceForm, salesIn
     <tr>
       <td>${index + 1}</td>
       <td>${salesInvoiceItem.itemName}</td>
-      <td>${parseFloat(salesInvoiceItem.quantity)} ${salesInvoiceItem.unit}</td>
-      <td>${parseFloat(salesInvoiceItem.price)}</td>
-      <td>${salesInvoiceItem.getDiscountString()}</td>
-      <td>${salesInvoiceItem.getTotalPrice()}</td>
+      <td>${currencyFormat(salesInvoiceItem.quantity)} ${salesInvoiceItem.unit}</td>
+      <td>${currencyFormat(salesInvoiceItem.price)}</td>
+      <td>${currencyFormat(salesInvoiceItem.discountValue)}</td>
+      <td>${currencyFormat(salesInvoiceItem.getTotalPrice())}</td>
     </tr>
     `;
   });
@@ -96,11 +97,11 @@ async function generateAttachmentPdf(tenantDatabase, { salesInvoiceForm, salesIn
   pdfBody = pdfBody.replaceAll('{{customerAddress}}', customer.address || '');
   pdfBody = pdfBody.replaceAll('{{customerPhone}}', customer.phone || '');
   pdfBody = pdfBody.replaceAll('{{items}}', itemsHtml);
-  pdfBody = pdfBody.replaceAll('{{subTotal}}', subTotal);
-  pdfBody = pdfBody.replaceAll('{{discount}}', salesInvoice.getDiscountString());
-  pdfBody = pdfBody.replaceAll('{{taxBase}}', taxBase);
-  pdfBody = pdfBody.replaceAll('{{tax}}', tax);
-  pdfBody = pdfBody.replaceAll('{{total}}', amount);
+  pdfBody = pdfBody.replaceAll('{{subTotal}}', currencyFormat(subTotal));
+  pdfBody = pdfBody.replaceAll('{{discount}}', currencyFormat(salesInvoice.discountValue));
+  pdfBody = pdfBody.replaceAll('{{taxBase}}', currencyFormat(taxBase));
+  pdfBody = pdfBody.replaceAll('{{tax}}', currencyFormat(tax));
+  pdfBody = pdfBody.replaceAll('{{total}}', currencyFormat(amount));
   pdfBody = pdfBody.replaceAll('{{notes}}', settingEndNote.salesInvoice);
 
   const options = { format: 'A4' };
