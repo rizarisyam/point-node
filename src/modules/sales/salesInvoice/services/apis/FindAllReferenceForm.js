@@ -51,7 +51,7 @@ function generateFilterFormType() {
       {
         [Op.and]: [
           { number: { [Op.startsWith]: 'SV' } },
-          { '$salesVisitation.payment_method$': { [Op.or]: ['tempo', 'cash'] } },
+          { '$salesVisitation.payment_method$': { [Op.or]: ['credit', 'cash'] } },
         ],
       },
     ],
@@ -111,13 +111,18 @@ function generateIncludes(tenantDatabase) {
       model: tenantDatabase.SalesVisitation,
       as: 'salesVisitation',
       include: [
-        { model: tenantDatabase.Customer, as: 'customer' },
+        {
+          model: tenantDatabase.SalesVisitationDetail,
+          as: 'itemsQuery',
+          include: [{ model: tenantDatabase.Item, as: 'item' }],
+        },
         {
           model: tenantDatabase.SalesVisitationDetail,
           as: 'items',
           include: [{ model: tenantDatabase.Item, as: 'item' }],
           required: true,
         },
+        { model: tenantDatabase.Customer, as: 'customer' },
       ],
     },
   ];

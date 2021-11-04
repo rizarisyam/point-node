@@ -43,19 +43,47 @@ yarn prettier:fix
 
 ## Todo
 - Deployment -> https://ourcodeworld.com/articles/read/977/how-to-deploy-a-node-js-application-on-aws-ec2-server
+
+&nbsp;
+
+- Need to fix bug sales visitation expiry date. Sales visitation expiry date not equal to inventory expiry date
+
+&nbsp;
+
 - add new permission 'menu setting', 'update setting'
 ```
-INSERT INTO `permissions` (`name`, `guard_name`) VALUES (`menu setting`, `api`, now(), now())
+INSERT INTO `permissions` (`name`, `guard_name`) VALUES (`menu setting`, `api`, now(), now());
 
-INSERT INTO `permissions` (`name`, `guard_name`) VALUES (`update setting`, `api`, now(), now())
+INSERT INTO `permissions` (`name`, `guard_name`) VALUES (`update setting`, `api`, now(), now());
 ```
-- create migration for alter sales invoice table
+
+&nbsp;
+
+- create migration for alter sales_invoices table
 ```
 ALTER TABLE `sales_invoices`
-ADD [COLUMN] `referenceable_id` int(10) unsigned NOT NULL,
-ADD [COLUMN] `referenceable_type` varchar(191) NOT NULL
+ADD `referenceable_id` int(10) unsigned NOT NULL,
+ADD `referenceable_type` varchar(191) NOT NULL;
 ```
-- create table setting logo
+
+&nbsp;
+
+- create migration for alter sales_invoice_items table
+```
+ALTER TABLE `sales_invoice_items` DROP COLUMN `delivery_note_item_id`;
+
+ALTER TABLE `sales_invoice_items` DROP COLUMN `delivery_note_id`;
+
+ALTER TABLE `sales_invoice_items`
+  ADD `referenceable_id` int(10) unsigned NOT NULL,
+  ADD `referenceable_type` varchar(191) NOT NULL,
+  ADD `item_referenceable_id` int(10) unsigned NOT NULL,
+  ADD `item_referenceable_type` varchar(191) NOT NULL;
+```
+
+&nbsp;
+
+- create migration to create table setting_logos
 ```
 CREATE TABLE `setting_logos` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -69,7 +97,10 @@ CREATE TABLE `setting_logos` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 ```
-- create table setting end notes
+
+&nbsp;
+
+- create migration for create table setting_end_notes
 ```
 CREATE TABLE `setting_end_notes` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
