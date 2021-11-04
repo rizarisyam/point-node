@@ -5,40 +5,32 @@ module.exports = (sequelize, DataTypes, projectCode) => {
     static associate({ [projectCode]: models }) {
       this.belongsTo(models.SalesInvoice, { as: 'salesInvoice', onDelete: 'CASCADE' });
 
-      this.belongsTo(models.DeliveryNote, { as: 'deliveryNote', onDelete: 'CASCADE' });
-
-      this.belongsTo(models.DeliveryNoteItem, { as: 'deliveryNoteItem', onDelete: 'CASCADE' });
-
       this.belongsTo(models.Item, { as: 'item', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.Allocation, { as: 'allocation', onDelete: 'RESTRICT' });
 
-      this.belongsTo(models.DeliveryNote, { foreignKey: 'deliveryNoteId', constraints: false });
+      this.belongsTo(models.PosBill, { as: 'posBill', foreignKey: 'referenceableId', constraints: false });
 
-      this.belongsTo(models.PosBill, { foreignKey: 'deliveryNoteId', constraints: false });
+      this.belongsTo(models.DeliveryNote, { as: 'salesDeliveryNote', foreignKey: 'referenceableId', constraints: false });
 
-      this.belongsTo(models.SalesVisitation, { foreignKey: 'deliveryNoteId', constraints: false });
-    }
+      this.belongsTo(models.SalesVisitation, { as: 'salesVisitation', foreignKey: 'referenceableId', constraints: false });
 
-    getDiscountString() {
-      if (this.discountValue && this.discountValue > 0) {
-        return `${parseFloat(this.discountValue)}`;
-      }
+      this.belongsTo(models.DeliveryNoteItem, {
+        as: 'salesDeliveryNoteItem',
+        foreignKey: 'itemReferenceableId',
+        constraints: false,
+      });
 
-      if (this.discountPercent && this.discountPercent > 0) {
-        return `${parseFloat(this.discountPercent)} %`;
-      }
-
-      return '';
+      this.belongsTo(models.SalesVisitationDetail, {
+        as: 'salesVisitationDetail',
+        foreignKey: 'itemReferenceableId',
+        constraints: false,
+      });
     }
 
     getTotalPrice() {
       if (this.discountValue && this.discountValue > 0) {
         return this.quantity * (this.price - this.discountValue);
-      }
-
-      if (this.discountPercent && this.discountPercent > 0) {
-        return this.quantity * this.price * this.discountPercent;
       }
 
       return this.quantity * this.price;
@@ -49,10 +41,16 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       salesInvoiceId: {
         type: DataTypes.INTEGER,
       },
-      deliveryNoteId: {
+      referenceableType: {
+        type: DataTypes.STRING,
+      },
+      referenceableId: {
         type: DataTypes.INTEGER,
       },
-      deliveryNoteItemId: {
+      itemReferenceableType: {
+        type: DataTypes.STRING,
+      },
+      itemReferenceableId: {
         type: DataTypes.INTEGER,
       },
       itemId: {
@@ -63,15 +61,27 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       quantity: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('quantity'));
+        },
       },
       price: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('price'));
+        },
       },
       discountPercent: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('discountPercent'));
+        },
       },
       discountValue: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('discountValue'));
+        },
       },
       taxable: {
         type: DataTypes.BOOLEAN,
@@ -81,12 +91,21 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       converter: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('converter'));
+        },
       },
       notes: {
         type: DataTypes.TEXT,
       },
       allocationId: {
         type: DataTypes.INTEGER,
+      },
+      expiryDate: {
+        type: DataTypes.DATE,
+      },
+      productionNumber: {
+        type: DataTypes.STRING,
       },
     },
     {

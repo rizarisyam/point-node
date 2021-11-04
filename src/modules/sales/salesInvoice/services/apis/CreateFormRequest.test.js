@@ -6,7 +6,8 @@ const ProcessSendApproval = require('../../workers/ProcessSendApproval.worker');
 const CreateFormRequest = require('./CreateFormRequest');
 
 jest.mock('../../workers/ProcessSendApproval.worker');
-Date.now = jest.fn(() => new Date(Date.UTC(2021, 0, 1)).valueOf());
+const mockedTime = new Date(Date.UTC(2021, 0, 1)).valueOf();
+Date.now = jest.fn(() => new Date(mockedTime));
 
 beforeEach(() => {
   ProcessSendApproval.mockClear();
@@ -107,8 +108,8 @@ describe('Sales Invoice - CreateFormRequest', () => {
       const firstItemSalesInvoiceCreateSalesInvoiceDto = createFormRequestDto.items[0];
       const firstSalesInvoiceItem = salesInvoiceItems[0];
 
-      expect(parseFloat(firstSalesInvoiceItem.quantity)).toEqual(firstItemSalesInvoiceCreateSalesInvoiceDto.quantity);
-      expect(parseFloat(firstSalesInvoiceItem.price)).toEqual(firstItemSalesInvoiceCreateSalesInvoiceDto.price);
+      expect(firstSalesInvoiceItem.quantity).toEqual(firstItemSalesInvoiceCreateSalesInvoiceDto.quantity);
+      expect(firstSalesInvoiceItem.price).toEqual(firstItemSalesInvoiceCreateSalesInvoiceDto.price);
     });
 
     it('has correct sales invoice data', async () => {
@@ -372,6 +373,8 @@ const generateRecordFactories = async ({
   allocation,
   deliveryNoteItem,
   formDeliveryNote,
+  inventoryForm,
+  inventory,
 } = {}) => {
   maker = maker || (await factory.user.create());
   approver = approver || (await factory.user.create());
@@ -398,6 +401,17 @@ const generateRecordFactories = async ({
       updatedBy: maker.id,
       requestApprovalTo: approver.id,
     }));
+  inventoryForm = await factory.form.create({
+    branch,
+    number: 'PI2101001',
+    formable: { id: 1 },
+    formableType: 'PurchaseInvoice',
+    createdBy: maker.id,
+    updatedBy: maker.id,
+    date: mockedTime,
+    ...inventoryForm,
+  });
+  inventory = await factory.inventory.create({ form: inventoryForm, warehouse, item });
 
   return {
     maker,
@@ -414,6 +428,8 @@ const generateRecordFactories = async ({
     allocation,
     deliveryNoteItem,
     formDeliveryNote,
+    inventoryForm,
+    inventory,
   };
 };
 
@@ -442,7 +458,7 @@ const generateCreateFormRequestDto = ({
   ],
   createdBy: maker.id,
   requestApprovalTo: approver.id,
-  dueDate: new Date('2021-09-15'),
+  dueDate: new Date('2021-01-01'),
   discountPercent: 0,
   discountValue: 0,
   customerId: customer.id,

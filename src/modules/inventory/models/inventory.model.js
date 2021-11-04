@@ -3,11 +3,11 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes, projectCode) => {
   class Inventory extends Model {
     static associate({ [projectCode]: models }) {
-      this.belongsTo(models.Warehouse, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.Warehouse, { as: 'warehouse', onDelete: 'RESTRICT' });
 
-      this.belongsTo(models.Item, { onUpdate: 'CASCADE', onDelete: 'CASCADE' });
+      this.belongsTo(models.Item, { as: 'item', onUpdate: 'CASCADE', onDelete: 'CASCADE' });
 
-      this.belongsTo(models.Form, { onUpdate: 'CASCADE', onDelete: 'CASCADE' });
+      this.belongsTo(models.Form, { as: 'form', onUpdate: 'CASCADE', onDelete: 'CASCADE' });
     }
   }
   Inventory.init(
@@ -23,6 +23,9 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       quantity: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('quantity'));
+        },
       },
       expiryDate: {
         type: DataTypes.DATE,
@@ -35,12 +38,18 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       quantityReference: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('quantityReference'));
+        },
       },
       unitReference: {
         type: DataTypes.STRING,
       },
       converterReference: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('converterReference'));
+        },
       },
       isPosted: {
         type: DataTypes.BOOLEAN,

@@ -54,10 +54,10 @@ async function restoreStock(tenantDatabase, { salesInvoice, form }) {
   if (form.approvalStatus === 1 && form.cancellationStatus !== 1) {
     updateItemsStock = salesInvoiceItems.map(async (salesInvoiceItem) => {
       const item = await salesInvoiceItem.getItem();
-      const totalQuantityItem = parseFloat(item.quantity) * parseFloat(item.converter);
+      const totalQuantityItem = item.quantity * item.converter;
 
       return item.update({
-        stock: parseFloat(item.stock) + totalQuantityItem,
+        stock: item.stock + totalQuantityItem,
       });
     });
   }

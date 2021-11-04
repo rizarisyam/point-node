@@ -10,7 +10,11 @@ class FindOne {
         id: this.salesInvoiceId,
       },
       include: [
-        { model: this.tenantDatabase.SalesInvoiceItem, as: 'items' },
+        {
+          model: this.tenantDatabase.SalesInvoiceItem,
+          as: 'items',
+          include: [{ model: this.tenantDatabase.Allocation, as: 'allocation' }],
+        },
         {
           model: this.tenantDatabase.Form,
           as: 'form',
@@ -22,7 +26,6 @@ class FindOne {
         { model: this.tenantDatabase.Customer, as: 'customer' },
       ],
     });
-    parseSalesInvoiceNumberStringToFLoat(salesInvoice);
     const referenceable = await salesInvoice.getReferenceable({
       include: [{ model: this.tenantDatabase.Form, as: 'form' }],
     });
@@ -30,21 +33,6 @@ class FindOne {
 
     return { salesInvoice };
   }
-}
-
-function parseSalesInvoiceNumberStringToFLoat(salesInvoice) {
-  salesInvoice.amount = parseFloat(salesInvoice.amount);
-  salesInvoice.discountPercent = parseFloat(salesInvoice.discountPercent);
-  salesInvoice.discountValue = parseFloat(salesInvoice.discountValue);
-  salesInvoice.remaining = parseFloat(salesInvoice.remaining);
-  salesInvoice.tax = parseFloat(salesInvoice.tax);
-
-  salesInvoice.items.forEach((item) => {
-    item.price = parseFloat(item.price);
-    item.quantity = parseFloat(item.quantity);
-    item.discountPercent = parseFloat(item.discountPercent);
-    item.discountValue = parseFloat(item.discountValue);
-  });
 }
 
 module.exports = FindOne;

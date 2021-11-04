@@ -1,10 +1,12 @@
 const { SalesInvoiceItem } = require('@src/models').tenant;
 
-async function create({ salesInvoice, deliveryNote, deliveryNoteItem, item, allocation }) {
+async function create({ salesInvoice, referenceable, referenceableItem, item, allocation }) {
   const salesInvoiceItem = await SalesInvoiceItem.create({
     salesInvoiceId: salesInvoice.id,
-    deliveryNoteId: deliveryNote.id,
-    deliveryNoteItemId: deliveryNoteItem.id,
+    referenceableId: referenceable.id,
+    referenceableType: referenceable.constructor.getMorphType(),
+    itemReferenceableId: referenceableItem.id,
+    itemReferenceableType: referenceableItem.constructor.getMorphType(),
     itemId: item.id,
     itemName: item.name,
     quantity: 10,
