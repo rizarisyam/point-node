@@ -9,11 +9,12 @@ async function create({
   requestApprovalTo,
   formable,
   formableType,
+  date = new Date(),
   number = 'DN2101001',
 }) {
   const form = await Form.create({
     branchId: branch.id,
-    date: new Date(),
+    date,
     number,
     incrementNumber,
     incrementGroup,

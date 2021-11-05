@@ -141,7 +141,13 @@ const generateRecordFactories = async ({
     }));
   salesInvoiceItem =
     salesInvoiceItem ||
-    (await factory.salesInvoiceItem.create({ salesInvoice, deliveryNote, deliveryNoteItem, item, allocation }));
+    (await factory.salesInvoiceItem.create({
+      salesInvoice,
+      referenceable: deliveryNote,
+      referenceableItem: deliveryNoteItem,
+      item,
+      allocation,
+    }));
   formSalesInvoice =
     formSalesInvoice ||
     (await factory.form.create({

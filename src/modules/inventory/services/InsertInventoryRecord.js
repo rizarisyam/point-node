@@ -24,7 +24,6 @@ class InsertInventoryRecord {
       warehouse: this.warehouse,
       form: this.form,
     });
-
     const inventory = await this.tenantDatabase.Inventory.create(
       {
         formId: this.form.id,
@@ -37,7 +36,7 @@ class InsertInventoryRecord {
         ...(this.options.expiryDate && { expiryDate: this.options.expiryDate }),
         ...(this.options.productionNumber && { productionNumber: this.options.productionNumber }),
       },
-      ...(this.transaction && { transaction: this.transaction })
+      { transaction: this.transaction }
     );
 
     return { inventory };
@@ -69,12 +68,18 @@ async function validate(tenantDatabase, { quantity, item, options, warehouse, fo
 async function getExistingAudit(tenantDatabase, { item, date, warehouse }) {
   const existingAudit = await tenantDatabase.InventoryAuditItem.findOne({
     where: {
-      '$form.date$': { [Op.lte]: date },
-      '$form.cancellation_status$': { [Op.ne]: 1 },
-      warehouseId: warehouse.id,
+      '$inventoryAudit.form.date$': { [Op.lte]: date },
+      '$inventoryAudit.form.cancellation_status$': { [Op.ne]: 1 },
+      '$inventoryAudit.warehouse_id$': warehouse.id,
       itemId: item.id,
     },
-    include: [{ model: tenantDatabase.Form, as: 'form' }],
+    include: [
+      {
+        model: tenantDatabase.InventoryAudit,
+        as: 'inventoryAudit',
+        include: [{ model: tenantDatabase.Form, as: 'form' }],
+      },
+    ],
   });
 
   return existingAudit;

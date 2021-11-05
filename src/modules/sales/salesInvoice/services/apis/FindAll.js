@@ -31,7 +31,6 @@ class FindAll {
       offset: offsetParams(queryPage, queryLimit),
       subQuery: false,
     });
-    parseSalesInvoiceNumberStringToFLoat(salesInvoices);
 
     const totalPage = Math.ceil(total / parseInt(queryLimit, 10));
 
@@ -134,23 +133,6 @@ function generateFilterFormStatus(formQueries) {
   }
 
   return result;
-}
-
-function parseSalesInvoiceNumberStringToFLoat(salesInvoices) {
-  salesInvoices.forEach((salesInvoice) => {
-    salesInvoice.amount = parseFloat(salesInvoice.amount);
-    salesInvoice.discountPercent = parseFloat(salesInvoice.discountPercent);
-    salesInvoice.discountValue = parseFloat(salesInvoice.discountValue);
-    salesInvoice.remaining = parseFloat(salesInvoice.remaining);
-    salesInvoice.tax = parseFloat(salesInvoice.tax);
-
-    salesInvoice.items.forEach((item) => {
-      item.price = parseFloat(item.price);
-      item.quantity = parseFloat(item.quantity);
-      item.discountPercent = parseFloat(item.discountPercent);
-      item.discountValue = parseFloat(item.discountValue);
-    });
-  });
 }
 
 function offsetParams(page = 1, maxItem = 10) {

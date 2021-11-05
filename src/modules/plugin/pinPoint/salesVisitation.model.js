@@ -10,10 +10,11 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       this.belongsTo(models.Warehouse, { as: 'warehouse', onDelete: 'RESTRICT' });
 
       this.hasMany(models.SalesVisitationDetail, { as: 'items' });
+
+      this.hasMany(models.SalesVisitationDetail, { as: 'itemsQuery' });
     }
 
-    // eslint-disable-next-line class-methods-use-this
-    getMorphType() {
+    static getMorphType() {
       return 'SalesVisitation';
     }
   }

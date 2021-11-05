@@ -5,11 +5,15 @@ module.exports = (sequelize, DataTypes, projectCode) => {
     static associate({ [projectCode]: models }) {
       this.belongsTo(models.DeliveryNote, { onDelete: 'CASCADE' });
 
-      this.belongsTo(models.Item, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.Item, { as: 'item', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.Allocation, { as: 'allocation', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.DeliveryOrderItem, { as: 'deliveryOrderItem' });
+    }
+
+    static getMorphType() {
+      return 'SalesDeliveryNoteItem';
     }
   }
   DeliveryNoteItem.init(
@@ -28,15 +32,27 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       grossWeight: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('grossWeight'));
+        },
       },
       tareWeight: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('tareWeight'));
+        },
       },
       netWeight: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('netWeight'));
+        },
       },
       quantity: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('quantity'));
+        },
       },
       expiryDate: {
         type: DataTypes.DATE,
@@ -46,12 +62,21 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       price: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('price'));
+        },
       },
       discountPercent: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('discountPercent'));
+        },
       },
       discountValue: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('discountValue'));
+        },
       },
       taxable: {
         type: DataTypes.BOOLEAN,
@@ -61,6 +86,9 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       converter: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('converter'));
+        },
       },
       notes: {
         type: DataTypes.TEXT,

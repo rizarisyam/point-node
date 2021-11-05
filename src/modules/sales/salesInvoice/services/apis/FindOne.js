@@ -10,7 +10,11 @@ class FindOne {
         id: this.salesInvoiceId,
       },
       include: [
-        { model: this.tenantDatabase.SalesInvoiceItem, as: 'items' },
+        {
+          model: this.tenantDatabase.SalesInvoiceItem,
+          as: 'items',
+          include: [{ model: this.tenantDatabase.Allocation, as: 'allocation' }],
+        },
         {
           model: this.tenantDatabase.Form,
           as: 'form',

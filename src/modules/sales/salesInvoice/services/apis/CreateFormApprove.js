@@ -1,5 +1,6 @@
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
+const InsertInventoryRecord = require('@src/modules/inventory/services/InsertInventoryRecord');
 
 class CreateFormApprove {
   constructor(tenantDatabase, { approver, salesInvoiceId }) {
@@ -21,7 +22,6 @@ class CreateFormApprove {
     if (form.approvalStatus === 1) {
       return { salesInvoice };
     }
-
     await this.tenantDatabase.sequelize.transaction(async (transaction) => {
       await updateInventory(this.tenantDatabase, { transaction, salesInvoice, form });
       await updateJournal(this.tenantDatabase, { transaction, salesInvoice, form });
@@ -159,22 +159,21 @@ async function updateInventory(tenantDatabase, { transaction, salesInvoice, form
     const item = await salesInvoiceItem.getItem();
     const reference = await salesInvoice.getReferenceable();
     const warehouse = await reference.getWarehouse();
+    const quantity = Math.abs(salesInvoiceItem.quantity) * -1;
 
-    const quantity = parseFloat(salesInvoiceItem.quantity) * parseFloat(salesInvoiceItem.converter) * -1;
-    const quantityReference = parseFloat(salesInvoiceItem.quantity) * -1;
-
-    return tenantDatabase.Inventory.create(
-      {
-        formId: form.id,
-        warehouseId: warehouse.id,
-        itemId: item.id,
-        quantity,
-        quantityReference,
-        unitReference: salesInvoiceItem.unit,
-        converterReference: parseFloat(salesInvoiceItem.converter),
+    return new InsertInventoryRecord(tenantDatabase, {
+      form,
+      warehouse,
+      item,
+      quantity,
+      unit: salesInvoiceItem.unit,
+      converter: salesInvoiceItem.converter,
+      options: {
+        expiryDate: salesInvoiceItem.expiryDate,
+        productionNumber: salesInvoiceItem.productionNumber,
       },
-      { transaction }
-    );
+      transaction,
+    }).call();
   });
 
   await Promise.all(doUpdateInventory);

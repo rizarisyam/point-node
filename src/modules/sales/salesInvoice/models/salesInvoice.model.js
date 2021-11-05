@@ -51,7 +51,7 @@ module.exports = (sequelize, DataTypes, projectCode) => {
 
     async getTotalDetails() {
       const items = await this.getItems();
-      const subTotal = getSubTotal(items);
+      const subTotal = await getSubTotal(items);
       const taxBase = getTaxBase(subTotal, this.discountValue, this.discountPercent);
 
       return {
@@ -144,24 +144,17 @@ module.exports = (sequelize, DataTypes, projectCode) => {
   return SalesInvoice;
 };
 
-function getSubTotal(items) {
-  const subTotal = items.reduce((result, item) => {
-    return result + getItemsPrice(item);
+async function getSubTotal(items) {
+  const subTotal = await items.reduce(async (result, item) => {
+    const itemsPrice = await getItemsPrice(item);
+    return result + itemsPrice;
   }, 0);
 
   return subTotal;
 }
 
-function getItemsPrice(item) {
-  let perItemPrice = item.price;
-  if (item.discountValue > 0) {
-    perItemPrice -= item.discountValue;
-  }
-  if (item.discountPercent > 0) {
-    const discountPercent = item.discountPercent / 100;
-    perItemPrice -= perItemPrice * discountPercent;
-  }
-  const totalItemPrice = perItemPrice * item.quantity;
+async function getItemsPrice(item) {
+  const totalItemPrice = await item.getTotalPrice();
 
   return totalItemPrice;
 }

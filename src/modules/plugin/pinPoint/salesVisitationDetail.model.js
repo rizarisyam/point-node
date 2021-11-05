@@ -7,6 +7,10 @@ module.exports = (sequelize, DataTypes, projectCode) => {
 
       this.belongsTo(models.Item, { as: 'item', onDelete: 'RESTRICT' });
     }
+
+    static getMorphType() {
+      return 'SalesVisitationDetail';
+    }
   }
   SalesVisitationDetail.init(
     {
@@ -18,15 +22,24 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       quantity: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('quantity'));
+        },
       },
       unit: {
         type: DataTypes.STRING,
       },
       converter: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('converter'));
+        },
       },
       price: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('price'));
+        },
       },
       expiryDate: {
         type: DataTypes.DATE,

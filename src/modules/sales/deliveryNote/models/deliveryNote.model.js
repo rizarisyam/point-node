@@ -21,8 +21,7 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       });
     }
 
-    // eslint-disable-next-line class-methods-use-this
-    getMorphType() {
+    static getMorphType() {
       return 'SalesDeliveryNote';
     }
   }

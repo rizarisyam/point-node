@@ -6,7 +6,7 @@ const config = require('@src/config/config');
 const tokenService = require('@src/modules/auth/services/token.service');
 const Mailer = require('@src/utils/Mailer');
 const getCurrentTenantDatabase = require('@src/utils/getCurrentTenantDatabase');
-const ProcessSendApprovalWorker = require('../workers/ProcessSendApproval.worker');
+const currencyFormat = require('@src/utils/currencyFormat');
 
 class ProcessSendApproval {
   constructor(tenantName, salesInvoiceId) {
@@ -21,13 +21,14 @@ class ProcessSendApproval {
     if (salesInvoiceForm.approvalStatus !== 0) {
       return;
     }
+
     const maker = await salesInvoiceForm.getCreatedByUser();
     const approver = await salesInvoiceForm.getRequestApprovalToUser();
     const reference = await salesInvoice.getReferenceable();
     const formReference = await reference.getForm();
 
     try {
-      const emailBody = await generateApprovalEmailBody({
+      const emailBody = await generateApprovalEmailBody(tenantDatabase, {
         tenantName: this.tenantName,
         maker,
         approver,
@@ -45,34 +46,32 @@ class ProcessSendApproval {
       logger.info(
         `Sales invoice approval email sent, id: ${messageId}, email: ${to}, sales invoice: ${salesInvoiceForm.number}}`
       );
-
-      new ProcessSendApprovalWorker({
-        tenantName: this.tenantName,
-        salesInvoiceId: this.salesInvoiceId,
-        // options: { delay: 1000 * 60 * 60 * 24 * 1 }, // 1 day
-        options: { delay: 1000 * 60 * 1 }, // 1 minute
-      }).call();
     } catch (error) {
       logger.error(error);
     }
   }
 }
 
-async function generateApprovalEmailBody({ tenantName, maker, approver, salesInvoiceForm, formReference, salesInvoice }) {
+async function generateApprovalEmailBody(
+  tenantDatabase,
+  { tenantName, maker, approver, salesInvoiceForm, formReference, salesInvoice }
+) {
   let emailBody = fs.readFileSync(path.resolve(__dirname, '../mails/salesInvoiceApproval.html'), 'utf8');
   let itemsHtml = '';
 
-  const salesInvoiceItems = await salesInvoice.getItems();
+  const salesInvoiceItems = await salesInvoice.getItems({
+    include: [{ model: tenantDatabase.Allocation, as: 'allocation' }],
+  });
   salesInvoiceItems.forEach((salesInvoiceItem, index) => {
     itemsHtml += `
     <tr>
       <td>${index + 1}</td>
       <td>${salesInvoiceItem.itemName}</td>
       <td>${salesInvoiceItem?.allocation?.name || ''}</td>
-      <td>${parseFloat(salesInvoiceItem.quantity)} ${salesInvoiceItem.unit}</td>
-      <td>${parseFloat(salesInvoiceItem.price)}</td>
-      <td>${salesInvoiceItem.getDiscountString()}</td>
-      <td>${salesInvoiceItem.getTotalPrice()}</td>
+      <td>${currencyFormat(salesInvoiceItem.quantity)} ${salesInvoiceItem.unit}</td>
+      <td>${currencyFormat(salesInvoiceItem.price)}</td>
+      <td>${currencyFormat(salesInvoiceItem.discountValue)}</td>
+      <td>${currencyFormat(salesInvoiceItem.getTotalPrice())}</td>
     </tr>
     `;
   });
@@ -91,11 +90,11 @@ async function generateApprovalEmailBody({ tenantName, maker, approver, salesInv
   emailBody = emailBody.replaceAll('{{createdBy}}', maker.name);
   emailBody = emailBody.replaceAll('{{notes}}', salesInvoiceForm.notes || '');
   emailBody = emailBody.replaceAll('{{items}}', itemsHtml);
-  emailBody = emailBody.replaceAll('{{subTotal}}', subTotal);
-  emailBody = emailBody.replaceAll('{{discount}}', salesInvoice.getDiscountString());
-  emailBody = emailBody.replaceAll('{{taxBase}}', taxBase);
-  emailBody = emailBody.replaceAll('{{tax}}', tax);
-  emailBody = emailBody.replaceAll('{{total}}', amount);
+  emailBody = emailBody.replaceAll('{{subTotal}}', currencyFormat(subTotal));
+  emailBody = emailBody.replaceAll('{{discount}}', currencyFormat(salesInvoice.discountValue));
+  emailBody = emailBody.replaceAll('{{taxBase}}', currencyFormat(taxBase));
+  emailBody = emailBody.replaceAll('{{tax}}', currencyFormat(tax));
+  emailBody = emailBody.replaceAll('{{total}}', currencyFormat(amount));
   emailBody = emailBody.replaceAll('{{checkLink}}', `${tenantWebsite}/sales/invoice/${salesInvoice.id}`);
   emailBody = emailBody.replaceAll(
     '{{approveLink}}',
