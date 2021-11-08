@@ -9,8 +9,7 @@ module.exports = (sequelize, DataTypes, projectCode) => {
 
       this.belongsTo(models.User, { as: 'archivedByUser', foreignKey: 'archivedBy', onDelete: 'RESTRICT' });
 
-      // TODO: Add ChartOfAccount model
-      // this.belongsTo(models.ChartOfAccount, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.ChartOfAccount, { onDelete: 'RESTRICT' });
     }
 
     async calculateCogs() {

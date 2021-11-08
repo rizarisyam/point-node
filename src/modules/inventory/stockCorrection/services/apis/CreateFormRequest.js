@@ -174,7 +174,7 @@ async function addStockCorrectionItem(
     const itemStock = await new GetCurrentStock(tenantDatabase, {
       item,
       date: stockCorrectionForm.date,
-      warehouse,
+      warehouseId: warehouse.id,
       options: {
         expiryDate: itemRequest.expiryDate,
         productionNumber: itemRequest.productionNumber,

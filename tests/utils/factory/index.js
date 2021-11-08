@@ -14,6 +14,8 @@ const userWarehouse = require('./userWarehouse');
 const warehouse = require('./warehouse');
 const salesInvoice = require('./salesInvoice');
 const salesInvoiceItem = require('./salesInvoiceItem');
+const stockCorrection = require('./stockCorrection');
+const stockCorrectionItem = require('./stockCorrectionItem');
 
 const factory = {
   allocation,
@@ -32,6 +34,8 @@ const factory = {
   warehouse,
   salesInvoice,
   salesInvoiceItem,
+  stockCorrection,
+  stockCorrectionItem,
 };
 
 module.exports = factory;

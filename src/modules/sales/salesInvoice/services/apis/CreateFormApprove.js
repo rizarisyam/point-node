@@ -17,6 +17,7 @@ class CreateFormApprove {
     if (!salesInvoice) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Sales invoice is not exist');
     }
+
     const form = await salesInvoice.getForm();
     validate(form, this.approver);
     if (form.approvalStatus === 1) {
