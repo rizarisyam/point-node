@@ -75,6 +75,12 @@ describe('Sales Invoice - CreateFormApproveByToken', () => {
         description: 'income tax payable',
         chartOfAccountId: chartOfAccount.id,
       });
+      await tenantDatabase.SettingJournal.create({
+        feature: 'sales',
+        name: 'cost of sales',
+        description: 'cost of sales',
+        chartOfAccountId: chartOfAccount.id,
+      });
 
       const token = await createToken(salesInvoice, approver);
 

@@ -21,7 +21,7 @@ class DeleteFormApprove {
 
     const { form } = salesInvoice;
     await deleteJournal(this.tenantDatabase, form);
-    await restoreStock(this.tenantDatabase, { salesInvoice, form });
+    await deleteInventory(this.tenantDatabase, form);
     await updateForm(form, this.approver);
 
     return { salesInvoice };
@@ -34,7 +34,7 @@ function validate(salesInvoice, approver) {
   }
   const { form } = salesInvoice;
   if (form.requestApprovalTo !== approver.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden -  You are not the selected approver');
   }
   if (form.cancellationStatus !== 0) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Sales invoice is not requested to be delete');
@@ -46,23 +46,6 @@ function validate(salesInvoice, approver) {
 
 async function deleteJournal(tenantDatabase, form) {
   await tenantDatabase.Journal.destroy({ where: { formId: form.id } });
-}
-
-async function restoreStock(tenantDatabase, { salesInvoice, form }) {
-  const salesInvoiceItems = salesInvoice.items;
-  let updateItemsStock = [];
-  if (form.approvalStatus === 1 && form.cancellationStatus !== 1) {
-    updateItemsStock = salesInvoiceItems.map(async (salesInvoiceItem) => {
-      const item = await salesInvoiceItem.getItem();
-      const totalQuantityItem = item.quantity * item.converter;
-
-      return item.update({
-        stock: item.stock + totalQuantityItem,
-      });
-    });
-  }
-
-  await Promise.all([...updateItemsStock, deleteInventory(tenantDatabase, form)]);
 }
 
 function deleteInventory(tenantDatabase, form) {

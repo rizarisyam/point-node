@@ -34,7 +34,7 @@ describe('Sales Invoice - CreateFormRequest', () => {
 
       await expect(async () => {
         await new CreateFormRequest(tenantDatabase, { maker, createFormRequestDto }).call();
-      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
+      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Invalid default branch'));
     });
 
     it("can't create when requested by user that does not have warehouse default", async () => {
@@ -57,7 +57,7 @@ describe('Sales Invoice - CreateFormRequest', () => {
 
       await expect(async () => {
         await new CreateFormRequest(tenantDatabase, { maker, createFormRequestDto }).call();
-      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
+      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Invalid default warehouse'));
     });
   });
 

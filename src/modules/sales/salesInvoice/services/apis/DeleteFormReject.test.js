@@ -28,7 +28,7 @@ describe('Sales Invoice - DeleteFormReject', () => {
           salesInvoiceId: salesInvoice.id,
           deleteFormRejectDto,
         }).call();
-      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
+      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the selected approver'));
     });
 
     it('throw error when sales invoice not requested to be delete', async () => {

@@ -15,7 +15,7 @@ class CreateFormRejectByToken {
     try {
       const payload = await tokenService.verifyToken(this.token);
       if (!payload) {
-        throw new ApiError(httpStatus.FORBIDDEN, 'FORBIDDEN');
+        throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
       }
       const { salesInvoiceId, userId } = payload;
       const approver = await this.tenantDatabase.User.findOne({ where: { id: userId } });
