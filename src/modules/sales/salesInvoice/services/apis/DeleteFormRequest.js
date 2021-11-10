@@ -18,7 +18,7 @@ class DeleteFormRequest {
     validate(salesInvoice, this.maker);
 
     const { form } = salesInvoice;
-    form.update({
+    await form.update({
       cancellationStatus: 0,
       requestCancellationBy: this.maker.id,
       requestCancellationTo: form.requestApprovalTo,

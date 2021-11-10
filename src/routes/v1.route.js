@@ -2,6 +2,7 @@ const express = require('express');
 const setupDatabase = require('@src/middlewares/setupDatabase');
 const config = require('../config/config');
 const salesInvoiceRoute = require('../modules/sales/salesInvoice/routes');
+const stockCorrectionRoute = require('../modules/inventory/stockCorrection/routes');
 const authRoute = require('../modules/auth/routes');
 const settingRoute = require('../modules/setting/routes');
 
@@ -23,6 +24,10 @@ const defaultRoutes = [
   {
     path: '/setting',
     route: settingRoute,
+  },
+  {
+    path: '/inventory/corrections',
+    route: stockCorrectionRoute,
   },
 ];
 

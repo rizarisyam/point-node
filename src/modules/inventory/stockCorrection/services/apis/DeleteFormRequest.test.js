@@ -1,16 +1,47 @@
-// const httpStatus = require('http-status');
-// const ApiError = require('@src/utils/ApiError');
+const httpStatus = require('http-status');
+const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
 const DeleteFormRequest = require('./DeleteFormRequest');
 
 describe('Stock Correction - Delete Form Request', () => {
+  describe('validations', () => {
+    it('throw error when stock correction is not exist', async () => {
+      const maker = await factory.user.create();
+
+      await expect(async () => {
+        await new DeleteFormRequest(tenantDatabase, {
+          maker,
+          stockCorrectionId: 'invalid-id',
+          deleteFormRequestDto: {
+            reason: 'example reason',
+          },
+        }).call();
+      }).rejects.toThrow(new ApiError(httpStatus.NOT_FOUND, 'Stock correction is not exist'));
+    });
+
+    it('throw error when approved by unwanted user', async () => {
+      const hacker = await factory.user.create();
+      const { stockCorrection } = await generateRecordFactories();
+
+      await expect(async () => {
+        await new DeleteFormRequest(tenantDatabase, {
+          maker: hacker,
+          stockCorrectionId: stockCorrection.id,
+          deleteFormRequestDto: {
+            reason: 'example reason',
+          },
+        }).call();
+      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the maker of the stock correction'));
+    });
+  });
+
   describe('success', () => {
-    let stockCorrection, formStockCorrection, deleteFormRequestDto;
+    let stockCorrection, stockCorrectionForm, deleteFormRequestDto;
     beforeEach(async (done) => {
       const recordFactories = await generateRecordFactories();
       const { maker } = recordFactories;
-      ({ stockCorrection, formStockCorrection } = recordFactories);
+      ({ stockCorrection, stockCorrectionForm } = recordFactories);
 
       deleteFormRequestDto = {
         reason: 'example reason',
@@ -26,27 +57,52 @@ describe('Stock Correction - Delete Form Request', () => {
     });
 
     it('change form cancellation status to pending', async () => {
-      await formStockCorrection.reload();
-      expect(formStockCorrection.cancellationStatus).toEqual(0);
-      expect(formStockCorrection.requestCancellationReason).toEqual(deleteFormRequestDto.reason);
+      await stockCorrectionForm.reload();
+      expect(stockCorrectionForm.cancellationStatus).toEqual(0);
+      expect(stockCorrectionForm.requestCancellationReason).toEqual(deleteFormRequestDto.reason);
     });
   });
 });
 
-const generateRecordFactories = async ({ maker, approver, branch, warehouse, allocation, item }) => {
+const generateRecordFactories = async ({
+  maker,
+  approver,
+  branch,
+  warehouse,
+  item,
+  stockCorrection,
+  stockCorrectionItem,
+  stockCorrectionForm,
+} = {}) => {
   maker = await factory.user.create(maker);
   approver = await factory.user.create(approver);
   branch = await factory.branch.create(branch);
-  warehouse = await factory.warehouse.create(warehouse);
-  allocation = await factory.allocation.create({ branch, ...allocation });
+  warehouse = await factory.warehouse.create({ branch, ...warehouse });
   item = await factory.item.create(item);
+  stockCorrection = await factory.stockCorrection.create({ warehouse, ...stockCorrection });
+  stockCorrectionItem = await factory.stockCorrectionItem.create({
+    stockCorrection,
+    quantity: 10,
+    item,
+  });
+  stockCorrectionForm = await factory.form.create({
+    branch,
+    createdBy: maker.id,
+    updatedBy: maker.id,
+    requestApprovalTo: approver.id,
+    formable: stockCorrection,
+    formableType: 'StockCorrection',
+    number: 'SC2101001',
+  });
 
   return {
     maker,
     approver,
     branch,
     warehouse,
-    allocation,
     item,
+    stockCorrection,
+    stockCorrectionItem,
+    stockCorrectionForm,
   };
 };
