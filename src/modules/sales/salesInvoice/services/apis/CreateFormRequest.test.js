@@ -408,7 +408,7 @@ const generateRecordFactories = async ({
     formableType: 'PurchaseInvoice',
     createdBy: maker.id,
     updatedBy: maker.id,
-    date: mockedTime,
+    date: new Date(mockedTime - 1000),
     ...inventoryForm,
   });
   inventory = await factory.inventory.create({ form: inventoryForm, warehouse, item });
