@@ -21,7 +21,7 @@ describe('Sales Invoice - DeleteFormApprove', () => {
 
       await expect(async () => {
         await new DeleteFormApprove(tenantDatabase, { approver: hacker, salesInvoiceId: salesInvoice.id }).call();
-      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
+      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden -  You are not the selected approver'));
     });
 
     it('throw error when sales invoice not requested to be delete', async () => {

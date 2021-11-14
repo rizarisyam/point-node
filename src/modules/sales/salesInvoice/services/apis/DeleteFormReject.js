@@ -35,7 +35,7 @@ function validate(salesInvoice, approver) {
   }
   const { form } = salesInvoice;
   if (form.requestApprovalTo !== approver.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the selected approver');
   }
   if (form.cancellationStatus !== 0) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Sales invoice is not requested to be delete');

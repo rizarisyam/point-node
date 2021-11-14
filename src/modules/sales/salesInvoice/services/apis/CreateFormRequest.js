@@ -71,7 +71,7 @@ async function validateBranchDefaultPermission(tenantDatabase, { maker, formRefe
     },
   });
   if (!branchUser) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Invalid default branch');
   }
 }
 
@@ -84,7 +84,7 @@ async function validateBranchDefaultPermissionSalesVisitation(tenantDatabase, { 
     },
   });
   if (!branchUser) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Invalid default branch');
   }
 }
 
@@ -97,7 +97,7 @@ async function validateWarehouseDefaultPermission(tenantDatabase, { maker, refer
     },
   });
   if (!userWarehouse) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Invalid default warehouse');
   }
 }
 

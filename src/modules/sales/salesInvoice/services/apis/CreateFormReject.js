@@ -37,7 +37,7 @@ class CreateFormReject {
 
 function validate({ form, salesInvoice, approver }) {
   if (form.requestApprovalTo !== approver.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the selected approver');
   }
   if (form.approvalStatus === -1) {
     return { salesInvoice };

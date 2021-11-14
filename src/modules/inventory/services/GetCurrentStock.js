@@ -1,4 +1,3 @@
-const moment = require('moment');
 const { Op, Sequelize } = require('sequelize');
 
 class GetCurrentStock {
@@ -32,12 +31,10 @@ class GetCurrentStock {
 }
 
 function generateFilter({ item, warehouseId, date, options }) {
-  const onlyDateFormDateFormat = moment(date).format('YYYY-MM-DD');
   const filter = {
     itemId: item.id,
     warehouseId,
-    '$form.date$': { [Op.lte]: onlyDateFormDateFormat },
-    // '$form.date$': Sequelize.where(Sequelize.fn('date', Sequelize.col('date')), '<=', onlyDateFormDateFormat),
+    '$form.date$': { [Op.lt]: date },
   };
   if (item.requireExpiryDate) {
     filter.expiryDate = options.expiryDate;

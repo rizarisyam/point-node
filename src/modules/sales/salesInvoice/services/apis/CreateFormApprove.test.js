@@ -20,7 +20,7 @@ describe('Sales Invoice - CreateFormApprove', () => {
 
       await expect(async () => {
         await new CreateFormApprove(tenantDatabase, { approver: hacker, salesInvoiceId: salesInvoice.id }).call();
-      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
+      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the selected approver'));
     });
 
     it('throw error when sales invoice is already rejected', async () => {
@@ -177,6 +177,12 @@ const generateRecordFactories = async ({
     feature: 'sales',
     name: 'income tax payable',
     description: 'income tax payable',
+    chartOfAccountId: chartOfAccount.id,
+  });
+  await tenantDatabase.SettingJournal.create({
+    feature: 'sales',
+    name: 'cost of sales',
+    description: 'cost of sales',
     chartOfAccountId: chartOfAccount.id,
   });
 

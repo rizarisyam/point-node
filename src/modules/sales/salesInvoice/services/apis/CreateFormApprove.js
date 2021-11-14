@@ -42,7 +42,7 @@ class CreateFormApprove {
 
 function validate(form, approver) {
   if (form.requestApprovalTo !== approver.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the selected approver');
   }
   if (form.approvalStatus === -1) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Sales invoice already rejected');
@@ -94,6 +94,7 @@ async function createJournalSalesIncome(tenantDatabase, { transaction, salesInvo
 }
 
 async function createJournalInventoriesAndCogs(tenantDatabase, { transaction, salesInvoice, form }) {
+  const costOfSalesSettingJournal = await getSettingJournal(tenantDatabase, { feature: 'sales', name: 'cost of sales' });
   const creations = salesInvoice.items.map(async (salesInvoiceItem) => {
     const cogs = await salesInvoiceItem.item.calculateCogs();
 
@@ -113,7 +114,7 @@ async function createJournalInventoriesAndCogs(tenantDatabase, { transaction, sa
         formId: form.id,
         journalableType: 'Item',
         journalableId: salesInvoiceItem.itemId,
-        chartOfAccountId: salesInvoiceItem.item.chartOfAccountId,
+        chartOfAccountId: costOfSalesSettingJournal.chartOfAccountId,
         debit: cogs * salesInvoiceItem.quantity,
       },
       { transaction }

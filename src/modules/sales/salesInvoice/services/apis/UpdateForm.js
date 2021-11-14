@@ -22,7 +22,7 @@ class UpdateForm {
     validate(form, this.maker);
 
     await deleteJournal(this.tenantDatabase, form);
-    await restoreStock(this.tenantDatabase, { salesInvoice, form });
+    await deleteInventory(this.tenantDatabase, form);
     await updateSalesInvoice(salesInvoice, this.updateFormDto);
     await updateSalesInvoiceForm({
       maker: this.maker,
@@ -39,7 +39,7 @@ class UpdateForm {
 
 function validate(form, maker) {
   if (form.createdBy !== maker.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Only maker can update the invoice');
   }
 }
 
@@ -170,23 +170,6 @@ async function buildFormData({ maker, updateFormDto }) {
 
 async function deleteJournal(tenantDatabase, form) {
   await tenantDatabase.Journal.destroy({ where: { formId: form.id } });
-}
-
-async function restoreStock(tenantDatabase, { salesInvoice, form }) {
-  const salesInvoiceItems = salesInvoice.items;
-  let updateItemsStock = [];
-  if (form.approvalStatus === 1 && form.cancellationStatus !== 1) {
-    updateItemsStock = salesInvoiceItems.map(async (salesInvoiceItem) => {
-      const item = await salesInvoiceItem.getItem();
-      const totalQuantityItem = item.quantity * item.converter;
-
-      return item.update({
-        stock: item.stock + totalQuantityItem,
-      });
-    });
-  }
-
-  await Promise.all([...updateItemsStock, deleteInventory(tenantDatabase, form)]);
 }
 
 function deleteInventory(tenantDatabase, form) {
