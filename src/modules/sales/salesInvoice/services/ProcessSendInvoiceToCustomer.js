@@ -43,23 +43,27 @@ class ProcessSendInvoiceToCustomer {
 }
 
 function generateEmailBody({ maker, salesInvoice, message }) {
-  let emailBody = fs.readFileSync(path.resolve(__dirname, '../mails/salesInvoiceCustomerNotif.html'), 'utf8');
-  emailBody = emailBody.replaceAll('{{customerName}}', salesInvoice.customerName);
-  emailBody = emailBody.replaceAll('{{makerName}}', maker.name);
+  try {
+    let emailBody = fs.readFileSync(path.resolve(__dirname, '../mails/salesInvoiceCustomerNotif.html'), 'utf8');
+    emailBody = emailBody.replaceAll('{{customerName}}', salesInvoice.customerName);
+    emailBody = emailBody.replaceAll('{{makerName}}', maker.name);
 
-  if (!message) {
-    emailBody = emailBody.replaceAll('{{message}}', '');
-  } else {
-    emailBody = emailBody.replaceAll(
-      '{{message}}',
-      `
-        Message: <br>
-        ${message}
-      `
-    );
+    if (!message) {
+      emailBody = emailBody.replaceAll('{{message}}', '');
+    } else {
+      emailBody = emailBody.replaceAll(
+        '{{message}}',
+        `
+          Message: <br>
+          ${message}
+        `
+      );
+    }
+
+    return emailBody;
+  } catch (error) {
+    logger.error(error);
   }
-
-  return emailBody;
 }
 
 async function generateAttachmentPdf(tenantDatabase, { salesInvoiceForm, salesInvoice }) {
