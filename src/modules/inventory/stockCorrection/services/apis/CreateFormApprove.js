@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
 const InsertInventoryRecord = require('@src/modules/inventory/services/InsertInventoryRecord');
+const GetCurrentStock = require('../../../services/GetCurrentStock');
 
 class CreateFormApprove {
   constructor(tenantDatabase, { approver, stockCorrectionId }) {
@@ -32,6 +33,7 @@ class CreateFormApprove {
     }
 
     await this.tenantDatabase.sequelize.transaction(async (transaction) => {
+      await updateStockCorretionItems(this.tenantDatabase, { stockCorrection, transaction });
       await updateInventory(this.tenantDatabase, { stockCorrection, stockCorrectionForm, transaction });
       await updateJournal(this.tenantDatabase, { stockCorrection, stockCorrectionForm, transaction });
       await stockCorrectionForm.update(
@@ -58,6 +60,31 @@ function validate(stockCorrectionForm, approver) {
   }
 }
 
+async function updateStockCorretionItems(tenantDatabase, { stockCorrection, transaction }) {
+  const { items: stockCorrectionItems, form: stockCorrectionForm } = stockCorrection;
+  const doUpdateStockCorrectionItems = stockCorrectionItems.map(async (stockCorrectionItem) => {
+    const currentStock = await new GetCurrentStock(tenantDatabase, {
+      item: stockCorrectionItem.item,
+      date: stockCorrectionForm.date,
+      warehouseId: stockCorrection.warehouseId,
+      options: {
+        expiryDate: stockCorrectionItem.expiryDate,
+        productionNumber: stockCorrectionItem.productionNumber,
+      },
+    }).call();
+
+    return stockCorrectionItem.update(
+      {
+        initialStock: currentStock,
+        finalStock: currentStock + stockCorrectionItem.quantity,
+      },
+      { transaction }
+    );
+  });
+
+  await Promise.all(doUpdateStockCorrectionItems);
+}
+
 async function updateInventory(tenantDatabase, { transaction, stockCorrection, stockCorrectionForm }) {
   const stockCorrectionItems = stockCorrection.items;
   const doUpdateInventory = stockCorrectionItems.map(async (stockCorrectionItem) => {
@@ -66,7 +93,7 @@ async function updateInventory(tenantDatabase, { transaction, stockCorrection, s
     }
     const item = await stockCorrectionItem.getItem();
     const warehouse = await stockCorrection.getWarehouse();
-    const quantity = Math.abs(stockCorrectionItem.quantity) * -1;
+    const { quantity } = stockCorrectionItem;
 
     return new InsertInventoryRecord(tenantDatabase, {
       form: stockCorrectionForm,
@@ -102,7 +129,9 @@ async function updateJournal(tenantDatabase, { stockCorrection, stockCorrectionF
         journalableType: 'Item',
         journalableId: stockCorrectionItem.itemId,
         chartOfAccountId: stockCorrectionItem.item.chartOfAccountId,
-        ...(isDecrement ? { credit: cogs * stockCorrectionItem.quantity } : { debit: cogs * stockCorrectionItem.quantity }),
+        ...(isDecrement
+          ? { credit: cogs * stockCorrectionItem.quantity }
+          : { debit: cogs * Math.abs(stockCorrectionItem.quantity) }),
       },
       { transaction }
     );
@@ -114,7 +143,9 @@ async function updateJournal(tenantDatabase, { stockCorrection, stockCorrectionF
         journalableType: 'Item',
         journalableId: stockCorrectionItem.itemId,
         chartOfAccountId: settingJournalDifferenceStockExpenses.chartOfAccountId,
-        ...(isDecrement ? { debit: cogs * stockCorrectionItem.quantity } : { credit: cogs * stockCorrectionItem.quantity }),
+        ...(isDecrement
+          ? { debit: cogs * stockCorrectionItem.quantity }
+          : { credit: cogs * Math.abs(stockCorrectionItem.quantity) }),
       },
       { transaction }
     );

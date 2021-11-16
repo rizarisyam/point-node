@@ -1,5 +1,4 @@
 const { Joi } = require('celebrate');
-const moment = require('moment');
 
 const requireAuth = {
   headers: Joi.object({
@@ -16,7 +15,7 @@ const requireStockCorrectionId = {
 const createFormRequest = {
   body: Joi.object({
     warehouseId: Joi.number().required(),
-    dueDate: Joi.date().iso().min(moment().format('YYYY-MM-DD 00:00:00')).required(),
+    dueDate: Joi.date().iso().required(),
     items: Joi.array().items({
       itemId: Joi.number().required(),
       unit: Joi.string().required(),
@@ -25,6 +24,7 @@ const createFormRequest = {
       notes: Joi.string().default('').allow(null).max(255),
       expiryDate: Joi.date().iso().allow(null),
       productionNumber: Joi.string().allow(null),
+      allocationId: Joi.number().allow(null),
     }),
     notes: Joi.string().default('').allow(null).max(255),
     requestApprovalTo: Joi.number().required(),
@@ -51,7 +51,7 @@ const deleteFormReject = {
 
 const updateForm = {
   body: Joi.object({
-    dueDate: Joi.date().iso().min(moment().format('YYYY-MM-DD 00:00:00')).required(),
+    dueDate: Joi.date().iso().required(),
     items: Joi.array().items({
       stockCorrectionItemId: Joi.number().required(),
       unit: Joi.string().required(),

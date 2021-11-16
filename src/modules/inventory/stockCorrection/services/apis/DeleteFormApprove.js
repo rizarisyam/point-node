@@ -20,8 +20,8 @@ class DeleteFormApprove {
     validate(stockCorrection, this.approver);
 
     const { form } = stockCorrection;
+    await deleteInventory(this.tenantDatabase, form);
     await deleteJournal(this.tenantDatabase, form);
-    await restoreStock(this.tenantDatabase, { stockCorrection, form });
     await updateForm(form, this.approver);
 
     return { stockCorrection };
@@ -46,23 +46,6 @@ function validate(stockCorrection, approver) {
 
 async function deleteJournal(tenantDatabase, form) {
   await tenantDatabase.Journal.destroy({ where: { formId: form.id } });
-}
-
-async function restoreStock(tenantDatabase, { stockCorrection, form }) {
-  const stockCorrectionItems = stockCorrection.items;
-  let updateItemsStock = [];
-  if (form.approvalStatus === 1 && form.cancellationStatus !== 1) {
-    updateItemsStock = stockCorrectionItems.map(async (stockCorectionItem) => {
-      const item = await stockCorectionItem.getItem();
-      const totalQuantityItem = item.quantity * item.converter;
-
-      return item.update({
-        stock: item.stock + totalQuantityItem,
-      });
-    });
-  }
-
-  await Promise.all([...updateItemsStock, deleteInventory(tenantDatabase, form)]);
 }
 
 function deleteInventory(tenantDatabase, form) {

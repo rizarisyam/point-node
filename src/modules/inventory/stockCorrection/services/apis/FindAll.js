@@ -22,6 +22,7 @@ class FindAll {
         {
           model: this.tenantDatabase.StockCorrectionItem,
           as: 'items',
+          include: [{ model: this.tenantDatabase.Item, as: 'item' }],
         },
       ],
       order: [['form', 'created_at', 'DESC']],

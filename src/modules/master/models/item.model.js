@@ -3,6 +3,8 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes, projectCode) => {
   class Item extends Model {
     static associate({ [projectCode]: models }) {
+      this.hasMany(models.ItemUnit, { as: 'units' });
+
       this.belongsTo(models.User, { as: 'createdByUser', foreignKey: 'createdBy', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.User, { as: 'updatedByUser', foreignKey: 'updatedBy', onDelete: 'RESTRICT' });

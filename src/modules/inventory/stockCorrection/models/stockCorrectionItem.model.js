@@ -1,8 +1,8 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, projectCode) => {
   class StockCorrectionItem extends Model {
-    static associate({ tenant: models }) {
+    static associate({ [projectCode]: models }) {
       this.belongsTo(models.StockCorrection, { as: 'stockCorrection', onUpdate: 'CASCADE', onDelete: 'CASCADE' });
 
       this.belongsTo(models.Item, { as: 'item', onUpdate: 'RESTRICT', onDelete: 'RESTRICT' });
@@ -18,9 +18,26 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER.UNSIGNED,
         allowNull: false,
       },
+      initialStock: {
+        type: DataTypes.DECIMAL,
+        allowNull: true,
+        get() {
+          return parseFloat(this.getDataValue('initialStock'));
+        },
+      },
       quantity: {
         type: DataTypes.DECIMAL,
         allowNull: false,
+        get() {
+          return parseFloat(this.getDataValue('quantity'));
+        },
+      },
+      finalStock: {
+        type: DataTypes.DECIMAL,
+        allowNull: true,
+        get() {
+          return parseFloat(this.getDataValue('finalStock'));
+        },
       },
       expiryDate: {
         type: DataTypes.DATE,
@@ -37,6 +54,9 @@ module.exports = (sequelize, DataTypes) => {
       converter: {
         type: DataTypes.DECIMAL,
         allowNull: false,
+        get() {
+          return parseFloat(this.getDataValue('converter'));
+        },
       },
       notes: {
         type: DataTypes.STRING,
