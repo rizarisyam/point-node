@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
 const moment = require('moment');
 const logger = require('@src/config/logger');
@@ -56,7 +56,7 @@ async function generateApprovalEmailBody(
   tenantDatabase,
   { tenantName, maker, approver, salesInvoiceForm, formReference, salesInvoice }
 ) {
-  let emailBody = fs.readFileSync(path.resolve(__dirname, '../mails/salesInvoiceApproval.html'), 'utf8');
+  let emailBody = await fs.readFile(path.resolve(__dirname, '../mails/salesInvoiceApproval.html'), 'utf8');
   let itemsHtml = '';
 
   const salesInvoiceItems = await salesInvoice.getItems({

@@ -75,6 +75,8 @@ ALTER TABLE `sales_invoice_items` DROP COLUMN `delivery_note_item_id`;
 ALTER TABLE `sales_invoice_items` DROP COLUMN `delivery_note_id`;
 
 ALTER TABLE `sales_invoice_items`
+  ADD `production_number` VARCHAR(191),
+  ADD `expiry_date` DATETIME,
   ADD `referenceable_id` int(10) unsigned NOT NULL,
   ADD `referenceable_type` varchar(191) NOT NULL,
   ADD `item_referenceable_id` int(10) unsigned NOT NULL,

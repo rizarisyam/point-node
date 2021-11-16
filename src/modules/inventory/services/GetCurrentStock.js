@@ -1,4 +1,4 @@
-const { Op, Sequelize } = require('sequelize');
+const { Op } = require('sequelize');
 const moment = require('moment');
 
 class GetCurrentStock {
@@ -11,6 +11,7 @@ class GetCurrentStock {
   }
 
   async call() {
+    const { sequelize } = this.tenantDatabase;
     const inventories = await this.tenantDatabase.Inventory.findAll({
       group: ['itemId', 'productionNumber', 'expiryDate'],
       where: generateFilter(this.tenantDatabase, {
@@ -24,7 +25,7 @@ class GetCurrentStock {
         'itemId',
         'productionNumber',
         'expiryDate',
-        [Sequelize.fn('SUM', Sequelize.col('quantity')), 'remaining'],
+        [sequelize.fn('SUM', sequelize.col('quantity')), 'remaining'],
       ],
     });
 
@@ -42,7 +43,10 @@ function generateFilter(tenantDatabase, { item, warehouseId, date, options }) {
   const filter = {
     itemId: item.id,
     warehouseId,
-    [Op.and]: [sequelize.where(sequelize.fn('date', sequelize.col('form.date')), '<=', onlyDateFormDateFormat)],
+    [Op.and]: [
+      sequelize.where(sequelize.fn('date', sequelize.col('form.date')), '<', onlyDateFormDateFormat),
+      sequelize.where(sequelize.fn('SUM', sequelize.col('quantity')), '>', 0),
+    ],
   };
   if (item.requireExpiryDate) {
     filter.expiryDate = options.expiryDate;

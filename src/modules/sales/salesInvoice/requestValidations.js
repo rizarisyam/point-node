@@ -1,5 +1,4 @@
 const { Joi } = require('celebrate');
-const moment = require('moment');
 
 const requireAuth = {
   headers: Joi.object({
@@ -29,7 +28,7 @@ const createFormRequest = {
       productionNumber: Joi.string().allow(null),
     }),
     requestApprovalTo: Joi.number().required(),
-    dueDate: Joi.date().iso().min(moment().format('YYYY-MM-DD 00:00:00')).required(),
+    dueDate: Joi.date().iso().required(),
     discountPercent: Joi.number().min(0).max(100).default(0),
     discountValue: Joi.number().min(0).default(0),
     customerId: Joi.number().required(),
@@ -67,7 +66,7 @@ const updateForm = {
       price: Joi.number().required(),
     }),
     requestApprovalTo: Joi.number().required(),
-    dueDate: Joi.date().iso().min(moment().format('YYYY-MM-DD 00:00:00')).required(),
+    dueDate: Joi.date().iso().required(),
     discountPercent: Joi.number().min(0).max(100).default(0),
     discountValue: Joi.number().min(0).default(0),
     typeOfTax: Joi.string().valid('include', 'exclude', 'non').required(),

@@ -27,7 +27,7 @@ describe('Sales Invoice - CreateFormReject', () => {
           salesInvoiceId: salesInvoice.id,
           createFormRejectDto,
         }).call();
-      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
+      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the selected approver'));
     });
 
     it('throw error when sales invoice is already approved', async () => {

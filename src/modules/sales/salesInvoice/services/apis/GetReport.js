@@ -78,6 +78,14 @@ function sanitizeQuery(queries) {
 function generateFilter(queryValue) {
   const filter = { [Op.and]: [] };
 
+  // not cancelled sales invoice
+  const filterNotCancelledSalesInvoice = {
+    '$form.cancellation_status$': {
+      [Op.or]: [{ [Op.ne]: 1 }, { [Op.is]: null }],
+    },
+  };
+  filter[Op.and] = [...filter[Op.and], filterNotCancelledSalesInvoice];
+
   // approved sales invoice
   const filterApprovedSalesInvoice = { '$form.approval_status$': 1 };
   filter[Op.and] = [...filter[Op.and], filterApprovedSalesInvoice];

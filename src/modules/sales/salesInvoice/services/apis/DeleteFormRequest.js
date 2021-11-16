@@ -36,7 +36,7 @@ function validate(salesInvoice, maker) {
   }
   const { form } = salesInvoice;
   if (form.createdBy !== maker.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Only maker can delete the invoice');
   }
   if (form.done === true) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Can not delete already referenced sales invoice');

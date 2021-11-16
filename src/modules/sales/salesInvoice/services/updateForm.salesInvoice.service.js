@@ -21,7 +21,7 @@ module.exports = async function updateFormSalesInvoice({
   validate(form, maker);
 
   await deleteJournal(form);
-  await restoreStock(salesInvoice, form);
+  await deleteInventory(form);
   await updateSalesInvoice(salesInvoice, updateFormSalesInvoiceDto);
   await updateSalesInvoiceForm({
     maker,
@@ -36,7 +36,7 @@ module.exports = async function updateFormSalesInvoice({
 
 function validate(form, maker) {
   if (form.createdBy !== maker.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Only maker can update the invoice');
   }
 }
 
@@ -161,23 +161,6 @@ async function buildFormData({ maker, updateFormSalesInvoiceDto }) {
 
 async function deleteJournal(form) {
   await Journal.destroy({ where: { formId: form.id } });
-}
-
-async function restoreStock(salesInvoice, form) {
-  const salesInvoiceItems = salesInvoice.items;
-  let updateItemsStock = [];
-  if (form.approvalStatus === 1 && form.cancellationStatus !== 1) {
-    updateItemsStock = salesInvoiceItems.map(async (salesInvoiceItem) => {
-      const item = await salesInvoiceItem.getItem();
-      const totalQuantityItem = item.quantity * item.converter;
-
-      return item.update({
-        stock: item.stock + totalQuantityItem,
-      });
-    });
-  }
-
-  await Promise.all([...updateItemsStock, deleteInventory(form)]);
 }
 
 function deleteInventory(form) {

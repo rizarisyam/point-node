@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
 const htmlToPdf = require('html-pdf-node');
 const moment = require('moment');
@@ -23,7 +23,7 @@ class ProcessSendInvoiceToCustomer {
     const maker = await salesInvoiceForm.getCreatedByUser();
 
     try {
-      const emailBody = generateEmailBody({ maker, salesInvoice, message });
+      const emailBody = await generateEmailBody({ maker, salesInvoice, message });
       const attachmentPdf = await generateAttachmentPdf(tenantDatabase, {
         salesInvoiceForm,
         salesInvoice,
@@ -42,8 +42,8 @@ class ProcessSendInvoiceToCustomer {
   }
 }
 
-function generateEmailBody({ maker, salesInvoice, message }) {
-  let emailBody = fs.readFileSync(path.resolve(__dirname, '../mails/salesInvoiceCustomerNotif.html'), 'utf8');
+async function generateEmailBody({ maker, salesInvoice, message }) {
+  let emailBody = await fs.readFile(path.resolve(__dirname, '../mails/salesInvoiceCustomerNotif.html'), 'utf8');
   emailBody = emailBody.replaceAll('{{customerName}}', salesInvoice.customerName);
   emailBody = emailBody.replaceAll('{{makerName}}', maker.name);
 
@@ -63,7 +63,7 @@ function generateEmailBody({ maker, salesInvoice, message }) {
 }
 
 async function generateAttachmentPdf(tenantDatabase, { salesInvoiceForm, salesInvoice }) {
-  let pdfBody = fs.readFileSync(path.resolve(__dirname, '../mails/salesInvoiceCustomerNotifAttachment.html'), 'utf8');
+  let pdfBody = await fs.readFile(path.resolve(__dirname, '../mails/salesInvoiceCustomerNotifAttachment.html'), 'utf8');
   let itemsHtml = '';
 
   const tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');

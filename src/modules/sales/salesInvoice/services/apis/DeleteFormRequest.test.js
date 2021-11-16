@@ -30,7 +30,7 @@ describe('Sales Invoice - DeleteFormRequest', () => {
           salesInvoiceId: salesInvoice.id,
           deleteFormRequestDto,
         }).call();
-      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
+      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Only maker can delete the invoice'));
     });
 
     it('throw error when sales invoice is already done', async () => {
