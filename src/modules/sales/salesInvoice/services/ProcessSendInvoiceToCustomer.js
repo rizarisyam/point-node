@@ -44,13 +44,13 @@ class ProcessSendInvoiceToCustomer {
 
 async function generateEmailBody({ maker, salesInvoice, message }) {
   let emailBody = await fs.readFile(path.resolve(__dirname, '../mails/salesInvoiceCustomerNotif.html'), 'utf8');
-  emailBody = emailBody.replaceAll('{{customerName}}', salesInvoice.customerName);
-  emailBody = emailBody.replaceAll('{{makerName}}', maker.name);
+  emailBody = emailBody.replace('{{customerName}}', salesInvoice.customerName);
+  emailBody = emailBody.replace('{{makerName}}', maker.name);
 
   if (!message) {
-    emailBody = emailBody.replaceAll('{{message}}', '');
+    emailBody = emailBody.replace('{{message}}', '');
   } else {
-    emailBody = emailBody.replaceAll(
+    emailBody = emailBody.replace(
       '{{message}}',
       `
         Message: <br>
@@ -87,22 +87,22 @@ async function generateAttachmentPdf(tenantDatabase, { salesInvoiceForm, salesIn
   });
 
   const { subTotal, taxBase, tax, amount } = await salesInvoice.getTotalDetails();
-  pdfBody = pdfBody.replaceAll('{{logoUrl}}', settingLogo.publicUrl);
-  pdfBody = pdfBody.replaceAll('{{companyName}}', project.name);
-  pdfBody = pdfBody.replaceAll('{{companyAddress}}', project.address || '');
-  pdfBody = pdfBody.replaceAll('{{companyPhone}}', project.phone || '');
-  pdfBody = pdfBody.replaceAll('{{date}}', moment(salesInvoiceForm.date).format('DD MMMM YYYY'));
-  pdfBody = pdfBody.replaceAll('{{invoiceNumber}}', salesInvoiceForm.number);
-  pdfBody = pdfBody.replaceAll('{{customerName}}', customer.name);
-  pdfBody = pdfBody.replaceAll('{{customerAddress}}', customer.address || '');
-  pdfBody = pdfBody.replaceAll('{{customerPhone}}', customer.phone || '');
-  pdfBody = pdfBody.replaceAll('{{items}}', itemsHtml);
-  pdfBody = pdfBody.replaceAll('{{subTotal}}', currencyFormat(subTotal));
-  pdfBody = pdfBody.replaceAll('{{discount}}', currencyFormat(salesInvoice.discountValue));
-  pdfBody = pdfBody.replaceAll('{{taxBase}}', currencyFormat(taxBase));
-  pdfBody = pdfBody.replaceAll('{{tax}}', currencyFormat(tax));
-  pdfBody = pdfBody.replaceAll('{{total}}', currencyFormat(amount));
-  pdfBody = pdfBody.replaceAll('{{notes}}', settingEndNote.salesInvoice);
+  pdfBody = pdfBody.replace('{{logoUrl}}', settingLogo.publicUrl);
+  pdfBody = pdfBody.replace('{{companyName}}', project.name);
+  pdfBody = pdfBody.replace('{{companyAddress}}', project.address || '');
+  pdfBody = pdfBody.replace('{{companyPhone}}', project.phone || '');
+  pdfBody = pdfBody.replace('{{date}}', moment(salesInvoiceForm.date).format('DD MMMM YYYY'));
+  pdfBody = pdfBody.replace('{{invoiceNumber}}', salesInvoiceForm.number);
+  pdfBody = pdfBody.replace('{{customerName}}', customer.name);
+  pdfBody = pdfBody.replace('{{customerAddress}}', customer.address || '');
+  pdfBody = pdfBody.replace('{{customerPhone}}', customer.phone || '');
+  pdfBody = pdfBody.replace('{{items}}', itemsHtml);
+  pdfBody = pdfBody.replace('{{subTotal}}', currencyFormat(subTotal));
+  pdfBody = pdfBody.replace('{{discount}}', currencyFormat(salesInvoice.discountValue));
+  pdfBody = pdfBody.replace('{{taxBase}}', currencyFormat(taxBase));
+  pdfBody = pdfBody.replace('{{tax}}', currencyFormat(tax));
+  pdfBody = pdfBody.replace('{{total}}', currencyFormat(amount));
+  pdfBody = pdfBody.replace('{{notes}}', settingEndNote.salesInvoice);
 
   const options = { format: 'A4' };
   const pdfBuffer = await htmlToPdf.generatePdf({ content: pdfBody }, options);

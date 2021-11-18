@@ -81,26 +81,26 @@ async function generateApprovalEmailBody(
   const emailApprovalToken = await generateEmailApprovalToken(salesInvoice, approver);
   const tenantWebsite = config.websiteUrl.replace('http://', `http:://${tenantName}.`);
 
-  emailBody = emailBody.replaceAll('{{approverName}}', approver.name);
-  emailBody = emailBody.replaceAll('{{formNumber}}', salesInvoiceForm.number);
-  emailBody = emailBody.replaceAll('{{formDate}}', moment(salesInvoiceForm.date).format('DD MMMM YYYY'));
-  emailBody = emailBody.replaceAll('{{formReference}}', formReference.number);
-  emailBody = emailBody.replaceAll('{{customerName}}', salesInvoice.customerName);
-  emailBody = emailBody.replaceAll('{{createdAt}}', moment(salesInvoiceForm.createdAt).format('DD MMMM YYYY'));
-  emailBody = emailBody.replaceAll('{{createdBy}}', maker.name);
-  emailBody = emailBody.replaceAll('{{notes}}', salesInvoiceForm.notes || '');
-  emailBody = emailBody.replaceAll('{{items}}', itemsHtml);
-  emailBody = emailBody.replaceAll('{{subTotal}}', currencyFormat(subTotal));
-  emailBody = emailBody.replaceAll('{{discount}}', currencyFormat(salesInvoice.discountValue));
-  emailBody = emailBody.replaceAll('{{taxBase}}', currencyFormat(taxBase));
-  emailBody = emailBody.replaceAll('{{tax}}', currencyFormat(tax));
-  emailBody = emailBody.replaceAll('{{total}}', currencyFormat(amount));
-  emailBody = emailBody.replaceAll('{{checkLink}}', `${tenantWebsite}/sales/invoice/${salesInvoice.id}`);
-  emailBody = emailBody.replaceAll(
+  emailBody = emailBody.replace('{{approverName}}', approver.name);
+  emailBody = emailBody.replace('{{formNumber}}', salesInvoiceForm.number);
+  emailBody = emailBody.replace('{{formDate}}', moment(salesInvoiceForm.date).format('DD MMMM YYYY'));
+  emailBody = emailBody.replace('{{formReference}}', formReference.number);
+  emailBody = emailBody.replace('{{customerName}}', salesInvoice.customerName);
+  emailBody = emailBody.replace('{{createdAt}}', moment(salesInvoiceForm.createdAt).format('DD MMMM YYYY'));
+  emailBody = emailBody.replace('{{createdBy}}', maker.name);
+  emailBody = emailBody.replace('{{notes}}', salesInvoiceForm.notes || '');
+  emailBody = emailBody.replace('{{items}}', itemsHtml);
+  emailBody = emailBody.replace('{{subTotal}}', currencyFormat(subTotal));
+  emailBody = emailBody.replace('{{discount}}', currencyFormat(salesInvoice.discountValue));
+  emailBody = emailBody.replace('{{taxBase}}', currencyFormat(taxBase));
+  emailBody = emailBody.replace('{{tax}}', currencyFormat(tax));
+  emailBody = emailBody.replace('{{total}}', currencyFormat(amount));
+  emailBody = emailBody.replace('{{checkLink}}', `${tenantWebsite}/sales/invoice/${salesInvoice.id}`);
+  emailBody = emailBody.replace(
     '{{approveLink}}',
     `${config.websiteUrl}/approval?tenant=${tenantName}&action=approve&token=${emailApprovalToken}`
   );
-  emailBody = emailBody.replaceAll(
+  emailBody = emailBody.replace(
     '{{rejectLink}}',
     `${config.websiteUrl}/approval?tenant=${tenantName}&action=reject&token=${emailApprovalToken}`
   );
