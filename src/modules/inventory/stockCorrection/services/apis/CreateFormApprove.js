@@ -130,7 +130,7 @@ async function updateJournal(tenantDatabase, { stockCorrection, stockCorrectionF
         journalableId: stockCorrectionItem.itemId,
         chartOfAccountId: stockCorrectionItem.item.chartOfAccountId,
         ...(isDecrement
-          ? { credit: cogs * stockCorrectionItem.quantity }
+          ? { credit: cogs * Math.abs(stockCorrectionItem.quantity) }
           : { debit: cogs * Math.abs(stockCorrectionItem.quantity) }),
       },
       { transaction }
@@ -144,7 +144,7 @@ async function updateJournal(tenantDatabase, { stockCorrection, stockCorrectionF
         journalableId: stockCorrectionItem.itemId,
         chartOfAccountId: settingJournalDifferenceStockExpenses.chartOfAccountId,
         ...(isDecrement
-          ? { debit: cogs * stockCorrectionItem.quantity }
+          ? { debit: cogs * Math.abs(stockCorrectionItem.quantity) }
           : { credit: cogs * Math.abs(stockCorrectionItem.quantity) }),
       },
       { transaction }

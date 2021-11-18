@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
 const GetCurrentStock = require('@src/modules/inventory/services/GetCurrentStock');
+const ProcessSendApprovalWorker = require('../../workers/ProcessSendApproval.worker');
 
 class CreateFormRequest {
   constructor(tenantDatabase, { maker, createFormRequestDto }) {
@@ -40,6 +41,8 @@ class CreateFormRequest {
         transaction,
       });
     });
+
+    await sendEmailToApprover(this.tenantDatabase, stockCorrection);
 
     return { stockCorrection, stockCorrectionForm };
   }
@@ -199,6 +202,22 @@ async function addStockCorrectionItem(
   });
 
   await Promise.all(doAddStockCorrectionItem);
+}
+
+async function sendEmailToApprover(tenantDatabase, stockCorrection) {
+  const tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');
+  await new ProcessSendApprovalWorker({
+    tenantName,
+    stockCorrectionId: stockCorrection.id,
+    options: {
+      repeat: {
+        every: 1000 * 60 * 0.5,
+        limit: 7,
+      },
+    },
+  }).call();
+
+  // options: { delay: 1000 * 60 * 60 * 24 * 1 }, // 1 day
 }
 
 module.exports = CreateFormRequest;
