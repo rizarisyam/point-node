@@ -367,7 +367,7 @@ async function sendEmailToApprover(tenantDatabase, salesInvoice) {
     salesInvoiceId: salesInvoice.id,
     options: {
       repeat: {
-        every: 1000 * 60 * 0.5,
+        every: 1000 * 60 * 60 * 24 * 1,
         limit: 7,
       },
     },
