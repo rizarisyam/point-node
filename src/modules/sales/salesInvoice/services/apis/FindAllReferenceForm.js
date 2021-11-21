@@ -9,13 +9,14 @@ class FindAllReferenceForm {
   async call() {
     const [queryLimit, queryPage] = [parseInt(this.queries.limit, 10) || 10, parseInt(this.queries.page, 10) || 1];
     const { count: total, rows: formReferences } = await this.tenantDatabase.Form.findAndCountAll({
+      subQuery: false,
       where: generateFilters(this.queries),
       include: generateIncludes(this.tenantDatabase),
       order: [['createdAt', 'ASC']],
       limit: queryLimit,
       offset: offsetParams(queryPage, queryLimit),
-      subQuery: false,
     });
+
     removeUnusedAttributes(formReferences);
 
     const totalPage = Math.ceil(total / parseInt(queryLimit, 10));
@@ -64,7 +65,6 @@ function generateFilterLike(likeQueries) {
 
   const result = filterKeys.map((key) => {
     const likeKey = key.split('.').length > 1 ? `$${key}$` : key;
-
     return {
       [likeKey]: { [Op.substring]: filtersObject[key] || '' },
     };
@@ -79,7 +79,6 @@ function generateIncludes(tenantDatabase) {
       model: tenantDatabase.DeliveryNote,
       as: 'salesDeliveryNote',
       include: [
-        { model: tenantDatabase.DeliveryNoteItem, as: 'itemsQuery' },
         {
           model: tenantDatabase.DeliveryNoteItem,
           as: 'items',
@@ -92,6 +91,7 @@ function generateIncludes(tenantDatabase) {
             },
             { model: tenantDatabase.Item, as: 'item' },
           ],
+          separate: true,
         },
         { model: tenantDatabase.Customer, as: 'customer' },
         {
@@ -113,14 +113,9 @@ function generateIncludes(tenantDatabase) {
       include: [
         {
           model: tenantDatabase.SalesVisitationDetail,
-          as: 'itemsQuery',
-          include: [{ model: tenantDatabase.Item, as: 'item' }],
-        },
-        {
-          model: tenantDatabase.SalesVisitationDetail,
           as: 'items',
           include: [{ model: tenantDatabase.Item, as: 'item' }],
-          required: true,
+          separate: true,
         },
         { model: tenantDatabase.Customer, as: 'customer' },
       ],
