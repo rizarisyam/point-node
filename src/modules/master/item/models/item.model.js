@@ -5,8 +5,6 @@ module.exports = (sequelize, DataTypes, projectCode) => {
     static associate({ [projectCode]: models }) {
       this.hasMany(models.ItemUnit, { as: 'units' });
 
-      this.hasMany(models.Inventory, { as: 'inventories' });
-
       this.belongsTo(models.User, { as: 'createdByUser', foreignKey: 'createdBy', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.User, { as: 'updatedByUser', foreignKey: 'updatedBy', onDelete: 'RESTRICT' });
@@ -42,12 +40,6 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       name: {
         type: DataTypes.STRING,
-      },
-      label: {
-        type: DataTypes.VIRTUAL,
-        get() {
-          return `[${this.get('code')}] ${this.get('name')}`;
-        },
       },
       size: {
         type: DataTypes.STRING,
