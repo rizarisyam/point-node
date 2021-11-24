@@ -1,7 +1,9 @@
 /* eslint-disable */
 const path = require('path');
 const Sequelize = require('sequelize');
-const config = require(`${__dirname}/../config/config.js`);
+
+const env = process.env.NODE_ENV || 'development';
+const config = require(`${__dirname}/../config/database.js`)[env];
 
 const modulesDir = `${__dirname}/../modules`;
 const modelPaths = [
@@ -96,17 +98,12 @@ function addOrFindNewProjectDatabase (db, projectCode) {
 }
 
 function generateConfigNewDatabase (projectCode) {
-  const databaseName = `point_${projectCode}`
+  const configDbTenant = config.databases.tenant;
+  const database = `point_${projectCode}`;
+  
   return {
-    username: config.tenantDatabase.username,
-    password: config.tenantDatabase.password,
-    database: databaseName,
-    host: config.tenantDatabase.host,
-    port: config.tenantDatabase.port,
-    dialect: 'mysql',
-    dialectOptions: {
-      bigNumberStrings: true,
-    },
+    ...configDbTenant,
+    database,
   }
 }
 
