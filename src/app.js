@@ -4,6 +4,7 @@ const xss = require('xss-clean');
 const compression = require('compression');
 const cors = require('cors');
 const passport = require('passport');
+const redis = require('redis');
 const httpStatus = require('http-status');
 const config = require('./config/config');
 const morgan = require('./config/morgan');
@@ -12,6 +13,14 @@ const { authLimiter } = require('./middlewares/rateLimiter');
 const routes = require('./routes/v1.route');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
+const logger = require('./config/logger');
+
+// check redis active
+const client = redis.createClient(config.redis.port, config.redis.host);
+client.on('error', function (err) {
+  logger.error('redis is not running');
+  throw err;
+});
 
 const app = express();
 
