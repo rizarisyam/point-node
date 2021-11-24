@@ -15,19 +15,19 @@ class ProcessSendApproval {
   }
 
   async call() {
-    const tenantDatabase = await getCurrentTenantDatabase(this.tenantName);
-    const salesInvoice = await tenantDatabase.SalesInvoice.findOne({ where: { id: this.salesInvoiceId } });
-    const salesInvoiceForm = await salesInvoice.getForm();
-    if (salesInvoiceForm.approvalStatus !== 0) {
-      return;
-    }
-
-    const maker = await salesInvoiceForm.getCreatedByUser();
-    const approver = await salesInvoiceForm.getRequestApprovalToUser();
-    const reference = await salesInvoice.getReferenceable();
-    const formReference = await reference.getForm();
-
     try {
+      const tenantDatabase = await getCurrentTenantDatabase(this.tenantName);
+      const salesInvoice = await tenantDatabase.SalesInvoice.findOne({ where: { id: this.salesInvoiceId } });
+      const salesInvoiceForm = await salesInvoice.getForm();
+      if (salesInvoiceForm.approvalStatus !== 0) {
+        return;
+      }
+
+      const maker = await salesInvoiceForm.getCreatedByUser();
+      const approver = await salesInvoiceForm.getRequestApprovalToUser();
+      const reference = await salesInvoice.getReferenceable();
+      const formReference = await reference.getForm();
+
       const emailBody = await generateApprovalEmailBody(tenantDatabase, {
         tenantName: this.tenantName,
         maker,
