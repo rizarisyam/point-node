@@ -34,11 +34,15 @@ function validate(salesInvoice, approver) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Sales invoice is not exist');
   }
   const { form } = salesInvoice;
-  if (form.requestApprovalTo !== approver.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the selected approver');
-  }
   if (form.cancellationStatus !== 0) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Sales invoice is not requested to be delete');
+  }
+  // super admin
+  if (approver?.roleHasModel?.role?.name === 'super admin') {
+    return true;
+  }
+  if (form.requestApprovalTo !== approver.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the selected approver');
   }
 }
 

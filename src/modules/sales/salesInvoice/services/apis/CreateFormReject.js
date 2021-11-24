@@ -36,14 +36,18 @@ class CreateFormReject {
 }
 
 function validate({ form, salesInvoice, approver }) {
-  if (form.requestApprovalTo !== approver.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the selected approver');
-  }
   if (form.approvalStatus === -1) {
     return { salesInvoice };
   }
   if (form.approvalStatus === 1) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Sales invoice already approved');
+  }
+  // super admin
+  if (approver?.roleHasModel?.role?.name === 'super admin') {
+    return true;
+  }
+  if (form.requestApprovalTo !== approver.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the selected approver');
   }
 }
 
