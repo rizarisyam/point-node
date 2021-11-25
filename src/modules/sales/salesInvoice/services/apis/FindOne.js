@@ -24,6 +24,24 @@ class FindOne {
           ],
         },
         { model: this.tenantDatabase.Customer, as: 'customer' },
+        {
+          model: this.tenantDatabase.DeliveryNote,
+          as: 'salesDeliveryNote',
+          include: [
+            { model: this.tenantDatabase.Form, as: 'form' },
+            {
+              model: this.tenantDatabase.DeliveryOrder,
+              as: 'deliveryOrder',
+              include: [
+                {
+                  model: this.tenantDatabase.SalesOrder,
+                  as: 'salesOrder',
+                  include: [{ model: this.tenantDatabase.Form, as: 'form' }],
+                },
+              ],
+            },
+          ],
+        },
       ],
     });
     const referenceable = await salesInvoice.getReferenceable({
