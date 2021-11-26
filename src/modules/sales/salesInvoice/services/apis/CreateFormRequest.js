@@ -362,18 +362,22 @@ function getMonthFormattedString(currentDate) {
 
 async function sendEmailToApprover(tenantDatabase, salesInvoice) {
   const tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');
+  // first time email
+  await new ProcessSendApprovalWorker({
+    tenantName,
+    salesInvoiceId: salesInvoice.id,
+  }).call();
+  // repeatable email
   await new ProcessSendApprovalWorker({
     tenantName,
     salesInvoiceId: salesInvoice.id,
     options: {
       repeat: {
-        every: 1000 * 60 * 0.5,
-        limit: 7,
+        every: 1000 * 60 * 60 * 24, // every 24 hours
+        limit: 6,
       },
     },
   }).call();
-
-  // options: { delay: 1000 * 60 * 60 * 24 * 1 }, // 1 day
 }
 
 module.exports = CreateFormRequest;
