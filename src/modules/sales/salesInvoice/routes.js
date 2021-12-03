@@ -45,9 +45,9 @@ router
     controller.createFormApprove
   );
 
-// APPROVE USING EMAIL TOKEN
+// CREATE APPROVE USING EMAIL TOKEN
 router
-  .route('/approve-with-token')
+  .route('/create-approve-with-token')
   .post(celebrate(requestValidations.createFormApproveByToken), controller.createFormApproveByToken);
 
 // REJECT CREATING SALES INVOICE
@@ -61,9 +61,9 @@ router
     controller.createFormReject
   );
 
-// REJECT USING EMAIL TOKEN
+// CREATE REJECT USING EMAIL TOKEN
 router
-  .route('/reject-with-token')
+  .route('/create-reject-with-token')
   .post(celebrate(requestValidations.createFormRejectByToken), controller.createFormRejectByToken);
 
 // REQUEST DELETING SALES INVOICE
@@ -87,6 +87,11 @@ router
     controller.deleteFormApprove
   );
 
+// DELETE APPROVE USING EMAIL TOKEN
+router
+  .route('/delete-approve-with-token')
+  .post(celebrate(requestValidations.deleteFormApproveByToken), controller.deleteFormApproveByToken);
+
 // REJECT DELETING SALES INVOICE
 router
   .route('/:salesInvoiceId/cancellation-reject')
@@ -97,6 +102,11 @@ router
     auth('approve sales invoice'),
     controller.deleteFormReject
   );
+
+// DELETE REJECT USING EMAIL TOKEN
+router
+  .route('/delete-reject-with-token')
+  .post(celebrate(requestValidations.deleteFormRejectByToken), controller.deleteFormRejectByToken);
 
 // UPDATE FORM SALES INVOICE
 router

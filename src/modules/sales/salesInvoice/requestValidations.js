@@ -20,6 +20,7 @@ const createFormRequest = {
       referenceItemId: Joi.number().required(),
       quantity: Joi.number().min(0).required(),
       itemUnit: Joi.string().required(),
+      converter: Joi.number().required(),
       allocationId: Joi.number().allow(null),
       price: Joi.number().required(),
       discountPercent: Joi.number().min(0).max(100).default(0),
@@ -86,6 +87,18 @@ const createFormRejectByToken = {
   }),
 };
 
+const deleteFormApproveByToken = {
+  body: Joi.object({
+    token: Joi.string().required(),
+  }),
+};
+
+const deleteFormRejectByToken = {
+  body: Joi.object({
+    token: Joi.string().required(),
+  }),
+};
+
 const sendInvoice = {
   body: Joi.object({
     email: Joi.string().email().required(),
@@ -103,5 +116,7 @@ module.exports = {
   updateForm,
   createFormApproveByToken,
   createFormRejectByToken,
+  deleteFormApproveByToken,
+  deleteFormRejectByToken,
   sendInvoice,
 };

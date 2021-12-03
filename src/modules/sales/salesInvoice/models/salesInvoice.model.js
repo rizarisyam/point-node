@@ -122,7 +122,8 @@ module.exports = (sequelize, DataTypes, projectCode) => {
 };
 
 async function getSubTotal(items) {
-  const subTotal = await items.reduce(async (result, item) => {
+  const subTotal = await items.reduce(async (resultPromise, item) => {
+    const result = await resultPromise;
     const itemsPrice = await getItemsPrice(item);
     return result + itemsPrice;
   }, 0);

@@ -2,15 +2,15 @@ const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
-const ProcessSendApproval = require('../../workers/ProcessSendApproval.worker');
+const ProcessSendCreateApproval = require('../../workers/ProcessSendCreateApproval.worker');
 const CreateFormRequest = require('./CreateFormRequest');
 
-jest.mock('../../workers/ProcessSendApproval.worker');
+jest.mock('../../workers/ProcessSendCreateApproval.worker');
 const mockedTime = new Date(Date.UTC(2021, 0, 1)).valueOf();
 Date.now = jest.fn(() => new Date(mockedTime));
 
 beforeEach(() => {
-  ProcessSendApproval.mockClear();
+  ProcessSendCreateApproval.mockClear();
 });
 
 describe('Sales Invoice - CreateFormRequest', () => {
@@ -449,7 +449,8 @@ const generateCreateFormRequestDto = ({
       itemId: item.id,
       referenceItemId: deliveryNoteItem.id,
       quantity: 10,
-      itemUnit: itemUnit.name,
+      itemUnit: itemUnit.label,
+      converter: itemUnit.converter,
       allocationId: allocation.id,
       price: 10000,
       discountPercent: 0,

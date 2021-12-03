@@ -1,5 +1,6 @@
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
+const ProcessSendUpdateApprovalWorker = require('../../workers/ProcessSendUpdateApproval.worker');
 
 class UpdateForm {
   constructor(tenantDatabase, { maker, salesInvoiceId, updateFormDto }) {
@@ -31,8 +32,9 @@ class UpdateForm {
       currentDate,
       form,
     });
-
     await salesInvoice.reload();
+    await sendEmailToApprover(this.tenantDatabase, salesInvoice);
+
     return { salesInvoice };
   }
 }
@@ -174,6 +176,14 @@ async function deleteJournal(tenantDatabase, form) {
 
 function deleteInventory(tenantDatabase, form) {
   return tenantDatabase.Inventory.destroy({ where: { formId: form.id } });
+}
+
+async function sendEmailToApprover(tenantDatabase, salesInvoice) {
+  const tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');
+  await new ProcessSendUpdateApprovalWorker({
+    tenantName,
+    salesInvoiceId: salesInvoice.id,
+  }).call();
 }
 
 module.exports = UpdateForm;
