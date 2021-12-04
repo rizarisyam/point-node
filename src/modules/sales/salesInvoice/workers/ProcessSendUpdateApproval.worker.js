@@ -1,7 +1,7 @@
 const Worker = require('@src/utils/Worker');
-const ProcessSendApproval = require('../services/ProcessSendApproval');
+const ProcessSendUpdateApproval = require('../services/ProcessSendUpdateApproval');
 
-class ProcessSendApprovalWorker {
+class ProcessSendCreateApprovalWorker {
   constructor({ tenantName, salesInvoiceId, options = {} }) {
     this.tenantName = tenantName;
     this.salesInvoiceId = salesInvoiceId;
@@ -10,7 +10,7 @@ class ProcessSendApprovalWorker {
 
   call() {
     const job = () => {
-      new ProcessSendApproval(this.tenantName, this.salesInvoiceId).call();
+      new ProcessSendUpdateApproval(this.tenantName, this.salesInvoiceId).call();
     };
 
     new Worker({
@@ -21,4 +21,4 @@ class ProcessSendApprovalWorker {
   }
 }
 
-module.exports = ProcessSendApprovalWorker;
+module.exports = ProcessSendCreateApprovalWorker;

@@ -1,4 +1,4 @@
-const BullWorker = require('bull');
+const Queue = require('bull');
 const config = require('@src/config/config');
 const logger = require('@src/config/logger');
 
@@ -27,7 +27,7 @@ class Worker {
 // private
 
 function createWorker(title) {
-  return new BullWorker(title, {
+  return new Queue(title, {
     redis: {
       host: config.redis.host,
       port: config.redis.port,

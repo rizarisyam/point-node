@@ -18,7 +18,7 @@ class DeleteFormReject {
     validate(salesInvoice, this.approver);
 
     const { form } = salesInvoice;
-    form.update({
+    await form.update({
       cancellationStatus: -1,
       cancellationApprovalAt: new Date(),
       cancellationApprovalBy: this.approver.id,

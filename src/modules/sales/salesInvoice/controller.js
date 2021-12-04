@@ -146,6 +146,16 @@ const deleteFormApprove = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send({ data: salesInvoice });
 });
 
+const deleteFormApproveByToken = catchAsync(async (req, res) => {
+  const {
+    currentTenantDatabase,
+    body: { token },
+  } = req;
+
+  const { salesInvoice, project } = await new apiServices.DeleteFormApproveByToken(currentTenantDatabase, token).call();
+  res.status(httpStatus.OK).send({ data: salesInvoice, meta: { projectName: project.name } });
+});
+
 const deleteFormReject = catchAsync(async (req, res) => {
   const {
     currentTenantDatabase,
@@ -159,6 +169,16 @@ const deleteFormReject = catchAsync(async (req, res) => {
     deleteFormRejectDto,
   }).call();
   res.status(httpStatus.OK).send({ data: salesInvoice });
+});
+
+const deleteFormRejectByToken = catchAsync(async (req, res) => {
+  const {
+    currentTenantDatabase,
+    body: { token },
+  } = req;
+
+  const { salesInvoice, project } = await new apiServices.DeleteFormRejectByToken(currentTenantDatabase, token).call();
+  res.status(httpStatus.OK).send({ data: salesInvoice, meta: { projectName: project.name } });
 });
 
 const getReport = catchAsync(async (req, res) => {
@@ -202,7 +222,9 @@ module.exports = {
   updateForm,
   deleteFormRequest,
   deleteFormApprove,
+  deleteFormApproveByToken,
   deleteFormReject,
+  deleteFormRejectByToken,
   getReport,
   sendInvoiceToCustomer,
 };

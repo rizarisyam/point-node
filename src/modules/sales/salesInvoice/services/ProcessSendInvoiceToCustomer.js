@@ -104,6 +104,34 @@ async function generateAttachmentPdf(tenantDatabase, { salesInvoiceForm, salesIn
   pdfBody = pdfBody.replace('{{total}}', currencyFormat(amount));
   pdfBody = pdfBody.replace('{{notes}}', settingEndNote.salesInvoice);
 
+  if (salesInvoice.referenceableType === 'SalesDeliveryNote') {
+    const deliveryNote = await salesInvoice.getReferenceable({
+      include: [
+        { model: tenantDatabase.Form, as: 'form' },
+        {
+          model: tenantDatabase.DeliveryOrder,
+          as: 'deliveryOrder',
+          include: [
+            {
+              model: tenantDatabase.SalesOrder,
+              as: 'salesOrder',
+              include: [{ model: tenantDatabase.Form, as: 'form' }],
+            },
+          ],
+        },
+      ],
+    });
+
+    pdfBody = pdfBody.replace(
+      '{{salesOrderNumber}}',
+      `<tr>
+        <td>Sales order number</td>
+        <td>:</td>
+        <td>${deliveryNote.deliveryOrder.salesOrder.form.number}</td>
+      </tr>`
+    );
+  }
+
   const options = { format: 'A4' };
   const pdfBuffer = await htmlToPdf.generatePdf({ content: pdfBody }, options);
 
