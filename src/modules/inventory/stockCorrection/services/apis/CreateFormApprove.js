@@ -52,11 +52,15 @@ class CreateFormApprove {
 }
 
 function validate(stockCorrectionForm, approver) {
-  if (stockCorrectionForm.requestApprovalTo !== approver.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
-  }
   if (stockCorrectionForm.approvalStatus === -1) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock correction already rejected');
+  }
+  // super admin
+  if (approver.modelHasRole?.role?.name === 'super admin') {
+    return true;
+  }
+  if (stockCorrectionForm.requestApprovalTo !== approver.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
 }
 

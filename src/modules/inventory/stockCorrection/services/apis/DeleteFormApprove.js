@@ -16,8 +16,11 @@ class DeleteFormApprove {
         { model: this.tenantDatabase.StockCorrectionItem, as: 'items' },
       ],
     });
+    if (!stockCorrection) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Stock correction is not exist');
+    }
 
-    validate(stockCorrection, this.approver);
+    validate(stockCorrection.form, this.approver);
 
     const { form } = stockCorrection;
     await deleteInventory(this.tenantDatabase, form);
@@ -28,19 +31,19 @@ class DeleteFormApprove {
   }
 }
 
-function validate(stockCorrection, approver) {
-  if (!stockCorrection) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Stock correction is not exist');
-  }
-  const { form } = stockCorrection;
-  if (form.requestApprovalTo !== approver.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not selected approver');
-  }
-  if (form.cancellationStatus !== 0) {
+function validate(stockCorrectionForm, approver) {
+  if (stockCorrectionForm.cancellationStatus !== 0) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock correction is not requested to be delete');
   }
-  if (form.done) {
+  if (stockCorrectionForm.done) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Can not delete already referenced stock correction');
+  }
+  // super admin
+  if (approver.modelHasRole?.role?.name === 'super admin') {
+    return true;
+  }
+  if (stockCorrectionForm.requestApprovalTo !== approver.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not selected approver');
   }
 }
 
