@@ -40,7 +40,7 @@ function validate(salesInvoice, approver) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Can not delete already referenced sales invoice');
   }
   // super admin
-  if (approver?.roleHasModel?.role?.name === 'super admin') {
+  if (approver.modelHasRole?.role?.name === 'super admin') {
     return true;
   }
   if (form.requestApprovalTo !== approver.id) {
