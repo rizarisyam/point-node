@@ -8,26 +8,26 @@ const Mailer = require('@src/utils/Mailer');
 const getCurrentTenantDatabase = require('@src/utils/getCurrentTenantDatabase');
 const currencyFormat = require('@src/utils/currencyFormat');
 
-class ProcessSendApproval {
+class ProcessSendUpdateApproval {
   constructor(tenantName, salesInvoiceId) {
     this.tenantName = tenantName;
     this.salesInvoiceId = salesInvoiceId;
   }
 
   async call() {
-    const tenantDatabase = await getCurrentTenantDatabase(this.tenantName);
-    const salesInvoice = await tenantDatabase.SalesInvoice.findOne({ where: { id: this.salesInvoiceId } });
-    const salesInvoiceForm = await salesInvoice.getForm();
-    if (salesInvoiceForm.approvalStatus !== 0) {
-      return;
-    }
-
-    const maker = await salesInvoiceForm.getCreatedByUser();
-    const approver = await salesInvoiceForm.getRequestApprovalToUser();
-    const reference = await salesInvoice.getReferenceable();
-    const formReference = await reference.getForm();
-
     try {
+      const tenantDatabase = await getCurrentTenantDatabase(this.tenantName);
+      const salesInvoice = await tenantDatabase.SalesInvoice.findOne({ where: { id: this.salesInvoiceId } });
+      const salesInvoiceForm = await salesInvoice.getForm();
+      if (salesInvoiceForm.approvalStatus !== 0) {
+        return;
+      }
+
+      const maker = await salesInvoiceForm.getCreatedByUser();
+      const approver = await salesInvoiceForm.getRequestApprovalToUser();
+      const reference = await salesInvoice.getReferenceable();
+      const formReference = await reference.getForm();
+
       const emailBody = await generateApprovalEmailBody(tenantDatabase, {
         tenantName: this.tenantName,
         maker,
@@ -37,14 +37,14 @@ class ProcessSendApproval {
         salesInvoice,
       });
       const { messageId, to } = await new Mailer({
-        jobTitle: 'Send Approval Email',
+        jobTitle: 'Send Update Approval Email',
         to: approver.email,
-        subject: `Approval Email - Sales Invoice ${salesInvoiceForm.number}`,
+        subject: `Update Approval Email - Sales Invoice ${salesInvoiceForm.number}`,
         html: emailBody,
       }).call();
 
       logger.info(
-        `Sales invoice approval email sent, id: ${messageId}, email: ${to}, sales invoice: ${salesInvoiceForm.number}}`
+        `Sales invoice update approval email sent, id: ${messageId}, email: ${to}, sales invoice: ${salesInvoiceForm.number}}`
       );
     } catch (error) {
       logger.error(error);
@@ -81,6 +81,7 @@ async function generateApprovalEmailBody(
   const emailApprovalToken = await generateEmailApprovalToken(salesInvoice, approver);
   const tenantWebsite = config.websiteUrl.replace('http://', `http:://${tenantName}.`);
 
+  emailBody = emailBody.replace('{{approvalType}}', 'an <b>UPDATE</b>');
   emailBody = emailBody.replace('{{approverName}}', approver.name);
   emailBody = emailBody.replace('{{formNumber}}', salesInvoiceForm.number);
   emailBody = emailBody.replace('{{formDate}}', moment(salesInvoiceForm.date).format('DD MMMM YYYY'));
@@ -98,11 +99,11 @@ async function generateApprovalEmailBody(
   emailBody = emailBody.replace('{{checkLink}}', `${tenantWebsite}/sales/invoice/${salesInvoice.id}`);
   emailBody = emailBody.replace(
     '{{approveLink}}',
-    `${config.websiteUrl}/approval?tenant=${tenantName}&action=approve&token=${emailApprovalToken}`
+    `${config.websiteUrl}/approval?tenant=${tenantName}&crud-type=update&resource-type=SalesInvoice&action=approve&token=${emailApprovalToken}`
   );
   emailBody = emailBody.replace(
     '{{rejectLink}}',
-    `${config.websiteUrl}/approval?tenant=${tenantName}&action=reject&token=${emailApprovalToken}`
+    `${config.websiteUrl}/approval?tenant=${tenantName}&crud-type=update&resource-type=SalesInvoice&action=reject&token=${emailApprovalToken}`
   );
 
   return emailBody;
@@ -120,4 +121,4 @@ async function generateEmailApprovalToken(salesInvoice, approver) {
   return token;
 }
 
-module.exports = ProcessSendApproval;
+module.exports = ProcessSendUpdateApproval;

@@ -12,6 +12,7 @@ module.exports = {
         host: config.database.host,
         port: config.database.port,
         dialect: DIALECT,
+        logging: config.database.logging,
         dialectOptions: {
           bigNumberStrings: true,
         },
@@ -23,6 +24,7 @@ module.exports = {
         host: config.tenantDatabase.host,
         port: config.tenantDatabase.port,
         dialect: DIALECT,
+        logging: config.tenantDatabase.logging,
         dialectOptions: {
           bigNumberStrings: true,
         },
@@ -37,6 +39,7 @@ module.exports = {
         database: config.database.name,
         host: config.database.host,
         port: config.database.port,
+        logging: config.database.logging,
         dialect: DIALECT,
         dialectOptions: {
           bigNumberStrings: true,
@@ -48,6 +51,7 @@ module.exports = {
         database: config.tenantDatabase.name,
         host: config.tenantDatabase.host,
         port: config.tenantDatabase.port,
+        logging: config.tenantDatabase.logging,
         dialect: DIALECT,
         dialectOptions: {
           bigNumberStrings: true,
@@ -63,8 +67,8 @@ module.exports = {
         database: config.testDatabase.name,
         host: config.testDatabase.host,
         port: config.testDatabase.port,
+        logging: config.testDatabase.logging,
         dialect: DIALECT,
-        logging: false,
         dialectOptions: {
           bigNumberStrings: true,
         },
@@ -75,8 +79,8 @@ module.exports = {
         database: config.testTenantDatabase.name,
         host: config.testTenantDatabase.host,
         port: config.testTenantDatabase.port,
+        logging: config.testTenantDatabase.logging,
         dialect: DIALECT,
-        logging: false,
         dialectOptions: {
           bigNumberStrings: true,
         },
@@ -91,6 +95,7 @@ module.exports = {
         database: config.database.name,
         host: config.database.host,
         port: config.database.port,
+        logging: config.database.logging,
         dialect: DIALECT,
         dialectOptions: {
           bigNumberStrings: true,
@@ -102,6 +107,7 @@ module.exports = {
         database: config.tenantDatabase.name,
         host: config.tenantDatabase.host,
         port: config.tenantDatabase.port,
+        logging: config.tenantDatabase.logging,
         dialect: DIALECT,
         dialectOptions: {
           bigNumberStrings: true,

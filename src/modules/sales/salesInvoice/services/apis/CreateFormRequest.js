@@ -1,7 +1,7 @@
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
 const GetCurrentStock = require('@src/modules/inventory/services/GetCurrentStock');
-const ProcessSendApprovalWorker = require('../../workers/ProcessSendApproval.worker');
+const ProcessSendCreateApprovalWorker = require('../../workers/ProcessSendCreateApproval.worker');
 
 class CreateFormRequest {
   constructor(tenantDatabase, { maker, createFormRequestDto }) {
@@ -188,7 +188,9 @@ async function createSalesInvoiceItem(tenantDatabase, { salesInvoice, formDate, 
     default:
   }
   const item = await referenceItem.getItem();
-  const itemUnit = await tenantDatabase.ItemUnit.findOne({ where: { name: itemPayload.itemUnit } });
+  const itemUnit = await tenantDatabase.ItemUnit.findOne({
+    where: { itemId: item.id, label: itemPayload.itemUnit, converter: itemPayload.converter },
+  });
   if (!itemUnit) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Item unit ${itemPayload.itemUnit} not found`);
   }
@@ -362,13 +364,20 @@ function getMonthFormattedString(currentDate) {
 
 async function sendEmailToApprover(tenantDatabase, salesInvoice) {
   const tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');
-  await new ProcessSendApprovalWorker({
+  // first time email
+  await new ProcessSendCreateApprovalWorker({
+    tenantName,
+    salesInvoiceId: salesInvoice.id,
+  }).call();
+  // repeatable email
+  const aDayInMiliseconds = 1000 * 60 * 60 * 24;
+  await new ProcessSendCreateApprovalWorker({
     tenantName,
     salesInvoiceId: salesInvoice.id,
     options: {
       repeat: {
-        every: 1000 * 60 * 60 * 24 * 1, // 1 day
-        limit: 7,
+        every: aDayInMiliseconds,
+        limit: 6,
       },
     },
   }).call();

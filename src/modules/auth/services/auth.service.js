@@ -7,8 +7,11 @@ const verifyCallback = (req, resolve, reject, requiredRights) => async (err, pay
     return reject(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
   }
 
-  const { User } = req.currentTenantDatabase;
-  const user = await User.findOne({ where: { id: payload.sub } });
+  const { User, ModelHasRole, Role } = req.currentTenantDatabase;
+  const user = await User.findOne({
+    where: { id: payload.sub },
+    include: [{ model: ModelHasRole, as: 'modelHasRole', include: [{ model: Role, as: 'role' }] }],
+  });
   if (!user) {
     return reject(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
   }
