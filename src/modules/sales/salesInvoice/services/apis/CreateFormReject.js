@@ -43,7 +43,7 @@ function validate({ form, salesInvoice, approver }) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Sales invoice already approved');
   }
   // super admin
-  if (approver?.roleHasModel?.role?.name === 'super admin') {
+  if (approver.modelHasRole?.role?.name === 'super admin') {
     return true;
   }
   if (form.requestApprovalTo !== approver.id) {
