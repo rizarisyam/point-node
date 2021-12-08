@@ -78,10 +78,10 @@ async function generateAttachmentPdf(tenantDatabase, { salesInvoiceForm, salesIn
     <tr>
       <td>${index + 1}</td>
       <td>${salesInvoiceItem.itemName}</td>
-      <td>${currencyFormat(salesInvoiceItem.quantity)} ${salesInvoiceItem.unit}</td>
-      <td>${currencyFormat(salesInvoiceItem.price)}</td>
-      <td>${currencyFormat(salesInvoiceItem.discountValue)}</td>
-      <td>${currencyFormat(salesInvoiceItem.getTotalPrice())}</td>
+      <td class="text-right">${currencyFormat(salesInvoiceItem.quantity)} ${salesInvoiceItem.unit}</td>
+      <td class="text-right">${currencyFormat(salesInvoiceItem.price)}</td>
+      <td class="text-right">${currencyFormat(salesInvoiceItem.discountValue)}</td>
+      <td class="text-left">${currencyFormat(salesInvoiceItem.getTotalPrice())}</td>
     </tr>
     `;
   });
