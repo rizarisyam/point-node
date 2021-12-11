@@ -38,11 +38,14 @@ function validate(salesInvoice, maker) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Sales invoice is not exist');
   }
   const { form } = salesInvoice;
-  if (form.createdBy !== maker.id) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Only maker can delete the invoice');
-  }
   if (form.done === true) {
     throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Can not delete already referenced sales invoice');
+  }
+  if (maker.modelHasRole?.role?.name === 'super admin') {
+    return true;
+  }
+  if (form.createdBy !== maker.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Only maker can delete the invoice');
   }
 }
 
