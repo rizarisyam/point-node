@@ -40,6 +40,9 @@ class UpdateForm {
 }
 
 function validate(form, maker) {
+  if (maker.modelHasRole?.role?.name === 'super admin') {
+    return true;
+  }
   if (form.createdBy !== maker.id) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Only maker can update the invoice');
   }
