@@ -23,7 +23,6 @@ class CreateFormApprove {
     }
 
     await updateJournal(this.tenantDatabase, { salesInvoice, form });
-    await updateStock(this.tenantDatabase, { salesInvoice, form });
 
     await form.update({
       approvalStatus: 1,
@@ -59,7 +58,6 @@ function generateSalesInvoiceIncludes(tenantDatabase) {
 async function updateJournal(tenantDatabase, { salesInvoice, form }) {
   await createJournalAccountReceivable(tenantDatabase, { salesInvoice, form });
   await createJournalSalesIncome(tenantDatabase, { salesInvoice, form });
-  await createJournalInventoriesAndCogs(tenantDatabase, { salesInvoice, form });
   await createJournalTaxPayable(tenantDatabase, { salesInvoice, form });
 }
 
@@ -81,30 +79,6 @@ async function createJournalSalesIncome(tenantDatabase, { salesInvoice, form }) 
     chartOfAccountId: settingJournal.chartOfAccountId,
     credit: salesInvoice.amount - salesInvoice.tax,
   });
-}
-
-async function createJournalInventoriesAndCogs(tenantDatabase, { salesInvoice, form }) {
-  const creations = salesInvoice.items.map(async (salesInvoiceItem) => {
-    const cogs = await salesInvoiceItem.item.calculateCogs();
-
-    await tenantDatabase.Journal.create({
-      formId: form.id,
-      journalableType: 'Item',
-      journalableId: salesInvoiceItem.itemId,
-      chartOfAccountId: salesInvoiceItem.item.chartOfAccountId,
-      credit: cogs * salesInvoiceItem.quantity,
-    });
-
-    await tenantDatabase.Journal.create({
-      formId: form.id,
-      journalableType: 'Item',
-      journalableId: salesInvoiceItem.itemId,
-      chartOfAccountId: salesInvoiceItem.item.chartOfAccountId,
-      debit: cogs * salesInvoiceItem.quantity,
-    });
-  });
-
-  await Promise.all(creations);
 }
 
 async function createJournalTaxPayable(tenantDatabase, { salesInvoice, form }) {

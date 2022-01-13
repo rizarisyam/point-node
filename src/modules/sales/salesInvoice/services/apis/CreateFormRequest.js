@@ -57,7 +57,6 @@ async function validate(tenantDatabase, { maker, formReference, reference }) {
   if (!formReference.number.startsWith('SV')) {
     await validateBranchDefaultPermission(tenantDatabase, { maker, formReference });
   }
-  await validateWarehouseDefaultPermission(tenantDatabase, { maker, reference });
 }
 
 async function validateBranchDefaultPermission(tenantDatabase, { maker, formReference }) {
@@ -69,19 +68,6 @@ async function validateBranchDefaultPermission(tenantDatabase, { maker, formRefe
     },
   });
   if (!branchUser) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
-  }
-}
-
-async function validateWarehouseDefaultPermission(tenantDatabase, { maker, reference }) {
-  const userWarehouse = await tenantDatabase.UserWarehouse.findOne({
-    where: {
-      userId: maker.id,
-      warehouseId: reference.warehouseId,
-      isDefault: true,
-    },
-  });
-  if (!userWarehouse) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
 }
