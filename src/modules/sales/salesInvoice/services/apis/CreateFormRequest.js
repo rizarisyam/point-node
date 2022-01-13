@@ -1,6 +1,5 @@
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
-const GetCurrentStock = require('@src/modules/inventory/services/GetCurrentStock');
 const ProcessSendCreateApprovalWorker = require('../../workers/ProcessSendCreateApproval.worker');
 
 class CreateFormRequest {
@@ -59,7 +58,6 @@ async function validate(tenantDatabase, { maker, formReference, reference }) {
   } else {
     await validateBranchDefaultPermission(tenantDatabase, { maker, formReference });
   }
-  await validateWarehouseDefaultPermission(tenantDatabase, { maker, reference });
 }
 
 async function validateBranchDefaultPermission(tenantDatabase, { maker, formReference }) {
@@ -85,19 +83,6 @@ async function validateBranchDefaultPermissionSalesVisitation(tenantDatabase, { 
   });
   if (!branchUser) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Invalid default branch');
-  }
-}
-
-async function validateWarehouseDefaultPermission(tenantDatabase, { maker, reference }) {
-  const userWarehouse = await tenantDatabase.UserWarehouse.findOne({
-    where: {
-      userId: maker.id,
-      warehouseId: reference.warehouseId,
-      isDefault: true,
-    },
-  });
-  if (!userWarehouse) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Invalid default warehouse');
   }
 }
 
@@ -195,7 +180,6 @@ async function createSalesInvoiceItem(tenantDatabase, { salesInvoice, formDate, 
     throw new ApiError(httpStatus.BAD_REQUEST, `Item unit ${itemPayload.itemUnit} not found`);
   }
 
-  await checkStock(tenantDatabase, { item, date: formDate, warehouseId: reference.warehouseId, itemPayload });
   return tenantDatabase.SalesInvoiceItem.create(
     {
       salesInvoiceId: salesInvoice.id,
@@ -218,19 +202,6 @@ async function createSalesInvoiceItem(tenantDatabase, { salesInvoice, formDate, 
     },
     { transaction }
   );
-}
-
-async function checkStock(tenantDatabase, { item, date, warehouseId, itemPayload }) {
-  const itemStock = await new GetCurrentStock(tenantDatabase, {
-    item,
-    date,
-    warehouseId,
-    options: { expiryDate: itemPayload.expiryDate, productionNumber: itemPayload.productionNumber },
-  }).call();
-  const targetStock = itemStock - itemPayload.quantity;
-  if (targetStock < 0) {
-    throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, `Insufficient ${item.name} stock`);
-  }
 }
 
 async function createSalesInvoiceForm(
