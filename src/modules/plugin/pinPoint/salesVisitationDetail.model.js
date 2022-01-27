@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const moment = require('moment');
 
 module.exports = (sequelize, DataTypes, projectCode) => {
   class SalesVisitationDetail extends Model {
@@ -43,6 +44,9 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       expiryDate: {
         type: DataTypes.DATE,
+        get() {
+          return moment(this.getDataValue('expiryDate')).format('YYYY-MM-DD HH:mm:ss');
+        },
       },
       productionNumber: {
         type: DataTypes.STRING,

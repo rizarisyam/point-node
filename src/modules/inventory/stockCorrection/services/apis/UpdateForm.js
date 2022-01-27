@@ -17,6 +17,7 @@ class UpdateForm {
       include: [
         { model: this.tenantDatabase.Form, as: 'form' },
         { model: this.tenantDatabase.StockCorrectionItem, as: 'items' },
+        { model: this.tenantDatabase.Warehouse, as: 'warehouse' },
       ],
     });
     const { form } = stockCorrection;

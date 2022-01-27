@@ -22,9 +22,7 @@ const mainSequelize = new Sequelize(
 
 mainSequelize
         .authenticate()
-        .then(() => {
-            console.log('Connection has been established successfully.');
-        })
+        .then(() => {})
         .catch((err) => {
             console.log('Unable to connect to the database:', err);
         });
@@ -39,9 +37,7 @@ const tenantSequelize = new Sequelize(
 
 tenantSequelize
         .authenticate()
-        .then(() => {
-            console.log('Connection has been established successfully.');
-        })
+        .then(() => {})
         .catch((err) => {
             console.log('Unable to connect to the database:', err);
         });
