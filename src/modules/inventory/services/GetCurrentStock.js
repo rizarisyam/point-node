@@ -1,5 +1,4 @@
 const { Op } = require('sequelize');
-const moment = require('moment');
 
 class GetCurrentStock {
   constructor(
@@ -43,11 +42,10 @@ class GetCurrentStock {
 
 function generateFilter(tenantDatabase, { item, warehouseId, date, useDna, options }) {
   const { sequelize } = tenantDatabase;
-  const onlyDateFormDateFormat = moment(date).format('YYYY-MM-DD');
   const filter = {
     itemId: item.id,
     warehouseId,
-    [Op.and]: [sequelize.where(sequelize.fn('date', sequelize.col('form.date')), '<', onlyDateFormDateFormat)],
+    [Op.and]: [sequelize.where(sequelize.fn('date', sequelize.col('form.date')), '<', date)],
   };
   if (useDna && item.requireExpiryDate) {
     filter.expiryDate = options.expiryDate;
