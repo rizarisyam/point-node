@@ -186,7 +186,6 @@ async function addStockCorrectionItem(
     if (itemStock + itemRequest.stockCorrection < 0) {
       throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock can not be minus');
     }
-    console.log(itemRequest.expiryDate);
     return tenantDatabase.StockCorrectionItem.create(
       {
         stockCorrectionId: stockCorrection.id,
