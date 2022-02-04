@@ -24,6 +24,10 @@ class FindAll {
           as: 'items',
           include: [{ model: this.tenantDatabase.Item, as: 'item' }],
         },
+        {
+          model: this.tenantDatabase.Warehouse,
+          as: 'warehouse',
+        },
       ],
       order: [['form', 'created_at', 'DESC']],
       limit: queryLimit,
