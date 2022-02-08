@@ -26,6 +26,7 @@ class FindOne {
           as: 'items',
           include: [
             { model: this.tenantDatabase.Item, as: 'item', include: [{ model: this.tenantDatabase.ItemUnit, as: 'units' }] },
+            { model: this.tenantDatabase.Allocation, as: 'allocation' },
           ],
         },
       ],

@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes, projectCode) => {
   class StockCorrectionItem extends Model {
     static associate({ [projectCode]: models }) {
       this.belongsTo(models.StockCorrection, { as: 'stockCorrection', onUpdate: 'CASCADE', onDelete: 'CASCADE' });
+      this.belongsTo(models.Allocation, { as: 'allocation', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.Item, { as: 'item', onUpdate: 'RESTRICT', onDelete: 'RESTRICT' });
     }
@@ -69,6 +70,9 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       notes: {
         type: DataTypes.STRING,
         allowNull: true,
+      },
+      allocationId: {
+        type: DataTypes.INTEGER,
       },
     },
     {

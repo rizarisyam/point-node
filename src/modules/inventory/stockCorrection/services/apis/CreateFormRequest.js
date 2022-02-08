@@ -194,6 +194,7 @@ async function addStockCorrectionItem(
         unit: itemRequest.unit,
         converter: itemRequest.converter,
         notes: itemRequest.notes,
+        allocationId: itemRequest.allocationId,
         ...(itemRequest.expiryDate && { expiryDate: itemRequest.expiryDate }),
         ...(itemRequest.productionNumber && { productionNumber: itemRequest.productionNumber }),
       },
