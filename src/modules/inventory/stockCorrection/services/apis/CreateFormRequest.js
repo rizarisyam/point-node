@@ -1,7 +1,7 @@
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
 const GetCurrentStock = require('@src/modules/inventory/services/GetCurrentStock');
-const ProcessSendApprovalWorker = require('../../workers/ProcessSendApproval.worker');
+const ProcessSendCreateApprovalWorker = require('../../workers/ProcessSendCreateApproval.worker');
 
 class CreateFormRequest {
   constructor(tenantDatabase, { maker, createFormRequestDto }) {
@@ -207,12 +207,19 @@ async function addStockCorrectionItem(
 
 async function sendEmailToApprover(tenantDatabase, stockCorrection) {
   const tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');
-  await new ProcessSendApprovalWorker({
+  // first time email
+  await new ProcessSendCreateApprovalWorker({
+    tenantName,
+    stockCorrectionId: stockCorrection.id,
+  }).call();
+  // repeatable email
+  const aDayInMiliseconds = 1000 * 60 * 60 * 24;
+  await new ProcessSendCreateApprovalWorker({
     tenantName,
     stockCorrectionId: stockCorrection.id,
     options: {
       repeat: {
-        every: 1000 * 60 * 60 * 24 * 1, // 1 day
+        every: aDayInMiliseconds, // 1 day
         limit: 7,
       },
     },

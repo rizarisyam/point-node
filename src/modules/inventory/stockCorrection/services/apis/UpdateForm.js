@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
 const GetCurrentStock = require('@src/modules/inventory/services/GetCurrentStock');
+const ProcessSendUpdateApprovalWorker = require('../../workers/ProcessSendUpdateApproval.worker');
 
 class UpdateForm {
   constructor(tenantDatabase, { maker, stockCorrectionId, updateFormDto }) {
@@ -38,6 +39,8 @@ class UpdateForm {
     });
 
     await stockCorrection.reload();
+    await sendEmailToApprover(this.tenantDatabase, stockCorrection);
+
     return { stockCorrection };
   }
 }
@@ -73,6 +76,7 @@ async function updateStockCorrectionItem(tenantDatabase, { stockCorrection, upda
       unit: updateItem.unit,
       converter: updateItem.converter,
       notes: updateItem.notes,
+      allocationId: updateItem.allocationId,
       ...(updateItem.expiryDate && { expiryDate: updateItem.expiryDate }),
       ...(updateItem.productionNumber && { productionNumber: updateItem.productionNumber }),
     });
@@ -111,6 +115,14 @@ async function deleteJournal(tenantDatabase, form) {
 
 function deleteInventory(tenantDatabase, form) {
   return tenantDatabase.Inventory.destroy({ where: { formId: form.id } });
+}
+
+async function sendEmailToApprover(tenantDatabase, stockCorrection) {
+  const tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');
+  await new ProcessSendUpdateApprovalWorker({
+    tenantName,
+    stockCorrectionId: stockCorrection.id,
+  }).call();
 }
 
 module.exports = UpdateForm;

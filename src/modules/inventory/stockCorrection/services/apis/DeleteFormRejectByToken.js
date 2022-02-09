@@ -1,11 +1,12 @@
 const httpStatus = require('http-status');
 const { JsonWebTokenError } = require('jsonwebtoken');
+const logger = require('@src/config/logger');
 const { Project } = require('@src/models').main;
 const ApiError = require('@src/utils/ApiError');
 const tokenService = require('@src/modules/auth/services/token.service');
-const CreateFormReject = require('./CreateFormReject');
+const DeleteFormReject = require('./DeleteFormReject');
 
-class CreateFormRejectByToken {
+class DeleteFormRejectByToken {
   constructor(tenantDatabase, token) {
     this.tenantDatabase = tenantDatabase;
     this.token = token;
@@ -17,17 +18,15 @@ class CreateFormRejectByToken {
       if (!payload) {
         throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
       }
+
       const { stockCorrectionId, userId } = payload;
       const approver = await this.tenantDatabase.User.findOne({ where: { id: userId } });
-      const createFormRejectDto = {
-        reason: 'Reject from email',
-      };
-      const { stockCorrection } = await new CreateFormReject(this.tenantDatabase, {
+      const deleteFormRejectDto = { reason: 'Reject from email' };
+      const { stockCorrection } = await new DeleteFormReject(this.tenantDatabase, {
         approver,
         stockCorrectionId,
-        createFormRejectDto,
+        deleteFormRejectDto,
       }).call();
-
       const form = await stockCorrection.getForm();
       stockCorrection.dataValues.form = form;
 
@@ -39,10 +38,12 @@ class CreateFormRejectByToken {
       if (error instanceof JsonWebTokenError) {
         throw new ApiError(httpStatus.BAD_REQUEST, 'invalid token');
       }
-
-      throw error;
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      logger.error(error);
     }
   }
 }
 
-module.exports = CreateFormRejectByToken;
+module.exports = DeleteFormRejectByToken;

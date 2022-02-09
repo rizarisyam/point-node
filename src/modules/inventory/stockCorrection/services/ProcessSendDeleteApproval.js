@@ -8,7 +8,7 @@ const Mailer = require('@src/utils/Mailer');
 const getCurrentTenantDatabase = require('@src/utils/getCurrentTenantDatabase');
 const GetCurrentStock = require('../../services/GetCurrentStock');
 
-class ProcessSendApproval {
+class ProcessSendDeleteApproval {
   constructor(tenantName, stockCorrectionId) {
     this.tenantName = tenantName;
     this.stockCorrectionId = stockCorrectionId;
@@ -24,7 +24,7 @@ class ProcessSendApproval {
       ],
     });
     const stockCorrectionForm = await stockCorrection.getForm();
-    if (stockCorrectionForm.approvalStatus !== 0) {
+    if (stockCorrectionForm.cancellationStatus !== 0) {
       return;
     }
 
@@ -40,14 +40,14 @@ class ProcessSendApproval {
         stockCorrection,
       });
       const { messageId, to } = await new Mailer({
-        jobTitle: 'Send Approval Email',
+        jobTitle: 'Send Delete Approval Email',
         to: approver.email,
-        subject: `Approval Email - Stock Correction ${stockCorrectionForm.number}`,
+        subject: `Delete Approval Email - Stock Correction ${stockCorrectionForm.number}`,
         html: emailBody,
       }).call();
 
       logger.info(
-        `Stock correction approval email sent, id: ${messageId}, email: ${to}, stock correction: ${stockCorrectionForm.number}}`
+        `Stock correction delete approval email sent, id: ${messageId}, email: ${to}, stock correction: ${stockCorrectionForm.number}}`
       );
     } catch (error) {
       logger.error(error);
@@ -97,6 +97,7 @@ async function generateApprovalEmailBody(
   const emailApprovalToken = await generateEmailApprovalToken(stockCorrection, approver);
   const tenantWebsite = config.websiteUrl.replace('http://', `http:://${tenantName}.`);
 
+  emailBody = emailBody.replace('{{approvalType}}', 'a <b>DELETE</b>');
   emailBody = emailBody.replaceAll('{{approverName}}', approver.name);
   emailBody = emailBody.replaceAll('{{formNumber}}', stockCorrectionForm.number);
   emailBody = emailBody.replaceAll('{{formDate}}', moment(stockCorrectionForm.date).format('DD MMMM YYYY'));
@@ -108,11 +109,11 @@ async function generateApprovalEmailBody(
   emailBody = emailBody.replaceAll('{{checkLink}}', `${tenantWebsite}/inventory/correction/${stockCorrection.id}`);
   emailBody = emailBody.replaceAll(
     '{{approveLink}}',
-    `${config.websiteUrl}/approval?tenant=${tenantName}&action=approve&token=${emailApprovalToken}`
+    `${config.websiteUrl}/approval?tenant=${tenantName}&crud-type=delete&resource-type=StockCorrection&action=approve&token=${emailApprovalToken}`
   );
   emailBody = emailBody.replaceAll(
     '{{rejectLink}}',
-    `${config.websiteUrl}/approval?tenant=${tenantName}&action=reject&token=${emailApprovalToken}`
+    `${config.websiteUrl}/approval?tenant=${tenantName}&crud-type=delete&resource-type=StockCorrection&action=reject&token=${emailApprovalToken}`
   );
 
   return emailBody;
@@ -130,4 +131,4 @@ async function generateEmailApprovalToken(stockCorrection, approver) {
   return token;
 }
 
-module.exports = ProcessSendApproval;
+module.exports = ProcessSendDeleteApproval;

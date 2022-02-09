@@ -129,6 +129,16 @@ const deleteFormApprove = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send({ data: stockCorrection });
 });
 
+const deleteFormApproveByToken = catchAsync(async (req, res) => {
+  const {
+    currentTenantDatabase,
+    body: { token },
+  } = req;
+
+  const { stockCorrection, project } = await new apiServices.DeleteFormApproveByToken(currentTenantDatabase, token).call();
+  res.status(httpStatus.OK).send({ data: stockCorrection, meta: { projectName: project.name } });
+});
+
 const deleteFormReject = catchAsync(async (req, res) => {
   const {
     currentTenantDatabase,
@@ -144,6 +154,16 @@ const deleteFormReject = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send({ data: stockCorrection });
 });
 
+const deleteFormRejectByToken = catchAsync(async (req, res) => {
+  const {
+    currentTenantDatabase,
+    body: { token },
+  } = req;
+
+  const { stockCorrection, project } = await new apiServices.DeleteFormRejectByToken(currentTenantDatabase, token).call();
+  res.status(httpStatus.OK).send({ data: stockCorrection, meta: { projectName: project.name } });
+});
+
 module.exports = {
   findAll,
   findOne,
@@ -155,5 +175,7 @@ module.exports = {
   updateForm,
   deleteFormRequest,
   deleteFormApprove,
+  deleteFormApproveByToken,
   deleteFormReject,
+  deleteFormRejectByToken,
 };

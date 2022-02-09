@@ -11,6 +11,7 @@ async function create({
   formableType,
   date = new Date(),
   number = 'DN2101001',
+  cancellationStatus = undefined,
 }) {
   const form = await Form.create({
     branchId: branch.id,
@@ -23,6 +24,7 @@ async function create({
     createdBy,
     updatedBy,
     requestApprovalTo,
+    cancellationStatus,
   });
 
   return form;

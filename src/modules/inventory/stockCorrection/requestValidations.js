@@ -61,6 +61,7 @@ const updateForm = {
       notes: Joi.string().default('').allow(null).max(255),
       expiryDate: Joi.date().iso().allow(null),
       productionNumber: Joi.string().allow(null),
+      allocationId: Joi.number().allow(null),
     }),
     notes: Joi.string().default('').allow(null).max(255),
     requestApprovalTo: Joi.number().required(),
@@ -79,6 +80,18 @@ const createFormRejectByToken = {
   }),
 };
 
+const deleteFormApproveByToken = {
+  body: Joi.object({
+    token: Joi.string().required(),
+  }),
+};
+
+const deleteFormRejectByToken = {
+  body: Joi.object({
+    token: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   requireAuth,
   createFormRequest,
@@ -89,4 +102,6 @@ module.exports = {
   updateForm,
   createFormApproveByToken,
   createFormRejectByToken,
+  deleteFormApproveByToken,
+  deleteFormRejectByToken,
 };

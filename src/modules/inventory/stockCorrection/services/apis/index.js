@@ -4,7 +4,9 @@ const CreateFormReject = require('./CreateFormReject');
 const CreateFormRejectByToken = require('./CreateFormRejectByToken');
 const CreateFormRequest = require('./CreateFormRequest');
 const DeleteFormApprove = require('./DeleteFormApprove');
+const DeleteFormApproveByToken = require('./DeleteFormApproveByToken');
 const DeleteFormReject = require('./DeleteFormReject');
+const DeleteFormRejectByToken = require('./DeleteFormRejectByToken');
 const DeleteFormRequest = require('./DeleteFormRequest');
 const FindAll = require('./FindAll');
 const FindOne = require('./FindOne');
@@ -17,7 +19,9 @@ module.exports = {
   CreateFormReject,
   CreateFormRejectByToken,
   DeleteFormApprove,
+  DeleteFormApproveByToken,
   DeleteFormReject,
+  DeleteFormRejectByToken,
   DeleteFormRequest,
   FindAll,
   FindOne,

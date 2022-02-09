@@ -39,9 +39,9 @@ router
     controller.createFormApprove
   );
 
-// APPROVE USING EMAIL TOKEN
+// CREATE APPROVE USING EMAIL TOKEN
 router
-  .route('/approve-with-token')
+  .route('/create-approve-with-token')
   .post(celebrate(requestValidations.createFormApproveByToken), controller.createFormApproveByToken);
 
 // REJECT CREATING STOCK CORRECTION
@@ -55,9 +55,9 @@ router
     controller.createFormReject
   );
 
-// REJECT USING EMAIL TOKEN
+// CREATE REJECT USING EMAIL TOKEN
 router
-  .route('/reject-with-token')
+  .route('/create-reject-with-token')
   .post(celebrate(requestValidations.createFormRejectByToken), controller.createFormRejectByToken);
 
 // REQUEST DELETING STOCK CORRECTION
@@ -81,6 +81,11 @@ router
     controller.deleteFormApprove
   );
 
+// DELETE APPROVE USING EMAIL TOKEN
+router
+  .route('/delete-approve-with-token')
+  .post(celebrate(requestValidations.deleteFormApproveByToken), controller.deleteFormApproveByToken);
+
 // REJECT DELETING STOCK CORRECTION
 router
   .route('/:stockCorrectionId/cancellation-reject')
@@ -91,6 +96,11 @@ router
     auth('approve stock correction'),
     controller.deleteFormReject
   );
+
+// DELETE REJECT USING EMAIL TOKEN
+router
+  .route('/delete-reject-with-token')
+  .post(celebrate(requestValidations.deleteFormRejectByToken), controller.deleteFormRejectByToken);
 
 // UPDATE FORM STOCK CORRECTION
 router
