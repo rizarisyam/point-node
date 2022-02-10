@@ -70,7 +70,8 @@ async function generateApprovalEmailBody(
         date: stockCorrectionForm.date,
         warehouseId: stockCorrection.warehouseId,
         options: {
-          dna: false,
+          expiryDate: stockCorrectionItem.expiryDate,
+          productionNumber: stockCorrectionItem.productionNumber,
         },
       }).call();
 
@@ -84,7 +85,15 @@ async function generateApprovalEmailBody(
     itemsHtml += `
     <tr>
       <td>${index + 1}</td>
-      <td>${stockCorrectionItem.item.name}</td>
+      <td>
+        ${stockCorrectionItem.item.label} 
+        ${stockCorrectionItem.item.requireProductionNumber ? `(PID: ${stockCorrectionItem.productionNumber})` : ''} 
+        ${
+          stockCorrectionItem.item.requireExpiryDate
+            ? `(E/D: ${moment(stockCorrectionForm.expiryDate).format('DD MMMM YYYY')})`
+            : ''
+        }
+      </td>
       <td>${stockCorrectionItem.allocation?.name || ''}</td>
       <td>${stockCorrectionItem.initialStock}</td>
       <td>${stockCorrectionItem.quantity}</td>

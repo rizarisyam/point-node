@@ -12,7 +12,6 @@ class UpdateForm {
   }
 
   async call() {
-    const currentDate = new Date(Date.now());
     const stockCorrection = await this.tenantDatabase.StockCorrection.findOne({
       where: { id: this.stockCorrectionId },
       include: [
@@ -21,76 +20,96 @@ class UpdateForm {
         { model: this.tenantDatabase.Warehouse, as: 'warehouse' },
       ],
     });
-    const { form } = stockCorrection;
-    validate(form, this.maker);
+    const { form: stockCorrectionForm, warehouse } = stockCorrection;
+    validate(stockCorrectionForm, this.maker);
 
-    await deleteJournal(this.tenantDatabase, form);
-    await deleteInventory(this.tenantDatabase, form);
-    await updateStockCorrectionForm({
-      maker: this.maker,
-      updateFormDto: this.updateFormDto,
-      stockCorrection,
-      currentDate,
-      form,
-    });
-    await updateStockCorrectionItem(this.tenantDatabase, {
-      stockCorrection,
-      updateFormDto: this.updateFormDto,
+    await this.tenantDatabase.sequelize.transaction(async (transaction) => {
+      await deleteJournal(this.tenantDatabase, { stockCorrectionForm, transaction });
+      await deleteInventory(this.tenantDatabase, { stockCorrectionForm, transaction });
+      await updateStockCorrectionForm({
+        maker: this.maker,
+        updateFormDto: this.updateFormDto,
+        stockCorrectionForm,
+        transaction,
+      });
+      await deleteOldStockCorrectionItems({ stockCorrection, transaction });
+      await addNewStockCorrectionItems(this.tenantDatabase, {
+        stockCorrection,
+        stockCorrectionForm,
+        warehouse,
+        updateFormDto: this.updateFormDto,
+        transaction,
+      });
     });
 
-    await stockCorrection.reload();
     await sendEmailToApprover(this.tenantDatabase, stockCorrection);
 
+    await stockCorrection.reload();
     return { stockCorrection };
   }
 }
 
-function validate(form, maker) {
-  if (form.createdBy !== maker.id) {
+function validate(stockCorrectionForm, maker) {
+  if (stockCorrectionForm.createdBy !== maker.id) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden - Only maker can update the stock correction');
   }
 }
 
-async function updateStockCorrectionItem(tenantDatabase, { stockCorrection, updateFormDto }) {
-  const { form: stockCorrectionForm, items: currentItems } = stockCorrection;
-  const { items: updateItemsData } = updateFormDto;
-  const doUpdateItem = updateItemsData.map(async (updateItem) => {
-    const item = currentItems.find((currentItem) => {
-      return currentItem.id === updateItem.stockCorrectionItemId;
-    });
+async function deleteOldStockCorrectionItems({ stockCorrection, transaction }) {
+  const doDelete = stockCorrection.items.map((stockCorrectionItem) => {
+    return stockCorrectionItem.destroy({ transaction });
+  });
+
+  await Promise.all(doDelete);
+}
+
+async function addNewStockCorrectionItems(
+  tenantDatabase,
+  { stockCorrection, stockCorrectionForm, warehouse, updateFormDto, transaction }
+) {
+  const { items: itemsRequest } = updateFormDto;
+  const doAddStockCorrectionItem = itemsRequest.map(async (itemRequest) => {
+    if (itemRequest.converter !== 1) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Only can use smallest item unit');
+    }
+    const item = await tenantDatabase.Item.findOne({ where: { id: itemRequest.itemId } });
+
     const itemStock = await new GetCurrentStock(tenantDatabase, {
       item,
       date: stockCorrectionForm.date,
-      warehouseId: stockCorrection.warehouse.id,
+      warehouseId: warehouse.id,
       options: {
-        expiryDate: updateItem.expiryDate,
-        productionNumber: updateItem.productionNumber,
+        expiryDate: itemRequest.expiryDate,
+        productionNumber: itemRequest.productionNumber,
       },
     }).call();
-    if (itemStock + updateItem.stockCorrection < 0) {
+    if (itemStock + itemRequest.stockCorrection < 0) {
       throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock can not be minus');
     }
-
-    return item.update({
-      quantity: updateItem.stockCorrection,
-      unit: updateItem.unit,
-      converter: updateItem.converter,
-      notes: updateItem.notes,
-      allocationId: updateItem.allocationId,
-      ...(updateItem.expiryDate && { expiryDate: updateItem.expiryDate }),
-      ...(updateItem.productionNumber && { productionNumber: updateItem.productionNumber }),
-    });
+    return tenantDatabase.StockCorrectionItem.create(
+      {
+        stockCorrectionId: stockCorrection.id,
+        itemId: item.id,
+        quantity: itemRequest.stockCorrection,
+        unit: itemRequest.unit,
+        converter: itemRequest.converter,
+        notes: itemRequest.notes,
+        allocationId: itemRequest.allocationId,
+        ...(itemRequest.expiryDate && { expiryDate: itemRequest.expiryDate }),
+        ...(itemRequest.productionNumber && { productionNumber: itemRequest.productionNumber }),
+      },
+      { transaction }
+    );
   });
 
-  await Promise.all(doUpdateItem);
+  await Promise.all(doAddStockCorrectionItem);
 }
 
-async function updateStockCorrectionForm({ maker, updateFormDto, form }) {
+async function updateStockCorrectionForm({ maker, updateFormDto, stockCorrectionForm, transaction }) {
   const formData = await buildFormData({ maker, updateFormDto });
-  await form.update(formData);
-  await form.reload();
+  const updatedForm = await stockCorrectionForm.update(formData, { transaction });
 
-  return form;
+  return updatedForm;
 }
 
 async function buildFormData({ maker, updateFormDto }) {
@@ -109,12 +128,22 @@ async function buildFormData({ maker, updateFormDto }) {
   };
 }
 
-async function deleteJournal(tenantDatabase, form) {
-  await tenantDatabase.Journal.destroy({ where: { formId: form.id } });
+async function deleteJournal(tenantDatabase, { stockCorrectionForm, transaction }) {
+  await tenantDatabase.Journal.destroy(
+    {
+      where: { formId: stockCorrectionForm.id },
+    },
+    { transaction }
+  );
 }
 
-function deleteInventory(tenantDatabase, form) {
-  return tenantDatabase.Inventory.destroy({ where: { formId: form.id } });
+function deleteInventory(tenantDatabase, { stockCorrectionForm, transaction }) {
+  return tenantDatabase.Inventory.destroy(
+    {
+      where: { formId: stockCorrectionForm.id },
+    },
+    { transaction }
+  );
 }
 
 async function sendEmailToApprover(tenantDatabase, stockCorrection) {

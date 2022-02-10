@@ -54,7 +54,6 @@ const updateForm = {
     dueDate: Joi.date().iso().required(),
     items: Joi.array().items({
       itemId: Joi.number().required(),
-      stockCorrectionItemId: Joi.number().required(),
       unit: Joi.string().required(),
       converter: Joi.number().required(),
       stockCorrection: Joi.number().required(),
