@@ -27,8 +27,8 @@ class GetCurrentStock {
       include: [{ model: this.tenantDatabase.Form, as: 'form', attributes: [] }],
       attributes: [
         'itemId',
-        ...(this.useDna && this.options.productionNumber ? ['productionNumber'] : []),
-        ...(this.useDna && this.options.expiryDate ? ['expiryDate'] : []),
+        ...(this.useDna && this.item.requireExpiryDate && this.options.productionNumber ? ['productionNumber'] : []),
+        ...(this.useDna && this.item.requireProductionNumber && this.options.expiryDate ? ['expiryDate'] : []),
         [sequelize.fn('SUM', sequelize.col('quantity')), 'remaining'],
       ],
     });
