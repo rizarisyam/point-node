@@ -8,8 +8,8 @@ class GetCurrentStock {
     this.warehouseId = warehouseId;
     this.useDna = useDna;
     this.options = {
-      expiryDate: options.expiryDate || null,
-      productionNumber: options.productionNumber || null,
+      ...(options.expiryDate ? { expiryDate: options.expiryDate } : {}),
+      ...(options.productionNumber ? { productionNumber: options.productionNumber } : {}),
     };
   }
 
@@ -27,7 +27,8 @@ class GetCurrentStock {
       include: [{ model: this.tenantDatabase.Form, as: 'form', attributes: [] }],
       attributes: [
         'itemId',
-        ...(this.useDna ? ['productionNumber', 'expiryDate'] : []),
+        ...(this.useDna && this.options.productionNumber ? ['productionNumber'] : []),
+        ...(this.useDna && this.options.expiryDate ? ['expiryDate'] : []),
         [sequelize.fn('SUM', sequelize.col('quantity')), 'remaining'],
       ],
     });
@@ -47,10 +48,10 @@ function generateFilter(tenantDatabase, { item, warehouseId, date, useDna, optio
     warehouseId,
     [Op.and]: [sequelize.where(sequelize.fn('date', sequelize.col('form.date')), '<', date)],
   };
-  if (useDna && item.requireExpiryDate) {
+  if (useDna && item.requireExpiryDate && options.expiryDate) {
     filter.expiryDate = options.expiryDate;
   }
-  if (useDna && item.requireProductionNumber) {
+  if (useDna && item.requireProductionNumber && options.expiryDate) {
     filter.productionNumber = options.productionNumber;
   }
 
