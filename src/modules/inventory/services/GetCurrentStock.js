@@ -16,7 +16,11 @@ class GetCurrentStock {
   async call() {
     const { sequelize } = this.tenantDatabase;
     const inventories = await this.tenantDatabase.Inventory.findAll({
-      group: ['itemId', ...(this.useDna ? ['productionNumber', 'expiryDate'] : [])],
+      group: [
+        'itemId',
+        ...(this.useDna && this.options.productionNumber ? ['productionNumber'] : []),
+        ...(this.useDna && this.options.expiryDate ? ['expiryDate'] : []),
+      ],
       where: generateFilter(this.tenantDatabase, {
         item: this.item,
         warehouseId: this.warehouseId,
@@ -27,8 +31,8 @@ class GetCurrentStock {
       include: [{ model: this.tenantDatabase.Form, as: 'form', attributes: [] }],
       attributes: [
         'itemId',
-        ...(this.useDna && this.item.requireExpiryDate && this.options.productionNumber ? ['productionNumber'] : []),
-        ...(this.useDna && this.item.requireProductionNumber && this.options.expiryDate ? ['expiryDate'] : []),
+        ...(this.useDna && this.options.productionNumber ? ['productionNumber'] : []),
+        ...(this.useDna && this.options.expiryDate ? ['expiryDate'] : []),
         [sequelize.fn('SUM', sequelize.col('quantity')), 'remaining'],
       ],
     });
