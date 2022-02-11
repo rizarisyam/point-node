@@ -1,16 +1,16 @@
 const { Op } = require('sequelize');
 
 class GetCurrentStock {
-  constructor(
-    tenantDatabase,
-    { item, date, warehouseId, useDna = true, options = { expiryDate: null, productionNumber: null } }
-  ) {
+  constructor(tenantDatabase, { item, date, warehouseId, useDna = true, options }) {
     this.tenantDatabase = tenantDatabase;
     this.item = item;
     this.date = date;
     this.warehouseId = warehouseId;
     this.useDna = useDna;
-    this.options = options;
+    this.options = {
+      expiryDate: options.expiryDate || null,
+      productionNumber: options.productionNumber || null,
+    };
   }
 
   async call() {
