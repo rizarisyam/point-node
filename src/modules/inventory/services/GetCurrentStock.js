@@ -15,26 +15,21 @@ class GetCurrentStock {
 
   async call() {
     const { sequelize } = this.tenantDatabase;
+    const group = generateGroup(this.useDna, this.options);
+    const where = generateFilter(this.tenantDatabase, {
+      item: this.item,
+      warehouseId: this.warehouseId,
+      date: this.date,
+      useDna: this.useDna,
+      options: this.options,
+    });
+    const include = generateInclude(this.tenantDatabase);
+    const attributes = generateAttributes(this.useDna, this.options, sequelize);
     const inventories = await this.tenantDatabase.Inventory.findAll({
-      group: [
-        'itemId',
-        ...(this.useDna && this.options.productionNumber ? ['productionNumber'] : []),
-        ...(this.useDna && this.options.expiryDate ? ['expiryDate'] : []),
-      ],
-      where: generateFilter(this.tenantDatabase, {
-        item: this.item,
-        warehouseId: this.warehouseId,
-        date: this.date,
-        useDna: this.useDna,
-        options: this.options,
-      }),
-      include: [{ model: this.tenantDatabase.Form, as: 'form', attributes: [] }],
-      attributes: [
-        'itemId',
-        ...(this.useDna && this.options.productionNumber ? ['productionNumber'] : []),
-        ...(this.useDna && this.options.expiryDate ? ['expiryDate'] : []),
-        [sequelize.fn('SUM', sequelize.col('quantity')), 'remaining'],
-      ],
+      group,
+      where,
+      include,
+      attributes,
     });
 
     if (!inventories[0]) {
@@ -43,6 +38,28 @@ class GetCurrentStock {
 
     return parseFloat(inventories[0].dataValues.remaining);
   }
+}
+
+function generateGroup(/* _useDna, _options */) {
+  // return [
+  //   'itemId',
+  //   ...(useDna && !!options.productionNumber ? ['productionNumber'] : []),
+  //   ...(useDna && !!options.expiryDate ? ['expiryDate'] : []),
+  // ];
+  return ['item_id', 'production_number', 'expiry_date'];
+}
+
+function generateAttributes(useDna, options, sequelize) {
+  return [
+    'itemId',
+    ...(useDna && options.productionNumber ? ['productionNumber'] : []),
+    ...(useDna && options.expiryDate ? ['expiryDate'] : []),
+    [sequelize.fn('SUM', sequelize.col('quantity')), 'remaining'],
+  ];
+}
+
+function generateInclude(tenantDatabase) {
+  return [{ model: tenantDatabase.Form, as: 'form', attributes: [] }];
 }
 
 function generateFilter(tenantDatabase, { item, warehouseId, date, useDna, options }) {
@@ -55,7 +72,7 @@ function generateFilter(tenantDatabase, { item, warehouseId, date, useDna, optio
   if (useDna && item.requireExpiryDate && options.expiryDate) {
     filter.expiryDate = options.expiryDate;
   }
-  if (useDna && item.requireProductionNumber && options.expiryDate) {
+  if (useDna && item.requireProductionNumber && options.productionNumber) {
     filter.productionNumber = options.productionNumber;
   }
 
