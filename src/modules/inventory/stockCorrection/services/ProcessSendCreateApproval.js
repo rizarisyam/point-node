@@ -20,7 +20,14 @@ class ProcessSendCreateApproval {
       where: { id: this.stockCorrectionId },
       include: [
         { model: tenantDatabase.Warehouse, as: 'warehouse' },
-        { model: tenantDatabase.StockCorrectionItem, as: 'items', include: [{ model: tenantDatabase.Item, as: 'item' }] },
+        {
+          model: tenantDatabase.StockCorrectionItem,
+          as: 'items',
+          include: [
+            { model: tenantDatabase.Item, as: 'item' },
+            { model: tenantDatabase.Allocation, as: 'allocation' },
+          ],
+        },
       ],
     });
     const stockCorrectionForm = await stockCorrection.getForm();
