@@ -182,11 +182,7 @@ async function updateInventory(tenantDatabase, { transaction, salesInvoice, form
     }).call();
   });
 
-  try {
-    await Promise.all(doUpdateInventory);
-  } catch (e) {
-    console.log(e);
-  }
+  await Promise.all(doUpdateInventory);
 }
 
 module.exports = CreateFormApprove;
