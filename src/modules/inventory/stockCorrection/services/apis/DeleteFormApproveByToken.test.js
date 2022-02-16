@@ -1,34 +1,27 @@
-// const httpStatus = require('http-status');
-// const ApiError = require('@src/utils/ApiError');
 const moment = require('moment');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
 const tokenService = require('@src/modules/auth/services/token.service');
-const CreateFormApproveByToken = require('./CreateFormApproveByToken');
+const DeleteFormApproveByToken = require('./DeleteFormApproveByToken');
 
 describe('Stock Correction - Create Form Approve By Token', () => {
   describe('success', () => {
     let stockCorrection, stockCorrectionForm;
     beforeEach(async (done) => {
-      const recordFactories = await generateRecordFactories();
+      const recordFactories = await generateRecordFactories({ stockCorrectionForm: { cancellationStatus: 0 } });
       const { approver } = recordFactories;
       ({ stockCorrection, stockCorrectionForm } = recordFactories);
 
       const token = await createToken(stockCorrection, approver);
 
-      ({ stockCorrection } = await new CreateFormApproveByToken(tenantDatabase, token).call());
+      ({ stockCorrection } = await new DeleteFormApproveByToken(tenantDatabase, token).call());
 
       done();
     });
 
     it('change form status to approved', async () => {
       await stockCorrectionForm.reload();
-      expect(stockCorrectionForm.approvalStatus).toEqual(1);
-    });
-
-    it('create the journals', async () => {
-      const journals = await tenantDatabase.Journal.findAll({ where: { formId: stockCorrectionForm.id } });
-      expect(journals.length).toEqual(2);
+      expect(stockCorrectionForm.cancellationStatus).toEqual(1);
     });
   });
 });
@@ -67,6 +60,7 @@ const generateRecordFactories = async ({
     item,
   });
   stockCorrectionForm = await factory.form.create({
+    ...stockCorrectionForm,
     branch,
     createdBy: maker.id,
     updatedBy: maker.id,
@@ -74,13 +68,6 @@ const generateRecordFactories = async ({
     formable: stockCorrection,
     formableType: 'StockCorrection',
     number: 'SC2101001',
-  });
-
-  await tenantDatabase.SettingJournal.create({
-    feature: 'stock correction',
-    name: 'difference stock expenses',
-    description: 'difference stock expenses',
-    chartOfAccountId: chartOfAccount.id,
   });
 
   return {

@@ -14,7 +14,7 @@
     "dev": "cross-env NODE_ENV=development nodemon src/index.js",
     "test": "jest --colors --verbose --runInBand --detectOpenHandles --forceExit",
     "test:watch": "jest --runInBand --watchAll",
-    "coverage": "jest --coverage --runInBand --detectOpenHandles",
+    "coverage": "jest --coverage --runInBand --detectOpenHandles --forceExit",
     "coverage:coveralls": "jest -i --coverage --coverageReporters=text-lcov | coveralls",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

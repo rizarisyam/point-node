@@ -8,11 +8,11 @@ const CreateFormRejectByToken = require('./CreateFormRejectByToken');
 
 describe('Stock Correction - Create Form Reject By Token', () => {
   describe('success', () => {
-    let stockCorrection, formStockCorrection;
+    let stockCorrection, stockCorrectionForm;
     beforeEach(async (done) => {
       const recordFactories = await generateRecordFactories();
       const { approver } = recordFactories;
-      ({ stockCorrection, formStockCorrection } = recordFactories);
+      ({ stockCorrection, stockCorrectionForm } = recordFactories);
 
       const token = await createToken(stockCorrection, approver);
 
@@ -22,8 +22,8 @@ describe('Stock Correction - Create Form Reject By Token', () => {
     });
 
     it('update form status to rejected', async () => {
-      await formStockCorrection.reload();
-      expect(formStockCorrection.approvalStatus).toEqual(-1);
+      await stockCorrectionForm.reload();
+      expect(stockCorrectionForm.approvalStatus).toEqual(-1);
     });
   });
 });
@@ -92,7 +92,7 @@ const generateRecordFactories = async ({
 
 const createToken = async (stockCorrection, approver) => {
   const payload = {
-    stockCorrection: stockCorrection.id,
+    stockCorrectionId: stockCorrection.id,
     userId: approver.id,
   };
   const expires = moment().add(7, 'days');

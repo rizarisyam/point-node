@@ -2,7 +2,13 @@ const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
+const ProcessSendDeleteApproval = require('../../workers/ProcessSendDeleteApproval.worker');
 const DeleteFormRequest = require('./DeleteFormRequest');
+
+jest.mock('../../workers/ProcessSendDeleteApproval.worker');
+beforeEach(() => {
+  ProcessSendDeleteApproval.mockClear();
+});
 
 describe('Stock Correction - Delete Form Request', () => {
   describe('validations', () => {

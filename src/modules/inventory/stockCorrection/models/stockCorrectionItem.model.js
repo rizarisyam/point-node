@@ -45,11 +45,9 @@ module.exports = (sequelize, DataTypes, projectCode) => {
         type: DataTypes.DATE,
         allowNull: true,
         get() {
-          if (this.getDataValue('expiryDate')) {
-            return moment(this.getDataValue('expiryDate')).format('YYYY-MM-DD HH:mm:ss');
-          }
+          if (this.getDataValue('expiryDate') === null) return null;
 
-          return null;
+          return moment(this.getDataValue('expiryDate')).format('YYYY-MM-DD HH:mm:ss');
         },
       },
       productionNumber: {

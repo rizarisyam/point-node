@@ -175,14 +175,18 @@ async function updateInventory(tenantDatabase, { transaction, salesInvoice, form
       unit: salesInvoiceItem.unit,
       converter: salesInvoiceItem.converter,
       options: {
-        expiryDate: salesInvoiceItem.expiryDate,
-        productionNumber: salesInvoiceItem.productionNumber,
+        ...(salesInvoiceItem.expiryDate && { expiryDate: salesInvoiceItem.expiryDate }),
+        ...(salesInvoiceItem.productionNumber && { productionNumber: salesInvoiceItem.productionNumber }),
       },
       transaction,
     }).call();
   });
 
-  await Promise.all(doUpdateInventory);
+  try {
+    await Promise.all(doUpdateInventory);
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 module.exports = CreateFormApprove;

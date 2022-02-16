@@ -2,9 +2,15 @@ const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
+const ProcessSendCreateApproval = require('../../workers/ProcessSendCreateApproval.worker');
 const CreateFormRequest = require('./CreateFormRequest');
 
+jest.mock('../../workers/ProcessSendCreateApproval.worker');
 Date.now = jest.fn(() => new Date(Date.UTC(2021, 0, 1)).valueOf());
+
+beforeEach(() => {
+  ProcessSendCreateApproval.mockClear();
+});
 
 describe('Stock Correction - Create Form Request', () => {
   describe('validations', () => {
