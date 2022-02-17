@@ -105,7 +105,7 @@ async function generateApprovalEmailBody(
       <td>${stockCorrectionItem.initialStock}</td>
       <td>${stockCorrectionItem.quantity}</td>
       <td>${stockCorrectionItem.finalStock}</td>
-      <td>${stockCorrectionItem.notes}</td>
+      <td>${stockCorrectionItem.notes || ''}</td>
     </tr>
     `;
   });
