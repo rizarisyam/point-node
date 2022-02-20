@@ -1,3 +1,5 @@
+const httpStatus = require('http-status');
+const ApiError = require('@src/utils/ApiError');
 const moment = require('moment');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
@@ -5,6 +7,26 @@ const tokenService = require('@src/modules/auth/services/token.service');
 const DeleteFormApproveByToken = require('./DeleteFormApproveByToken');
 
 describe('Stock Correction - Create Form Approve By Token', () => {
+  describe('validations', () => {
+    it('throw error when token is invalid', async () => {
+      await expect(async () => {
+        await new DeleteFormApproveByToken(tenantDatabase, 'invalid-token').call();
+      }).rejects.toThrow(new ApiError(httpStatus.BAD_REQUEST, 'invalid token'));
+    });
+
+    it('throw error when stock correction is not requested to be delete', async () => {
+      const { approver, stockCorrection, stockCorrectionForm } = await generateRecordFactories();
+      await stockCorrectionForm.update({
+        cancellationStatus: 1,
+      });
+      const token = await createToken(stockCorrection, approver);
+
+      await expect(async () => {
+        await new DeleteFormApproveByToken(tenantDatabase, token).call();
+      }).rejects.toThrow(new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock correction is not requested to be delete'));
+    });
+  });
+
   describe('success', () => {
     let stockCorrection, stockCorrectionForm;
     beforeEach(async (done) => {

@@ -1,5 +1,5 @@
-// const httpStatus = require('http-status');
-// const ApiError = require('@src/utils/ApiError');
+const httpStatus = require('http-status');
+const ApiError = require('@src/utils/ApiError');
 const moment = require('moment');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
@@ -7,6 +7,39 @@ const tokenService = require('@src/modules/auth/services/token.service');
 const CreateFormApproveByToken = require('./CreateFormApproveByToken');
 
 describe('Stock Correction - Create Form Approve By Token', () => {
+  describe('validations', () => {
+    it('throw error when token is invalid', async () => {
+      await expect(async () => {
+        await new CreateFormApproveByToken(tenantDatabase, 'invalid-token').call();
+      }).rejects.toThrow(new ApiError(httpStatus.BAD_REQUEST, 'invalid token'));
+    });
+
+    it('throw error when stock correction is already rejected', async () => {
+      const { approver, stockCorrection, stockCorrectionForm } = await generateRecordFactories();
+      await stockCorrectionForm.update({
+        approvalStatus: -1,
+      });
+      const token = await createToken(stockCorrection, approver);
+
+      await expect(async () => {
+        await new CreateFormApproveByToken(tenantDatabase, token).call();
+      }).rejects.toThrow(new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock correction already rejected'));
+    });
+
+    it('return approved stock correction when stock correction is already approved', async () => {
+      const { approver, stockCorrection, stockCorrectionForm } = await generateRecordFactories();
+      await stockCorrectionForm.update({
+        approvalStatus: 1,
+      });
+      const token = await createToken(stockCorrection, approver);
+
+      const createFormApprove = await new CreateFormApproveByToken(tenantDatabase, token).call();
+
+      expect(createFormApprove.stockCorrection).toBeDefined();
+      expect(createFormApprove.stockCorrection.form.approvalStatus).toEqual(1);
+    });
+  });
+
   describe('success', () => {
     let stockCorrection, stockCorrectionForm;
     beforeEach(async (done) => {

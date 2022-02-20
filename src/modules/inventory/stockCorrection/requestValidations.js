@@ -45,7 +45,7 @@ const deleteFormRequest = {
 
 const deleteFormReject = {
   body: Joi.object({
-    reason: Joi.string().allow(null).default(''),
+    reason: Joi.string().allow(null).allow('').default(''),
   }),
 };
 
