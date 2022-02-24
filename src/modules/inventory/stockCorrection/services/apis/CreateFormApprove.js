@@ -76,6 +76,9 @@ async function updateStockCorretionItems(tenantDatabase, { stockCorrection, tran
         productionNumber: stockCorrectionItem.productionNumber,
       },
     }).call();
+    if (currentStock + stockCorrectionItem.quantity < 0) {
+      throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock can not be minus');
+    }
 
     return stockCorrectionItem.update(
       {
