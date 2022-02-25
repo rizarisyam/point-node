@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const ApiError = require('@src/utils/ApiError');
 const InsertInventoryRecord = require('@src/modules/inventory/services/InsertInventoryRecord');
+const { Project } = require('@src/models').main;
 const GetCurrentStock = require('../../../services/GetCurrentStock');
 
 class CreateFormApprove {
@@ -27,7 +28,7 @@ class CreateFormApprove {
     }
 
     const { form: stockCorrectionForm } = stockCorrection;
-    validate(stockCorrectionForm, this.approver);
+    await validate(this.tenantDatabase, { stockCorrectionForm, approver: this.approver });
     if (stockCorrectionForm.approvalStatus === 1) {
       return { stockCorrection };
     }
@@ -51,9 +52,15 @@ class CreateFormApprove {
   }
 }
 
-function validate(stockCorrectionForm, approver) {
+async function validate(tenantDatabase, { stockCorrectionForm, approver }) {
   if (stockCorrectionForm.approvalStatus === -1) {
-    throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock correction already rejected');
+    const project = await getProject(tenantDatabase);
+    throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock correction already rejected', {
+      formNumber: stockCorrectionForm.number,
+      formStatus: stockCorrectionForm.status,
+      formType: stockCorrectionForm.formableType,
+      projectName: project.name,
+    });
   }
   // super admin
   if (approver.modelHasRole?.role?.name === 'super admin') {
@@ -77,7 +84,13 @@ async function updateStockCorretionItems(tenantDatabase, { stockCorrection, tran
       },
     }).call();
     if (currentStock + stockCorrectionItem.quantity < 0) {
-      throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock can not be minus');
+      const project = await getProject(tenantDatabase);
+      throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock can not be minus', {
+        formNumber: stockCorrectionForm.number,
+        formStatus: stockCorrectionForm.approvalStatus,
+        formType: stockCorrectionForm.formableType,
+        projectName: project.name,
+      });
     }
 
     return stockCorrectionItem.update(
@@ -174,6 +187,13 @@ async function getSettingJournal(tenantDatabase, { feature, name }) {
   }
 
   return settingJournal;
+}
+
+async function getProject(tenantDatabase) {
+  const tenantCode = tenantDatabase.sequelize.config.database.replace('point_', '');
+  const project = await Project.findOne({ where: { code: tenantCode } });
+
+  return project;
 }
 
 module.exports = CreateFormApprove;
