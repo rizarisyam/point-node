@@ -1,9 +1,9 @@
 const faker = require('faker');
 const { Branch } = require('@src/models').tenant;
 
-async function create() {
+async function create({ name } = {}) {
   const branch = await Branch.create({
-    name: faker.company.companyName(),
+    name: name || faker.company.companyName(),
   });
 
   return branch;

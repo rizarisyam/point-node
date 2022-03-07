@@ -3,14 +3,17 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes, projectCode) => {
   class Item extends Model {
     static associate({ [projectCode]: models }) {
+      this.hasMany(models.ItemUnit, { as: 'units' });
+
+      this.hasMany(models.Inventory, { as: 'inventories' });
+
       this.belongsTo(models.User, { as: 'createdByUser', foreignKey: 'createdBy', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.User, { as: 'updatedByUser', foreignKey: 'updatedBy', onDelete: 'RESTRICT' });
 
       this.belongsTo(models.User, { as: 'archivedByUser', foreignKey: 'archivedBy', onDelete: 'RESTRICT' });
 
-      // TODO: Add ChartOfAccount model
-      // this.belongsTo(models.ChartOfAccount, { onDelete: 'RESTRICT' });
+      this.belongsTo(models.ChartOfAccount, { onDelete: 'RESTRICT' });
     }
 
     async calculateCogs() {
@@ -39,6 +42,12 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       name: {
         type: DataTypes.STRING,
+      },
+      label: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          return `[${this.get('code')}] ${this.get('name')}`;
+        },
       },
       size: {
         type: DataTypes.STRING,

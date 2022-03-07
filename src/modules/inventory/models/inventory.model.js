@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const moment = require('moment');
 
 module.exports = (sequelize, DataTypes, projectCode) => {
   class Inventory extends Model {
@@ -29,6 +30,11 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       expiryDate: {
         type: DataTypes.DATE,
+        get() {
+          if (this.getDataValue('expiryDate') === null) return null;
+
+          return moment(this.getDataValue('expiryDate')).format('YYYY-MM-DD HH:mm:ss');
+        },
       },
       productionNumber: {
         type: DataTypes.STRING,

@@ -1,6 +1,7 @@
 /* eslint-disable */
 const path = require('path');
 const Sequelize = require('sequelize');
+const logger = require('../config/logger');
 
 const env = process.env.NODE_ENV || 'development';
 const config = require(`${__dirname}/../config/database.js`)[env];
@@ -34,6 +35,9 @@ const modelPaths = [
   '/inventory/models/inventory.model.js',
   '/inventory/models/inventoryAudit.model.js',
   '/inventory/models/inventoryAuditItem.model.js',
+  // inventory/stockCorrection
+  '/inventory/stockCorrection/models/stockCorrection.model.js',
+  '/inventory/stockCorrection/models/stockCorrectionItem.model.js',
   // sales/deliveryNote
   '/sales/deliveryNote/models/deliveryNote.model.js',
   '/sales/deliveryNote/models/deliveryNoteItem.model.js',
@@ -67,7 +71,7 @@ async function loadAllTenantProjectDatabase (db) {
   });
 }
 
-function addOrFindNewProjectDatabase (db, projectCode) {
+async function addOrFindNewProjectDatabase (db, projectCode) {
   if (db[projectCode]) {
     return db[projectCode]
   }
