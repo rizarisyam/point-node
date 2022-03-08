@@ -6,7 +6,6 @@ const ProcessSendDeleteApproval = require('../../workers/ProcessSendDeleteApprov
 const DeleteFormRequest = require('./DeleteFormRequest');
 
 jest.mock('../../workers/ProcessSendDeleteApproval.worker');
-
 beforeEach(() => {
   ProcessSendDeleteApproval.mockClear();
 });

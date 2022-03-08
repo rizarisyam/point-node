@@ -71,6 +71,7 @@ describe('Sales Invoice - CreateFormApprove', () => {
 
     it('create the journals', async () => {
       const journals = await tenantDatabase.Journal.findAll({ where: { formId: formSalesInvoice.id } });
+      await formSalesInvoice.reload();
       expect(journals.length).toEqual(5);
     });
   });

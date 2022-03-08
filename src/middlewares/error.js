@@ -15,13 +15,23 @@ const errorConverter = (err, req, res, next) => {
     error = new ApiError(statusCode, message, false, err.stack);
   }
 
+  let statusCode;
+  let message;
+  let meta = {};
   if (!(error instanceof ApiError)) {
-    const statusCode = error.statusCode ? httpStatus.BAD_REQUEST : httpStatus.INTERNAL_SERVER_ERROR;
-    const message = error.message || httpStatus[statusCode];
-    error = new ApiError(statusCode, message, false, err.stack);
+    statusCode = error.statusCode ? httpStatus.BAD_REQUEST : httpStatus.INTERNAL_SERVER_ERROR;
+    message = error.message || httpStatus[statusCode];
+    error = new ApiError(statusCode, message, meta, false, err.stack);
+  } else {
+    statusCode = error.statusCode;
+    message = error.message;
+    meta = error.meta;
   }
 
-  next(error);
+  return res.status(statusCode).json({
+    message,
+    meta,
+  });
 };
 
 // eslint-disable-next-line no-unused-vars

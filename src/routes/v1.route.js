@@ -1,9 +1,11 @@
 const express = require('express');
 const setupDatabase = require('@src/middlewares/setupDatabase');
 const config = require('../config/config');
-const salesInvoiceRoute = require('../modules/sales/salesInvoice/routes');
 const authRoute = require('../modules/auth/routes');
 const settingRoute = require('../modules/setting/routes');
+const masterItemRoute = require('../modules/master/item/routes');
+const salesInvoiceRoute = require('../modules/sales/salesInvoice/routes');
+const stockCorrectionRoute = require('../modules/inventory/stockCorrection/routes');
 
 const router = express.Router();
 
@@ -13,16 +15,24 @@ router.get('/status', (req, res) => {
 
 const defaultRoutes = [
   {
-    path: '/sales/invoices',
-    route: salesInvoiceRoute,
-  },
-  {
     path: '/auth',
     route: authRoute,
   },
   {
     path: '/setting',
     route: settingRoute,
+  },
+  {
+    path: '/master/items',
+    route: masterItemRoute,
+  },
+  {
+    path: '/sales/invoices',
+    route: salesInvoiceRoute,
+  },
+  {
+    path: '/inventory/corrections',
+    route: stockCorrectionRoute,
   },
 ];
 

@@ -17,6 +17,7 @@ class CreateFormApprove {
     if (!salesInvoice) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Sales invoice is not exist');
     }
+
     const form = await salesInvoice.getForm();
     validate(form, this.approver);
     if (form.approvalStatus === 1) {
@@ -174,8 +175,8 @@ async function updateInventory(tenantDatabase, { transaction, salesInvoice, form
       unit: salesInvoiceItem.unit,
       converter: salesInvoiceItem.converter,
       options: {
-        expiryDate: salesInvoiceItem.expiryDate,
-        productionNumber: salesInvoiceItem.productionNumber,
+        ...(salesInvoiceItem.expiryDate && { expiryDate: salesInvoiceItem.expiryDate }),
+        ...(salesInvoiceItem.productionNumber && { productionNumber: salesInvoiceItem.productionNumber }),
       },
       transaction,
     }).call();

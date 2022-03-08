@@ -20,6 +20,9 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       },
       converter: {
         type: DataTypes.DECIMAL,
+        get() {
+          return parseFloat(this.getDataValue('converter'));
+        },
       },
       disabled: {
         type: DataTypes.BOOLEAN,

@@ -20,6 +20,13 @@ const mainSequelize = new Sequelize(
  configDbMain
 );
 
+mainSequelize
+        .authenticate()
+        .then(() => {})
+        .catch((err) => {
+            console.log('Unable to connect to the database:', err);
+        });
+
 const configDbTenant = config.databases.tenant;
 const tenantSequelize = new Sequelize(
   configDbTenant.database,
@@ -27,6 +34,13 @@ const tenantSequelize = new Sequelize(
   configDbTenant.password,
   configDbTenant
 );
+
+tenantSequelize
+        .authenticate()
+        .then(() => {})
+        .catch((err) => {
+            console.log('Unable to connect to the database:', err);
+        });
 
 //Add models from main folder
 fs

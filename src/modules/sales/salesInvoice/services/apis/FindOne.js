@@ -44,10 +44,9 @@ class FindOne {
         },
       ],
     });
-    const referenceable = await salesInvoice.getReferenceable({
+    await salesInvoice.setReferenceable({
       include: [{ model: this.tenantDatabase.Form, as: 'form' }],
     });
-    salesInvoice.dataValues.referenceable = referenceable;
 
     return { salesInvoice };
   }
