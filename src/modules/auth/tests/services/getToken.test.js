@@ -4,6 +4,7 @@ const activateNockBack = require('@root/tests/utils/activateNockBack');
 const getTokenService = require('../../services/getToken.service');
 
 const unauthorizedError = new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized');
+const internalServerError = new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Internal server error');
 
 activateNockBack();
 
@@ -41,6 +42,17 @@ describe('Auth - Generate Token Service', () => {
       await expect(async () => {
         await getTokenService(generateTokenDto);
       }).rejects.toThrow(unauthorizedError);
+    });
+
+    it.nock('throw internal server error when get unindentified error form main app', async () => {
+      const generateTokenDto = {
+        id: 2599,
+        email: 'bosgagitu@gmail.com',
+        accessToken: '[SECRET]',
+      };
+      await expect(async () => {
+        await getTokenService(generateTokenDto);
+      }).rejects.toThrow(internalServerError);
     });
   });
 });
