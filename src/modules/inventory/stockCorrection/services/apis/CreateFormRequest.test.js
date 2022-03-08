@@ -83,7 +83,7 @@ const generateRecordFactories = async ({
   warehouse = await factory.warehouse.create({ branch, ...warehouse });
   userWarehouse = await factory.userWarehouse.create({ user: maker, warehouse, isDefault: true });
   allocation = await factory.allocation.create({ branch, ...allocation });
-  item = await factory.item.create(item);
+  item = await factory.item.create({ ...item });
   inventoryForm = await factory.form.create({
     branch,
     number: 'PI2101001',
@@ -108,19 +108,21 @@ const generateRecordFactories = async ({
   };
 };
 
-const generateCreateFormRequestDto = ({ warehouse, item, allocation, approver }) => ({
-  warehouseId: warehouse.id,
-  dueDate: new Date('2021-01-01'),
-  items: [
-    {
-      itemId: item.id,
-      unit: 'PCS',
-      converter: 1,
-      stockCorrection: -10,
-      notes: 'example stock correction item note',
-      allocationId: allocation.id,
-    },
-  ],
-  notes: 'example stock correction note',
-  requestApprovalTo: approver.id,
-});
+const generateCreateFormRequestDto = ({ warehouse, item, allocation, approver }) => {
+  return {
+    warehouseId: warehouse.id,
+    dueDate: new Date('2021-01-01'),
+    items: [
+      {
+        itemId: item.id,
+        unit: 'PCS',
+        converter: 1,
+        stockCorrection: -10,
+        notes: 'example stock correction item note',
+        allocationId: allocation.id,
+      },
+    ],
+    notes: 'example stock correction note',
+    requestApprovalTo: approver.id,
+  };
+};

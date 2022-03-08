@@ -74,6 +74,11 @@ describe('Stock Correction - Create Form Approve', () => {
       const journals = await tenantDatabase.Journal.findAll({ where: { formId: stockCorrectionForm.id } });
       expect(journals.length).toEqual(2);
     });
+
+    it('create the inventory', async () => {
+      const inventories = await tenantDatabase.Inventory.findAll({ where: { formId: stockCorrectionForm.id } });
+      expect(inventories.length).toEqual(1);
+    });
   });
 });
 
