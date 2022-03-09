@@ -88,6 +88,8 @@ const generateRecordFactories = async ({
   deliveryOrder,
   item,
   itemUnit,
+  inventoryForm,
+  inventory,
   deliveryNote,
   allocation,
   deliveryNoteItem,
@@ -120,6 +122,18 @@ const generateRecordFactories = async ({
   deliveryOrder = deliveryOrder || (await factory.deliveryOrder.create({ customer, warehouse }));
   item = item || (await factory.item.create({ chartOfAccount }));
   itemUnit = itemUnit || (await factory.itemUnit.create({ item, createdBy: maker.id }));
+  inventoryForm =
+    inventoryForm ||
+    (await factory.form.create({
+      branch,
+      formable: { id: 0 },
+      formableType: 'PurchaseInvoice',
+      number: 'PI2109001',
+      createdBy: maker.id,
+      updatedBy: maker.id,
+      requestApprovalTo: approver.id,
+    }));
+  inventory = inventory || (await factory.inventory.create({ form: inventoryForm, warehouse, item }));
   deliveryNote = deliveryNote || (await factory.deliveryNote.create({ customer, warehouse, deliveryOrder }));
   allocation = allocation || (await factory.allocation.create({ branch }));
   deliveryNoteItem = deliveryNoteItem || (await factory.deliveryNoteItem.create({ deliveryNote, item, allocation }));
@@ -198,6 +212,8 @@ const generateRecordFactories = async ({
     deliveryOrder,
     item,
     itemUnit,
+    inventoryForm,
+    inventory,
     deliveryNote,
     allocation,
     deliveryNoteItem,

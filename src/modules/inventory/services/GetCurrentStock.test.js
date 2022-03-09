@@ -2,7 +2,7 @@ const factory = require('@root/tests/utils/factory');
 const tenantDatabase = require('@src/models').tenant;
 const GetCurrentStock = require('./GetCurrentStock');
 
-describe('Get Current Stock', () => {
+describe('Inventory - Get Current Stock', () => {
   describe('when item require production number and expiry date', () => {
     let warehouse, item, inventory;
     beforeEach(async (done) => {

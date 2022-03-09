@@ -54,14 +54,22 @@ async function validate(tenantDatabase, { quantity, item, options, warehouse, fo
     throw new ApiError(httpStatus.BAD_REQUEST, 'Production number of item is required');
   }
   if (quantity < 0) {
-    const stock = await new GetCurrentStock(tenantDatabase, { item, date: form.date, warehouse, options });
+    const stock = await new GetCurrentStock(tenantDatabase, {
+      item,
+      date: form.date,
+      warehouseId: warehouse.id,
+      options,
+    }).call();
     if (Math.abs(quantity) > stock) {
       throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, `Insufficient ${item.name} stock`);
     }
   }
   const existingAudit = await getExistingAudit(tenantDatabase, { item, date: form.date, warehouse });
   if (existingAudit) {
-    throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, `${item.name} already audited in ${existingAudit.form.number}`);
+    throw new ApiError(
+      httpStatus.UNPROCESSABLE_ENTITY,
+      `${item.name} already audited in ${existingAudit.inventoryAudit.form.number}`
+    );
   }
 }
 
@@ -69,7 +77,7 @@ async function getExistingAudit(tenantDatabase, { item, date, warehouse }) {
   const existingAudit = await tenantDatabase.InventoryAuditItem.findOne({
     where: {
       '$inventoryAudit.form.date$': { [Op.lte]: date },
-      '$inventoryAudit.form.cancellation_status$': { [Op.ne]: 1 },
+      '$inventoryAudit.form.cancellation_status$': { [Op.or]: [{ [Op.is]: null }, { [Op.ne]: 1 }] },
       '$inventoryAudit.warehouse_id$': warehouse.id,
       itemId: item.id,
     },
