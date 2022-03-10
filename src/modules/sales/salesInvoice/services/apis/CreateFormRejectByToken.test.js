@@ -41,10 +41,10 @@ describe('Sales Invoice - CreateFormRejectByToken', () => {
   });
 
   describe('success reject', () => {
-    let salesInvoice, approver;
+    let salesInvoice, formSalesInvoice, approver;
     beforeEach(async (done) => {
       const recordFactories = await generateRecordFactories();
-      ({ salesInvoice, approver } = recordFactories);
+      ({ salesInvoice, formSalesInvoice, approver } = recordFactories);
 
       const chartOfAccountType = await tenantDatabase.ChartOfAccountType.create({
         name: 'cash',
@@ -83,7 +83,8 @@ describe('Sales Invoice - CreateFormRejectByToken', () => {
     });
 
     it('update form status to rejected', async () => {
-      expect(salesInvoice.form.approvalStatus).toEqual(-1);
+      await formSalesInvoice.reload();
+      expect(formSalesInvoice.approvalStatus).toEqual(-1);
     });
   });
 });
