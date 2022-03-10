@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const { User, Role, ModelHasRole, Inventory } = require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
@@ -51,33 +52,116 @@ describe('Stock Correction - Create Form Approve', () => {
   });
 
   describe('success', () => {
-    let stockCorrection, stockCorrectionForm;
+    let stockCorrection, stockCorrectionItem, stockCorrectionForm, approver;
     beforeEach(async (done) => {
       const recordFactories = await generateRecordFactories();
-      const { approver } = recordFactories;
-      ({ stockCorrection, stockCorrectionForm } = recordFactories);
-
-      ({ stockCorrection } = await new CreateFormApprove(tenantDatabase, {
-        approver,
-        stockCorrectionId: stockCorrection.id,
-      }).call());
+      ({ stockCorrection, stockCorrectionItem, stockCorrectionForm, approver } = recordFactories);
 
       done();
     });
 
     it('change form status to approved', async () => {
+      ({ stockCorrection } = await new CreateFormApprove(tenantDatabase, {
+        approver,
+        stockCorrectionId: stockCorrection.id,
+      }).call());
+
       await stockCorrectionForm.reload();
       expect(stockCorrectionForm.approvalStatus).toEqual(1);
     });
 
     it('create the journals', async () => {
+      ({ stockCorrection } = await new CreateFormApprove(tenantDatabase, {
+        approver,
+        stockCorrectionId: stockCorrection.id,
+      }).call());
+
       const journals = await tenantDatabase.Journal.findAll({ where: { formId: stockCorrectionForm.id } });
       expect(journals.length).toEqual(2);
     });
 
     it('create the inventory', async () => {
+      let totalInventory = await Inventory.count();
+      expect(totalInventory).toEqual(1);
+      ({ stockCorrection } = await new CreateFormApprove(tenantDatabase, {
+        approver,
+        stockCorrectionId: stockCorrection.id,
+      }).call());
       const inventories = await tenantDatabase.Inventory.findAll({ where: { formId: stockCorrectionForm.id } });
       expect(inventories.length).toEqual(1);
+      totalInventory = await Inventory.count();
+      expect(totalInventory).toEqual(2);
+    });
+
+    it('can be approve by super admin', async () => {
+      const superAdmin = await factory.user.create();
+      const superAdminRole = await Role.create({ name: 'super admin', guardName: 'api' });
+      await ModelHasRole.create({
+        roleId: superAdminRole.id,
+        modelId: superAdmin.id,
+        modelType: 'App\\Model\\Master\\User',
+      });
+      approver = await User.findOne({
+        where: { id: superAdmin.id },
+        include: [{ model: ModelHasRole, as: 'modelHasRole', include: [{ model: Role, as: 'role' }] }],
+      });
+      ({ stockCorrection } = await new CreateFormApprove(tenantDatabase, {
+        approver,
+        stockCorrectionId: stockCorrection.id,
+      }).call());
+    });
+
+    it('can stock correction with minus quantity', async () => {
+      await stockCorrectionItem.update({ quantity: -10 });
+      ({ stockCorrection } = await new CreateFormApprove(tenantDatabase, {
+        approver,
+        stockCorrectionId: stockCorrection.id,
+      }).call());
+
+      const journals = await tenantDatabase.Journal.findAll({ where: { formId: stockCorrectionForm.id } });
+      expect(journals.length).toEqual(2);
+    });
+
+    it('not create inventory when quantity 0', async () => {
+      let totalInventory = await Inventory.count();
+      expect(totalInventory).toEqual(1);
+      await stockCorrectionItem.update({ quantity: 0 });
+      ({ stockCorrection } = await new CreateFormApprove(tenantDatabase, {
+        approver,
+        stockCorrectionId: stockCorrection.id,
+      }).call());
+      totalInventory = await Inventory.count();
+      expect(totalInventory).toEqual(1);
+    });
+  });
+
+  describe('failed', () => {
+    let stockCorrection, stockCorrectionItem, approver, settingJournal;
+    beforeEach(async (done) => {
+      const recordFactories = await generateRecordFactories();
+      ({ stockCorrection, stockCorrectionItem, approver, settingJournal } = recordFactories);
+
+      done();
+    });
+
+    it('throws error when stock become minus', async () => {
+      await stockCorrectionItem.update({ quantity: -110 });
+      await expect(async () => {
+        await new CreateFormApprove(tenantDatabase, {
+          approver,
+          stockCorrectionId: stockCorrection.id,
+        }).call();
+      }).rejects.toThrow('Stock can not be minus');
+    });
+
+    it('throws error setting journal not exist', async () => {
+      await settingJournal.destroy();
+      await expect(async () => {
+        await new CreateFormApprove(tenantDatabase, {
+          approver,
+          stockCorrectionId: stockCorrection.id,
+        }).call();
+      }).rejects.toThrow('Journal stock correction account - difference stock expenses not found');
     });
   });
 });
@@ -125,11 +209,26 @@ const generateRecordFactories = async ({
     number: 'SC2101001',
   });
 
-  await tenantDatabase.SettingJournal.create({
+  const settingJournal = await tenantDatabase.SettingJournal.create({
     feature: 'stock correction',
     name: 'difference stock expenses',
     description: 'difference stock expenses',
     chartOfAccountId: chartOfAccount.id,
+  });
+
+  const inventoryForm = await factory.form.create({
+    date: new Date('2022-01-01'),
+    branch,
+    number: 'PI2101001',
+    formable: { id: 1 },
+    formableType: 'PurchaseInvoice',
+    createdBy: maker.id,
+    updatedBy: maker.id,
+  });
+  await factory.inventory.create({
+    form: inventoryForm,
+    warehouse,
+    item,
   });
 
   return {
@@ -141,5 +240,6 @@ const generateRecordFactories = async ({
     stockCorrection,
     stockCorrectionItem,
     stockCorrectionForm,
+    settingJournal,
   };
 };
