@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const { User, Role, ModelHasRole } = require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
@@ -69,28 +70,46 @@ describe('Stock Correction - Create Form Reject', () => {
   });
 
   describe('success', () => {
-    let stockCorrection, stockCorrectionForm, createFormRejectDto;
+    let stockCorrection, stockCorrectionForm, approver, createFormRejectDto;
     beforeEach(async (done) => {
       const recordFactories = await generateRecordFactories();
-      const { approver } = recordFactories;
-      ({ stockCorrection, stockCorrectionForm } = recordFactories);
+      ({ stockCorrection, stockCorrectionForm, approver } = recordFactories);
 
       createFormRejectDto = {
         reason: 'example reason',
       };
 
+      done();
+    });
+
+    it('update form status to rejected', async () => {
       ({ stockCorrection } = await new CreateFormReject(tenantDatabase, {
         approver,
         stockCorrectionId: stockCorrection.id,
         createFormRejectDto,
       }).call());
 
-      done();
-    });
-
-    it('update form status to rejected', async () => {
       await stockCorrectionForm.reload();
       expect(stockCorrectionForm.approvalStatus).toEqual(-1); // rejected
+    });
+
+    it('can be approve by super admin', async () => {
+      const superAdmin = await factory.user.create();
+      const superAdminRole = await Role.create({ name: 'super admin', guardName: 'api' });
+      await ModelHasRole.create({
+        roleId: superAdminRole.id,
+        modelId: superAdmin.id,
+        modelType: 'App\\Model\\Master\\User',
+      });
+      approver = await User.findOne({
+        where: { id: superAdmin.id },
+        include: [{ model: ModelHasRole, as: 'modelHasRole', include: [{ model: Role, as: 'role' }] }],
+      });
+      ({ stockCorrection } = await new CreateFormReject(tenantDatabase, {
+        approver,
+        stockCorrectionId: stockCorrection.id,
+        createFormRejectDto,
+      }).call());
     });
   });
 });
