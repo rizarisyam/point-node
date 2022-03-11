@@ -32,10 +32,11 @@ describe('Stock Correction - Create Form Request', () => {
     });
   });
   describe('success', () => {
-    let stockCorrection, stockCorrectionForm, createFormRequestDto;
+    let stockCorrection, stockCorrectionForm, maker, createFormRequestDto;
     beforeEach(async (done) => {
       const recordFactories = await generateRecordFactories();
-      const { maker, approver, branch, warehouse, allocation, item } = recordFactories;
+      const { approver, branch, warehouse, allocation, item } = recordFactories;
+      ({ maker } = recordFactories);
       createFormRequestDto = generateCreateFormRequestDto({
         approver,
         branch,
@@ -44,22 +45,116 @@ describe('Stock Correction - Create Form Request', () => {
         item,
       });
 
+      done();
+    });
+
+    it('create form with correct date', async () => {
       ({ stockCorrection, stockCorrectionForm } = await new CreateFormRequest(tenantDatabase, {
         maker,
         createFormRequestDto,
       }).call());
 
-      done();
-    });
-
-    it('create form with correct date', () => {
       expect(stockCorrectionForm).toBeDefined();
       expect(stockCorrectionForm.number).toEqual('SC2101001');
       expect(stockCorrectionForm.approvalStatus).toEqual(0); // pending
     });
 
-    it('has correct stock correction data', () => {
+    it('has correct stock correction data', async () => {
+      ({ stockCorrection, stockCorrectionForm } = await new CreateFormRequest(tenantDatabase, {
+        maker,
+        createFormRequestDto,
+      }).call());
+
       expect(stockCorrection.warehouseId).toEqual(createFormRequestDto.warehouseId);
+    });
+
+    it('can create with expiry date and production number', async () => {
+      createFormRequestDto.items[0].expiryDate = new Date('2022-03-01');
+      createFormRequestDto.items[0].productionNumber = '001';
+      ({ stockCorrection, stockCorrectionForm } = await new CreateFormRequest(tenantDatabase, {
+        maker,
+        createFormRequestDto,
+      }).call());
+
+      expect(stockCorrectionForm).toBeDefined();
+      const stockCorrectionItems = await stockCorrection.getItems();
+      expect(stockCorrectionItems[0].expiryDate).toEqual('2022-03-01 07:00:00');
+      expect(stockCorrectionItems[0].productionNumber).toEqual('001');
+    });
+
+    it('will increase the stock correction form number', async () => {
+      ({ stockCorrection, stockCorrectionForm } = await new CreateFormRequest(tenantDatabase, {
+        maker,
+        createFormRequestDto,
+      }).call());
+      expect(stockCorrectionForm.number).toEqual('SC2101001');
+      ({ stockCorrection, stockCorrectionForm } = await new CreateFormRequest(tenantDatabase, {
+        maker,
+        createFormRequestDto,
+      }).call());
+      expect(stockCorrectionForm.number).toEqual('SC2101002');
+    });
+  });
+
+  describe('failed', () => {
+    let maker, userWarehouse, createFormRequestDto;
+    beforeEach(async (done) => {
+      const recordFactories = await generateRecordFactories();
+      const { approver, branch, warehouse, allocation, item } = recordFactories;
+      ({ maker, userWarehouse } = recordFactories);
+      createFormRequestDto = generateCreateFormRequestDto({
+        approver,
+        branch,
+        warehouse,
+        allocation,
+        item,
+      });
+
+      done();
+    });
+
+    it('throws error when user warehouse is missing', async () => {
+      await userWarehouse.destroy();
+
+      await expect(async () => {
+        await new CreateFormRequest(tenantDatabase, {
+          maker,
+          createFormRequestDto,
+        }).call();
+      }).rejects.toThrow('Forbidden');
+    });
+
+    it('throws error when approver is missing', async () => {
+      createFormRequestDto.requestApprovalTo = null;
+
+      await expect(async () => {
+        await new CreateFormRequest(tenantDatabase, {
+          maker,
+          createFormRequestDto,
+        }).call();
+      }).rejects.toThrow('Approver is not exist');
+    });
+
+    it('throws error when request item without smallest unit', async () => {
+      createFormRequestDto.items[0].converter = 2;
+
+      await expect(async () => {
+        await new CreateFormRequest(tenantDatabase, {
+          maker,
+          createFormRequestDto,
+        }).call();
+      }).rejects.toThrow('Only can use smallest item unit');
+    });
+
+    it('throws error when item stock be minus', async () => {
+      createFormRequestDto.items[0].stockCorrection = -200;
+
+      await expect(async () => {
+        await new CreateFormRequest(tenantDatabase, {
+          maker,
+          createFormRequestDto,
+        }).call();
+      }).rejects.toThrow('Stock can not be minus');
     });
   });
 });
