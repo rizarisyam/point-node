@@ -1,10 +1,34 @@
+const httpStatus = require('http-status');
 const moment = require('moment');
+const logger = require('@src/config/logger');
+const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
 const tokenService = require('@src/modules/auth/services/token.service');
+const DeleteFormReject = require('./DeleteFormReject');
 const DeleteFormRejectByToken = require('./DeleteFormRejectByToken');
 
 describe('Stock Correction - Create Form Approve By Token', () => {
+  describe('validations', () => {
+    it('throw error when token is invalid', async () => {
+      await expect(async () => {
+        await new DeleteFormRejectByToken(tenantDatabase, 'invalid-token').call();
+      }).rejects.toThrow(new ApiError(httpStatus.BAD_REQUEST, 'invalid token'));
+    });
+
+    it('throw error when stock correction is not requested to be delete', async () => {
+      const { approver, stockCorrection, stockCorrectionForm } = await generateRecordFactories();
+      await stockCorrectionForm.update({
+        cancellationStatus: 1,
+      });
+      const token = await createToken(stockCorrection, approver);
+
+      await expect(async () => {
+        await new DeleteFormRejectByToken(tenantDatabase, token).call();
+      }).rejects.toThrow(new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Stock correction is not requested to be delete'));
+    });
+  });
+
   describe('success', () => {
     let stockCorrection, stockCorrectionForm;
     beforeEach(async (done) => {
@@ -22,6 +46,34 @@ describe('Stock Correction - Create Form Approve By Token', () => {
     it('change form status to approved', async () => {
       await stockCorrectionForm.reload();
       expect(stockCorrectionForm.cancellationStatus).toEqual(-1);
+    });
+  });
+
+  describe('failed', () => {
+    let stockCorrection, token;
+    beforeEach(async (done) => {
+      const recordFactories = await generateRecordFactories({ stockCorrectionForm: { cancellationStatus: 0 } });
+      const { approver } = recordFactories;
+      ({ stockCorrection } = recordFactories);
+
+      token = await createToken(stockCorrection, approver);
+
+      done();
+    });
+
+    it('throws error when token payload undefined', async () => {
+      jest.spyOn(tokenService, 'verifyToken').mockReturnValue();
+      await expect(async () => {
+        ({ stockCorrection } = await new DeleteFormRejectByToken(tenantDatabase, token).call());
+      }).rejects.toThrow('Forbidden');
+      tokenService.verifyToken.mockRestore();
+    });
+
+    it('call logger error when get unexpected error', async () => {
+      const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+      jest.spyOn(DeleteFormReject.prototype, 'call').mockRejectedValue('error');
+      await new DeleteFormRejectByToken(tenantDatabase, token).call();
+      expect(loggerErrorSpy).toHaveBeenCalled();
     });
   });
 });
