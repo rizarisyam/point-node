@@ -1,9 +1,11 @@
 const httpStatus = require('http-status');
-const ApiError = require('@src/utils/ApiError');
 const moment = require('moment');
+const logger = require('@src/config/logger');
+const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
 const tokenService = require('@src/modules/auth/services/token.service');
+const DeleteFormApprove = require('./DeleteFormApprove');
 const DeleteFormApproveByToken = require('./DeleteFormApproveByToken');
 
 describe('Stock Correction - Create Form Approve By Token', () => {
@@ -44,6 +46,34 @@ describe('Stock Correction - Create Form Approve By Token', () => {
     it('change form status to approved', async () => {
       await stockCorrectionForm.reload();
       expect(stockCorrectionForm.cancellationStatus).toEqual(1);
+    });
+  });
+
+  describe('failed', () => {
+    let stockCorrection, token;
+    beforeEach(async (done) => {
+      const recordFactories = await generateRecordFactories({ stockCorrectionForm: { cancellationStatus: 0 } });
+      const { approver } = recordFactories;
+      ({ stockCorrection } = recordFactories);
+
+      token = await createToken(stockCorrection, approver);
+
+      done();
+    });
+
+    it('throws error when token payload undefined', async () => {
+      jest.spyOn(tokenService, 'verifyToken').mockReturnValue();
+      await expect(async () => {
+        await new DeleteFormApproveByToken(tenantDatabase, token).call();
+      }).rejects.toThrow('Forbidden');
+      tokenService.verifyToken.mockRestore();
+    });
+
+    it('call logger error when get unexpected error', async () => {
+      const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+      jest.spyOn(DeleteFormApprove.prototype, 'call').mockRejectedValue('error');
+      await new DeleteFormApproveByToken(tenantDatabase, token).call();
+      expect(loggerErrorSpy).toHaveBeenCalled();
     });
   });
 });
