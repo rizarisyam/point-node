@@ -40,6 +40,29 @@ describe('Stock Correction - Delete Form Request', () => {
         }).call();
       }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the maker of the stock correction'));
     });
+
+    it('throw error when stock correction is already done', async () => {
+      const recordFactories = await generateRecordFactories();
+      const { approver, stockCorrectionForm, maker } = recordFactories;
+      let { stockCorrection } = recordFactories;
+      await stockCorrectionForm.update({
+        cancellationStatus: 0,
+        requestCancellationTo: approver.id,
+        done: true,
+      });
+
+      await expect(async () => {
+        ({ stockCorrection } = await new DeleteFormRequest(tenantDatabase, {
+          maker,
+          stockCorrectionId: stockCorrection.id,
+          deleteFormRequestDto: {
+            reason: 'example reason',
+          },
+        }).call());
+      }).rejects.toThrow(
+        new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Can not delete already referenced stock correction')
+      );
+    });
   });
 
   describe('success', () => {
