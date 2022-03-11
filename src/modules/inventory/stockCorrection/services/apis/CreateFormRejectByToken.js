@@ -1,5 +1,6 @@
 const httpStatus = require('http-status');
 const { JsonWebTokenError } = require('jsonwebtoken');
+const logger = require('@src/config/logger');
 const { Project } = require('@src/models').main;
 const ApiError = require('@src/utils/ApiError');
 const tokenService = require('@src/modules/auth/services/token.service');
@@ -39,8 +40,10 @@ class CreateFormRejectByToken {
       if (error instanceof JsonWebTokenError) {
         throw new ApiError(httpStatus.BAD_REQUEST, 'invalid token');
       }
-
-      throw error;
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      logger.error(error);
     }
   }
 }
