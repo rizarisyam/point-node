@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const { User, Role, ModelHasRole } = require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
@@ -56,15 +57,37 @@ describe('Stock Correction - Delete Form Approve', () => {
       ({ stockCorrection, stockCorrectionForm, approver } = recordFactories);
       await stockCorrectionForm.update({ cancellationStatus: 0, requestCancellationTo: approver.id });
 
+      done();
+    });
+
+    it('change form cancellation status to approved', async () => {
       ({ stockCorrection } = await new DeleteFormApprove(tenantDatabase, {
         approver,
         stockCorrectionId: stockCorrection.id,
       }).call());
 
-      done();
+      await stockCorrectionForm.reload();
+      expect(stockCorrectionForm.cancellationStatus).toEqual(1); // approved
     });
 
-    it('change form cancellation status to approved', async () => {
+    it('can be approve by super admin', async () => {
+      const superAdmin = await factory.user.create();
+      const superAdminRole = await Role.create({ name: 'super admin', guardName: 'api' });
+      await ModelHasRole.create({
+        roleId: superAdminRole.id,
+        modelId: superAdmin.id,
+        modelType: 'App\\Model\\Master\\User',
+      });
+      approver = await User.findOne({
+        where: { id: superAdmin.id },
+        include: [{ model: ModelHasRole, as: 'modelHasRole', include: [{ model: Role, as: 'role' }] }],
+      });
+
+      ({ stockCorrection } = await new DeleteFormApprove(tenantDatabase, {
+        approver,
+        stockCorrectionId: stockCorrection.id,
+      }).call());
+
       await stockCorrectionForm.reload();
       expect(stockCorrectionForm.cancellationStatus).toEqual(1); // approved
     });
