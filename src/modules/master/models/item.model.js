@@ -21,12 +21,12 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       const qty = await Inventory.sum('quantity', { where: { itemId: this.id } });
       const valueDebit = await Journal.sum('debit', { where: { journalableId: this.id } });
       const valueCredit = await Journal.sum('credit', { where: { journalableId: this.id } });
-
       if (qty < 0) {
         return 0;
       }
 
-      return (valueDebit - valueCredit) / qty;
+      const result = (valueDebit - valueCredit) / qty;
+      return Number.isNaN(result) ? 0 : result;
     }
   }
   Item.init(
