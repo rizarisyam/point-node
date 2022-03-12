@@ -39,6 +39,24 @@ describe('Process Send Create Approval', () => {
     expect(loggerInfoSpy).toHaveBeenCalled();
   });
 
+  it('send mailer with sales invoice discount value', async () => {
+    await salesInvoice.update({ discountValue: 1000 });
+    const mailerSpy = jest.spyOn(Mailer.prototype, 'call');
+    const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+    await new ProcessSendCreateApproval(tenantName, salesInvoice.id).call();
+    expect(mailerSpy).toHaveBeenCalled();
+    expect(loggerInfoSpy).toHaveBeenCalled();
+  });
+
+  it('send mailer with sales invoice discount percent', async () => {
+    await salesInvoice.update({ discountPercent: 5 });
+    const mailerSpy = jest.spyOn(Mailer.prototype, 'call');
+    const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+    await new ProcessSendCreateApproval(tenantName, salesInvoice.id).call();
+    expect(mailerSpy).toHaveBeenCalled();
+    expect(loggerInfoSpy).toHaveBeenCalled();
+  });
+
   it('not send mailer if sales invoice not in pending', async () => {
     await formSalesInvoice.update({ approvalStatus: 1 });
     const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
