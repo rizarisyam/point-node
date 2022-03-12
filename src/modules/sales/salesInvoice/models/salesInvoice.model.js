@@ -34,21 +34,6 @@ module.exports = (sequelize, DataTypes, projectCode) => {
       this.dataValues.referenceable = await this[mixinMethodName](options);
     }
 
-    getDiscountString() {
-      const discountValue = parseFloat(this.discountValue);
-      const discountPercent = parseFloat(this.discountPercent);
-
-      if (discountValue > 0) {
-        return `${discountValue}`;
-      }
-
-      if (discountPercent > 0) {
-        return `${discountPercent} %`;
-      }
-
-      return '';
-    }
-
     async getTotalDetails() {
       const items = await this.getItems();
       const subTotal = await getSubTotal(items);
