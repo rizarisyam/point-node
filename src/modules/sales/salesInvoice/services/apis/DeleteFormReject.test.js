@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const { User, Role, ModelHasRole } = require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
@@ -49,7 +50,7 @@ describe('Sales Invoice - DeleteFormReject', () => {
   });
 
   describe('success reject', () => {
-    let salesInvoice, approver, formSalesInvoice;
+    let salesInvoice, approver, formSalesInvoice, deleteFormRejectDto;
     beforeEach(async (done) => {
       const recordFactories = await generateRecordFactories();
       ({ salesInvoice, approver, formSalesInvoice } = recordFactories);
@@ -84,21 +85,43 @@ describe('Sales Invoice - DeleteFormReject', () => {
         chartOfAccountId: chartOfAccount.id,
       });
       await formSalesInvoice.update({ cancellationStatus: 0, requestCancellationTo: approver.id });
-      const deleteFormRejectDto = {
+      deleteFormRejectDto = {
         reason: 'example reason',
       };
 
+      done();
+    });
+
+    it('update form cancellation status to rejected', async () => {
       ({ salesInvoice } = await new DeleteFormReject(tenantDatabase, {
         approver,
         salesInvoiceId: salesInvoice.id,
         deleteFormRejectDto,
       }).call());
 
-      done();
+      expect(salesInvoice.form.cancellationStatus).toEqual(-1);
     });
 
-    it('update form cancellation status to rejected', async () => {
-      expect(salesInvoice.form.cancellationStatus).toEqual(-1);
+    it('can be reject by super admin', async () => {
+      const superAdmin = await factory.user.create();
+      const superAdminRole = await Role.create({ name: 'super admin', guardName: 'api' });
+      await ModelHasRole.create({
+        roleId: superAdminRole.id,
+        modelId: superAdmin.id,
+        modelType: 'App\\Model\\Master\\User',
+      });
+      approver = await User.findOne({
+        where: { id: superAdmin.id },
+        include: [{ model: ModelHasRole, as: 'modelHasRole', include: [{ model: Role, as: 'role' }] }],
+      });
+      ({ salesInvoice } = await new DeleteFormReject(tenantDatabase, {
+        approver,
+        salesInvoiceId: salesInvoice.id,
+        deleteFormRejectDto,
+      }).call());
+
+      await formSalesInvoice.reload();
+      expect(formSalesInvoice.cancellationStatus).toEqual(-1);
     });
   });
 });

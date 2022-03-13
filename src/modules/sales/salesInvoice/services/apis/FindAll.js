@@ -135,7 +135,7 @@ function generateFilterFormStatus(formQueries) {
   return result;
 }
 
-function offsetParams(page = 1, maxItem = 10) {
+function offsetParams(page, maxItem) {
   return page > 1 ? maxItem * (page - 1) : 0;
 }
 

@@ -7,13 +7,13 @@ const ProcessSendDeleteApproval = require('./ProcessSendDeleteApproval');
 
 jest.mock('nodemailer');
 
-nodemailer.createTransport.mockReturnValue({
-  sendMail: jest.fn().mockReturnValue({ messageId: '1' }),
-});
-
 describe('Process Send Create Approval', () => {
   let salesInvoice, formSalesInvoice, salesInvoiceItem, item, tenantName;
   beforeEach(async (done) => {
+    nodemailer.createTransport.mockReturnValue({
+      sendMail: jest.fn().mockReturnValue({ messageId: '1' }),
+    });
+
     tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');
     const recordFactories = await generateRecordFactories();
     ({ salesInvoice, formSalesInvoice, salesInvoiceItem, item } = recordFactories);
@@ -53,6 +53,15 @@ describe('Process Send Create Approval', () => {
     const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
     await new ProcessSendDeleteApproval(tenantName, salesInvoice.id).call();
     expect(loggerErrorSpy).toHaveBeenCalled();
+  });
+
+  it('send mailer with sales invoice item allocation null', async () => {
+    await salesInvoiceItem.update({ allocationId: null });
+    const mailerSpy = jest.spyOn(Mailer.prototype, 'call');
+    const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+    await new ProcessSendDeleteApproval(tenantName, salesInvoice.id).call();
+    expect(mailerSpy).toHaveBeenCalled();
+    expect(loggerInfoSpy).toHaveBeenCalled();
   });
 });
 

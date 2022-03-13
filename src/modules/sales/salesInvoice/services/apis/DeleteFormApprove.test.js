@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const { User, Role, ModelHasRole } = require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
@@ -84,21 +85,46 @@ describe('Sales Invoice - DeleteFormApprove', () => {
       });
       await formSalesInvoice.update({ cancellationStatus: 0, requestCancellationTo: approver.id });
 
+      done();
+    });
+
+    it('update form cancellation status to approved', async () => {
       ({ salesInvoice } = await new DeleteFormApprove(tenantDatabase, {
         approver,
         salesInvoiceId: salesInvoice.id,
       }).call());
 
-      done();
-    });
-
-    it('update form cancellation status to approved', async () => {
       expect(salesInvoice.form.cancellationStatus).toEqual(1);
     });
 
     it('delete the journals', async () => {
+      ({ salesInvoice } = await new DeleteFormApprove(tenantDatabase, {
+        approver,
+        salesInvoiceId: salesInvoice.id,
+      }).call());
+
       const journals = await tenantDatabase.Journal.findAll({ where: { formId: formSalesInvoice.id } });
       expect(journals.length).toEqual(0);
+    });
+
+    it('can be approve by super admin', async () => {
+      const superAdmin = await factory.user.create();
+      const superAdminRole = await Role.create({ name: 'super admin', guardName: 'api' });
+      await ModelHasRole.create({
+        roleId: superAdminRole.id,
+        modelId: superAdmin.id,
+        modelType: 'App\\Model\\Master\\User',
+      });
+      approver = await User.findOne({
+        where: { id: superAdmin.id },
+        include: [{ model: ModelHasRole, as: 'modelHasRole', include: [{ model: Role, as: 'role' }] }],
+      });
+      ({ salesInvoice } = await new DeleteFormApprove(tenantDatabase, {
+        approver,
+        salesInvoiceId: salesInvoice.id,
+      }).call());
+
+      expect(salesInvoice.form.cancellationStatus).toEqual(1);
     });
   });
 });

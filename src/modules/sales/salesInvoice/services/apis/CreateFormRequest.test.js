@@ -356,6 +356,159 @@ describe('Sales Invoice - CreateFormRequest', () => {
       expect(salesInvoice.dueDate).toEqual(createFormRequestDto.dueDate);
     });
   });
+
+  describe('with sales visitation as reference', () => {
+    let createFormRequestDto,
+      salesInvoice,
+      salesInvoiceForm,
+      maker,
+      approver,
+      formSalesVisitation,
+      branch,
+      branchUser,
+      customer;
+    beforeEach(async (done) => {
+      const recordFactories = await generateSalesVisitationRecordFactories();
+      const { item, allocation, salesVisitationDetail, itemUnit } = recordFactories;
+      ({ maker, approver, formSalesVisitation, branch, branchUser, customer } = recordFactories);
+      createFormRequestDto = generateSalesVisitationCreateFormRequestDto({
+        formSalesVisitation,
+        item,
+        allocation,
+        salesVisitationDetail,
+        itemUnit,
+        maker,
+        approver,
+        customer,
+      });
+
+      done();
+    });
+
+    it('returs correct sales invoice', async () => {
+      ({ salesInvoiceForm } = await new CreateFormRequest(tenantDatabase, {
+        maker,
+        createFormRequestDto,
+      }).call());
+
+      expect(salesInvoiceForm).toBeDefined();
+      expect(salesInvoiceForm.number).toEqual('SI2101001');
+      expect(salesInvoiceForm.approvalStatus).toEqual(0);
+    });
+
+    it('returs correct sales invoice with null customer phone and address', async () => {
+      await customer.update({ phone: null, address: null });
+
+      ({ salesInvoice, salesInvoiceForm } = await new CreateFormRequest(tenantDatabase, {
+        maker,
+        createFormRequestDto,
+      }).call());
+
+      expect(salesInvoiceForm).toBeDefined();
+      expect(salesInvoiceForm.number).toEqual('SI2101001');
+      expect(salesInvoiceForm.approvalStatus).toEqual(0);
+      expect(salesInvoice.customerPhone).toEqual('');
+      expect(salesInvoice.customerAddress).toEqual('');
+    });
+
+    it('increase form number', async () => {
+      await factory.form.create({
+        branch,
+        maker,
+        approver,
+        number: 'SI2101001',
+        formable: { id: 1 },
+        formableType: 'SalesInvoice',
+        createdBy: maker.id,
+        updatedBy: maker.id,
+        requestApprovalTo: approver.id,
+        incrementGroup: '202101',
+      });
+      ({ salesInvoice, salesInvoiceForm } = await new CreateFormRequest(tenantDatabase, {
+        maker,
+        createFormRequestDto,
+      }).call());
+
+      expect(salesInvoiceForm).toBeDefined();
+      expect(salesInvoiceForm.number).toEqual('SI2101002');
+      expect(salesInvoiceForm.approvalStatus).toEqual(0);
+    });
+
+    it('throws error when branch user not exist', async () => {
+      await branchUser.destroy();
+
+      await expect(async () => {
+        await new CreateFormRequest(tenantDatabase, {
+          maker,
+          createFormRequestDto,
+        }).call();
+      }).rejects.toThrow('Forbidden - Invalid default branch');
+    });
+  });
+
+  describe('failed', () => {
+    let createFormRequestDto, maker, approver, formDeliveryNote, item, branchUser, itemUnit;
+    beforeEach(async (done) => {
+      const recordFactories = await generateRecordFactories();
+      const { allocation, deliveryNoteItem, customer } = recordFactories;
+      ({ maker, approver, formDeliveryNote, item, branchUser, itemUnit } = recordFactories);
+      createFormRequestDto = generateCreateFormRequestDto({
+        formDeliveryNote,
+        item,
+        allocation,
+        deliveryNoteItem,
+        itemUnit,
+        maker,
+        approver,
+        customer,
+      });
+
+      done();
+    });
+
+    it('throws error when form reference done status not exist', async () => {
+      await formDeliveryNote.destroy();
+
+      await expect(async () => {
+        await new CreateFormRequest(tenantDatabase, {
+          maker,
+          createFormRequestDto,
+        }).call();
+      }).rejects.toThrow('Form reference without done status not found');
+    });
+
+    it('throws error when stock is not enough', async () => {
+      createFormRequestDto.items[0].quantity = 500;
+      await expect(async () => {
+        await new CreateFormRequest(tenantDatabase, {
+          maker,
+          createFormRequestDto,
+        }).call();
+      }).rejects.toThrow(`Insufficient ${item.name} stock`);
+    });
+
+    it('throws error when branch user not exist', async () => {
+      await branchUser.destroy();
+
+      await expect(async () => {
+        await new CreateFormRequest(tenantDatabase, {
+          maker,
+          createFormRequestDto,
+        }).call();
+      }).rejects.toThrow('Forbidden - Invalid default branch');
+    });
+
+    it('throws error when item unit not exist', async () => {
+      await itemUnit.destroy();
+
+      await expect(async () => {
+        await new CreateFormRequest(tenantDatabase, {
+          maker,
+          createFormRequestDto,
+        }).call();
+      }).rejects.toThrow('Item unit pcs not found');
+    });
+  });
 });
 
 const generateRecordFactories = async ({
@@ -448,6 +601,126 @@ const generateCreateFormRequestDto = ({
     {
       itemId: item.id,
       referenceItemId: deliveryNoteItem.id,
+      quantity: 10,
+      itemUnit: itemUnit.label,
+      converter: itemUnit.converter,
+      allocationId: allocation.id,
+      price: 10000,
+      discountPercent: 0,
+      discountValue: 0,
+    },
+  ],
+  createdBy: maker.id,
+  requestApprovalTo: approver.id,
+  dueDate: new Date('2021-01-01'),
+  discountPercent: 0,
+  discountValue: 0,
+  customerId: customer.id,
+  typeOfTax: 'non',
+  notes: 'example form note',
+});
+
+const generateSalesVisitationRecordFactories = async ({
+  maker,
+  approver,
+  branch,
+  branchUser,
+  customer,
+  warehouse,
+  userWarehouse,
+  deliveryOrder,
+  item,
+  itemUnit,
+  salesVisitation,
+  allocation,
+  salesVisitationDetail,
+  formSalesVisitation,
+  inventoryForm,
+  inventory,
+} = {}) => {
+  maker = maker || (await factory.user.create());
+  approver = approver || (await factory.user.create());
+  branch = branch || (await factory.branch.create());
+  // create relation between maker and branch for authorization
+  branchUser = branchUser || (await factory.branchUser.create({ user: maker, branch, isDefault: true }));
+  customer = customer || (await factory.customer.create({ branch }));
+  warehouse = warehouse || (await factory.warehouse.create({ branch }));
+  // create relation between maker and warehouse for authorization
+  userWarehouse = userWarehouse || (await factory.userWarehouse.create({ user: maker, warehouse, isDefault: true }));
+  deliveryOrder = deliveryOrder || (await factory.deliveryOrder.create({ customer, warehouse }));
+  item = item || (await factory.item.create());
+  itemUnit = itemUnit || (await factory.itemUnit.create({ item, createdBy: maker.id }));
+  formSalesVisitation =
+    formSalesVisitation ||
+    (await factory.form.create({
+      number: 'SV2101001',
+      branch,
+      formable: { id: 0 },
+      formableType: '',
+      createdBy: maker.id,
+      updatedBy: maker.id,
+      requestApprovalTo: approver.id,
+    }));
+  salesVisitation =
+    salesVisitation ||
+    (await factory.salesVisitation.create({
+      form: formSalesVisitation,
+      branch,
+      customer,
+      warehouse,
+      deliveryOrder,
+      group: 1,
+    }));
+  allocation = allocation || (await factory.allocation.create({ branch }));
+  salesVisitationDetail =
+    salesVisitationDetail || (await factory.salesVisitationDetail.create({ salesVisitation, item, allocation }));
+  inventoryForm = await factory.form.create({
+    branch,
+    number: 'PI2101001',
+    formable: { id: 1 },
+    formableType: 'PurchaseInvoice',
+    createdBy: maker.id,
+    updatedBy: maker.id,
+    date: new Date(mockedTime - 1000),
+    ...inventoryForm,
+  });
+  inventory = await factory.inventory.create({ form: inventoryForm, warehouse, item });
+
+  return {
+    maker,
+    approver,
+    branch,
+    branchUser,
+    customer,
+    warehouse,
+    userWarehouse,
+    deliveryOrder,
+    item,
+    itemUnit,
+    salesVisitation,
+    allocation,
+    salesVisitationDetail,
+    formSalesVisitation,
+    inventoryForm,
+    inventory,
+  };
+};
+
+const generateSalesVisitationCreateFormRequestDto = ({
+  formSalesVisitation,
+  item,
+  salesVisitationDetail,
+  itemUnit,
+  maker,
+  approver,
+  customer,
+  allocation,
+}) => ({
+  formId: formSalesVisitation.id,
+  items: [
+    {
+      itemId: item.id,
+      referenceItemId: salesVisitationDetail.id,
       quantity: 10,
       itemUnit: itemUnit.label,
       converter: itemUnit.converter,

@@ -18,6 +18,8 @@ const stockCorrection = require('./stockCorrection');
 const stockCorrectionItem = require('./stockCorrectionItem');
 const inventoryAudit = require('./inventoryAudit');
 const inventoryAuditItem = require('./inventoryAuditItem');
+const salesVisitation = require('./salesVisitation');
+const salesVisitationDetail = require('./salesVisitationDetail');
 
 const factory = {
   allocation,
@@ -40,6 +42,8 @@ const factory = {
   stockCorrectionItem,
   inventoryAudit,
   inventoryAuditItem,
+  salesVisitation,
+  salesVisitationDetail,
 };
 
 module.exports = factory;

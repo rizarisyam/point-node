@@ -93,7 +93,7 @@ describe('Stock Correction - Create Form Reject', () => {
       expect(stockCorrectionForm.approvalStatus).toEqual(-1); // rejected
     });
 
-    it('can be approve by super admin', async () => {
+    it('can be reject by super admin', async () => {
       const superAdmin = await factory.user.create();
       const superAdminRole = await Role.create({ name: 'super admin', guardName: 'api' });
       await ModelHasRole.create({
@@ -110,6 +110,9 @@ describe('Stock Correction - Create Form Reject', () => {
         stockCorrectionId: stockCorrection.id,
         createFormRejectDto,
       }).call());
+
+      await stockCorrectionForm.reload();
+      expect(stockCorrectionForm.approvalStatus).toEqual(-1); // rejected
     });
   });
 });

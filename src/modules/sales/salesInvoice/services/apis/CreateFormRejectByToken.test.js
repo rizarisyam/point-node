@@ -3,7 +3,9 @@ const moment = require('moment');
 const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
+const logger = require('@src/config/logger');
 const tokenService = require('@src/modules/auth/services/token.service');
+const CreateFormReject = require('./CreateFormReject');
 const CreateFormRejectByToken = require('./CreateFormRejectByToken');
 
 describe('Sales Invoice - CreateFormRejectByToken', () => {
@@ -85,6 +87,62 @@ describe('Sales Invoice - CreateFormRejectByToken', () => {
     it('update form status to rejected', async () => {
       await formSalesInvoice.reload();
       expect(formSalesInvoice.approvalStatus).toEqual(-1);
+    });
+  });
+
+  describe('failed', () => {
+    let salesInvoice, approver, token;
+    beforeEach(async (done) => {
+      const recordFactories = await generateRecordFactories();
+      ({ salesInvoice, approver } = recordFactories);
+
+      const chartOfAccountType = await tenantDatabase.ChartOfAccountType.create({
+        name: 'cash',
+        alias: 'kas',
+        isDebit: true,
+      });
+      const chartOfAccount = await tenantDatabase.ChartOfAccount.create({
+        typeId: chartOfAccountType.id,
+        position: '',
+        name: 'kas besar',
+        alias: 'kas besar',
+      });
+      await tenantDatabase.SettingJournal.create({
+        feature: 'sales',
+        name: 'account receivable',
+        description: 'account receivable',
+        chartOfAccountId: chartOfAccount.id,
+      });
+      await tenantDatabase.SettingJournal.create({
+        feature: 'sales',
+        name: 'sales income',
+        description: 'sales income',
+        chartOfAccountId: chartOfAccount.id,
+      });
+      await tenantDatabase.SettingJournal.create({
+        feature: 'sales',
+        name: 'income tax payable',
+        description: 'income tax payable',
+        chartOfAccountId: chartOfAccount.id,
+      });
+      token = await createToken(salesInvoice, approver);
+
+      done();
+    });
+
+    it('throws error when token payload undefined', async () => {
+      jest.spyOn(tokenService, 'verifyToken').mockReturnValue();
+      await expect(async () => {
+        await new CreateFormRejectByToken(tenantDatabase, token).call();
+      }).rejects.toThrow('Forbidden');
+      tokenService.verifyToken.mockRestore();
+    });
+
+    it('call logger error when get unexpected error', async () => {
+      const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+      jest.spyOn(CreateFormReject.prototype, 'call').mockRejectedValue('error');
+      await new CreateFormRejectByToken(tenantDatabase, token).call();
+      expect(loggerErrorSpy).toHaveBeenCalled();
     });
   });
 });

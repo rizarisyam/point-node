@@ -1,85 +1,33 @@
-const nodemailer = require('nodemailer');
-const logger = require('@src/config/logger');
-const tenantDatabase = require('@src/models').tenant;
-const Mailer = require('@src/utils/Mailer');
+const Queue = require('bull');
 const factory = require('@root/tests/utils/factory');
-const ProcessSendCreateApproval = require('./ProcessSendCreateApproval');
+const tenantDatabase = require('@src/models').tenant;
+const ProcessSendDeleteApproval = require('../services/ProcessSendDeleteApproval');
+const ProcessSendDeleteApprovalWorker = require('./ProcessSendDeleteApproval.worker');
 
-jest.mock('nodemailer');
-
-describe('Process Send Create Approval', () => {
-  let salesInvoice, formSalesInvoice, salesInvoiceItem, item, tenantName;
+describe('Process Send Delete Approval Worker', () => {
+  let salesInvoice;
   beforeEach(async (done) => {
-    nodemailer.createTransport.mockReturnValue({
-      sendMail: jest.fn().mockReturnValue({ messageId: '1' }),
-    });
-
-    tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');
     const recordFactories = await generateRecordFactories();
-    ({ salesInvoice, formSalesInvoice, salesInvoiceItem, item } = recordFactories);
+    ({ salesInvoice } = recordFactories);
 
     done();
   });
 
-  it('send mailer', async () => {
-    const mailerSpy = jest.spyOn(Mailer.prototype, 'call');
-    const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
-    await new ProcessSendCreateApproval(tenantName, salesInvoice.id).call();
-    expect(mailerSpy).toHaveBeenCalled();
-    expect(loggerInfoSpy).toHaveBeenCalled();
-  });
-
-  it('send mailer with require production number and expiry date', async () => {
-    const mailerSpy = jest.spyOn(Mailer.prototype, 'call');
-    const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
-    await item.update({ requireProductionNumber: true, requireExpiryDate: true });
-    await salesInvoiceItem.update({ productionNumber: '001', expiryDate: new Date('2022-03-01') });
-    await new ProcessSendCreateApproval(tenantName, salesInvoice.id).call();
-    expect(mailerSpy).toHaveBeenCalled();
-    expect(loggerInfoSpy).toHaveBeenCalled();
-  });
-
-  it('send mailer with sales invoice discount value', async () => {
-    await salesInvoice.update({ discountValue: 1000 });
-    const mailerSpy = jest.spyOn(Mailer.prototype, 'call');
-    const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
-    await new ProcessSendCreateApproval(tenantName, salesInvoice.id).call();
-    expect(mailerSpy).toHaveBeenCalled();
-    expect(loggerInfoSpy).toHaveBeenCalled();
-  });
-
-  it('send mailer with sales invoice discount percent', async () => {
-    await salesInvoice.update({ discountPercent: 5 });
-    const mailerSpy = jest.spyOn(Mailer.prototype, 'call');
-    const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
-    await new ProcessSendCreateApproval(tenantName, salesInvoice.id).call();
-    expect(mailerSpy).toHaveBeenCalled();
-    expect(loggerInfoSpy).toHaveBeenCalled();
-  });
-
-  it('not send mailer if sales invoice not in pending', async () => {
-    await formSalesInvoice.update({ approvalStatus: 1 });
-    const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
-    await new ProcessSendCreateApproval(tenantName, salesInvoice.id).call();
-    expect(loggerInfoSpy).not.toHaveBeenCalled();
-  });
-
-  it('calls logger error when mailer failed', async () => {
-    nodemailer.createTransport.mockReturnValue({
-      sendMail: jest.fn().mockRejectedValue('error'),
+  it('create worker', () => {
+    const tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');
+    const processSendCreateApproval = jest.spyOn(ProcessSendDeleteApproval.prototype, 'call').mockImplementation(() => {});
+    const queueProcessSpy = jest.spyOn(Queue.prototype, 'process').mockImplementation((callback) => {
+      callback();
     });
-    const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
-    await new ProcessSendCreateApproval(tenantName, salesInvoice.id).call();
-    expect(loggerErrorSpy).toHaveBeenCalled();
-  });
+    const params = {
+      tenantName,
+      stockCorrectionId: salesInvoice.id,
+    };
 
-  it('send mailer with sales invoice item allocation null', async () => {
-    await salesInvoiceItem.update({ allocationId: null });
-    const mailerSpy = jest.spyOn(Mailer.prototype, 'call');
-    const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
-    await new ProcessSendCreateApproval(tenantName, salesInvoice.id).call();
-    expect(mailerSpy).toHaveBeenCalled();
-    expect(loggerInfoSpy).toHaveBeenCalled();
+    const processSendCreateApprovalWorker = new ProcessSendDeleteApprovalWorker(params);
+    processSendCreateApprovalWorker.call();
+    expect(queueProcessSpy).toHaveBeenCalled();
+    expect(processSendCreateApproval).toHaveBeenCalled();
   });
 });
 
@@ -200,7 +148,7 @@ const generateRecordFactories = async ({
     description: 'income tax payable',
     chartOfAccountId: chartOfAccount.id,
   });
-  await tenantDatabase.SettingJournal.create({
+  const settingJournal = await tenantDatabase.SettingJournal.create({
     feature: 'sales',
     name: 'cost of sales',
     description: 'cost of sales',
@@ -227,5 +175,6 @@ const generateRecordFactories = async ({
     salesInvoice,
     salesInvoiceItem,
     formSalesInvoice,
+    settingJournal,
   };
 };

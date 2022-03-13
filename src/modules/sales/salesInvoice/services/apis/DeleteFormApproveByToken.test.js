@@ -1,79 +1,39 @@
 const httpStatus = require('http-status');
-const { User, Role, ModelHasRole } = require('@src/models').tenant;
+const moment = require('moment');
 const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
-const CreateFormReject = require('./CreateFormReject');
+const logger = require('@src/config/logger');
+const tokenService = require('@src/modules/auth/services/token.service');
+const DeleteFormApprove = require('./DeleteFormApprove');
+const DeleteFormApproveByToken = require('./DeleteFormApproveByToken');
 
-describe('Sales Invoice - CreateFormReject', () => {
+describe('Sales Invoice - DeleteFormApproveByToken', () => {
   describe('validations', () => {
-    it('throw error when sales invoice is not exist', async () => {
-      const approver = await factory.user.create();
-
+    it('throw error when token is invalid', async () => {
       await expect(async () => {
-        await new CreateFormReject(tenantDatabase, { approver, salesInvoiceId: 'invalid-id' }).call();
-      }).rejects.toThrow(new ApiError(httpStatus.NOT_FOUND, 'Sales invoice is not exist'));
+        await new DeleteFormApproveByToken(tenantDatabase, 'invalid-token').call();
+      }).rejects.toThrow(new ApiError(httpStatus.BAD_REQUEST, 'invalid token'));
     });
 
-    it('throw error when rejected by unwanted user', async () => {
-      const hacker = await factory.user.create();
-      const { salesInvoice } = await generateRecordFactories();
-      const createFormRejectDto = {
-        reason: 'example reason',
-      };
-
-      await expect(async () => {
-        await new CreateFormReject(tenantDatabase, {
-          approver: hacker,
-          salesInvoiceId: salesInvoice.id,
-          createFormRejectDto,
-        }).call();
-      }).rejects.toThrow(new ApiError(httpStatus.FORBIDDEN, 'Forbidden - You are not the selected approver'));
-    });
-
-    it('throw error when sales invoice is already approved', async () => {
+    it('throw error when sales invoice is already rejected', async () => {
       const { approver, salesInvoice, formSalesInvoice } = await generateRecordFactories();
       await formSalesInvoice.update({
-        approvalStatus: 1,
+        cancellationStatus: -1,
       });
-      const createFormRejectDto = {
-        reason: 'example reason',
-      };
+      const token = await createToken(salesInvoice, approver);
 
       await expect(async () => {
-        await new CreateFormReject(tenantDatabase, {
-          approver,
-          salesInvoiceId: salesInvoice.id,
-          createFormRejectDto,
-        }).call();
-      }).rejects.toThrow(new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Sales invoice already approved'));
-    });
-
-    it('return rejected sales invoice when sales invoice is already rejected', async () => {
-      const { approver, salesInvoice, formSalesInvoice } = await generateRecordFactories();
-      await formSalesInvoice.update({
-        approvalStatus: -1,
-      });
-      const createFormRejectDto = {
-        reason: 'example reason',
-      };
-
-      const createFormApprove = await new CreateFormReject(tenantDatabase, {
-        approver,
-        salesInvoiceId: salesInvoice.id,
-        createFormRejectDto,
-      }).call();
-
-      expect(createFormApprove.salesInvoice).toBeDefined();
-      expect(createFormApprove.salesInvoice.form.approvalStatus).toEqual(-1);
+        await new DeleteFormApproveByToken(tenantDatabase, token).call();
+      }).rejects.toThrow(new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Sales invoice is not requested to be delete'));
     });
   });
 
-  describe('success reject', () => {
-    let salesInvoice, approver, formSalesInvoice, createFormRejectDto;
+  describe('success approve', () => {
+    let salesInvoice, approver;
     beforeEach(async (done) => {
       const recordFactories = await generateRecordFactories();
-      ({ salesInvoice, approver, formSalesInvoice } = recordFactories);
+      ({ salesInvoice, approver } = recordFactories);
 
       const chartOfAccountType = await tenantDatabase.ChartOfAccountType.create({
         name: 'cash',
@@ -104,44 +64,50 @@ describe('Sales Invoice - CreateFormReject', () => {
         description: 'income tax payable',
         chartOfAccountId: chartOfAccount.id,
       });
-      createFormRejectDto = {
-        reason: 'example reason',
-      };
+      await tenantDatabase.SettingJournal.create({
+        feature: 'sales',
+        name: 'cost of sales',
+        description: 'cost of sales',
+        chartOfAccountId: chartOfAccount.id,
+      });
+
+      const token = await createToken(salesInvoice, approver);
+
+      ({ salesInvoice } = await new DeleteFormApproveByToken(tenantDatabase, token).call());
 
       done();
     });
 
-    it('update form status to rejected', async () => {
-      ({ salesInvoice } = await new CreateFormReject(tenantDatabase, {
-        approver,
-        salesInvoiceId: salesInvoice.id,
-        createFormRejectDto,
-      }).call());
+    it('update form status to approved', async () => {
+      expect(salesInvoice.form.cancellationStatus).toEqual(1);
+    });
+  });
 
-      await formSalesInvoice.reload();
-      expect(formSalesInvoice.approvalStatus).toEqual(-1);
+  describe('failed', () => {
+    let salesInvoice, token;
+    beforeEach(async (done) => {
+      const recordFactories = await generateRecordFactories();
+      const { approver } = recordFactories;
+      ({ salesInvoice } = recordFactories);
+
+      token = await createToken(salesInvoice, approver);
+
+      done();
     });
 
-    it('can be reject by super admin', async () => {
-      const superAdmin = await factory.user.create();
-      const superAdminRole = await Role.create({ name: 'super admin', guardName: 'api' });
-      await ModelHasRole.create({
-        roleId: superAdminRole.id,
-        modelId: superAdmin.id,
-        modelType: 'App\\Model\\Master\\User',
-      });
-      approver = await User.findOne({
-        where: { id: superAdmin.id },
-        include: [{ model: ModelHasRole, as: 'modelHasRole', include: [{ model: Role, as: 'role' }] }],
-      });
-      ({ salesInvoice } = await new CreateFormReject(tenantDatabase, {
-        approver,
-        salesInvoiceId: salesInvoice.id,
-        createFormRejectDto,
-      }).call());
+    it('throws error when token payload undefined', async () => {
+      jest.spyOn(tokenService, 'verifyToken').mockReturnValue();
+      await expect(async () => {
+        await new DeleteFormApproveByToken(tenantDatabase, token).call();
+      }).rejects.toThrow('Forbidden');
+      tokenService.verifyToken.mockRestore();
+    });
 
-      await formSalesInvoice.reload();
-      expect(formSalesInvoice.approvalStatus).toEqual(-1);
+    it('call logger error when get unexpected error', async () => {
+      const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+      jest.spyOn(DeleteFormApprove.prototype, 'call').mockRejectedValue('error');
+      await new DeleteFormApproveByToken(tenantDatabase, token).call();
+      expect(loggerErrorSpy).toHaveBeenCalled();
     });
   });
 });
@@ -207,6 +173,7 @@ const generateRecordFactories = async ({
       formable: salesInvoice,
       formableType: 'SalesInvoice',
       number: 'SI2109001',
+      cancellationStatus: 0,
     }));
 
   return {
@@ -227,4 +194,16 @@ const generateRecordFactories = async ({
     salesInvoice,
     formSalesInvoice,
   };
+};
+
+const createToken = async (salesInvoice, approver) => {
+  const payload = {
+    salesInvoiceId: salesInvoice.id,
+    userId: approver.id,
+  };
+  const expires = moment().add(7, 'days');
+
+  const token = await tokenService.generatePayloadToken(payload, expires);
+
+  return token;
 };

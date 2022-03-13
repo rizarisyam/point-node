@@ -9,12 +9,6 @@ const ProcessSendInvoiceToCustomer = require('./ProcessSendInvoiceToCustomer');
 jest.mock('nodemailer');
 jest.mock('html-pdf-node');
 
-nodemailer.createTransport.mockReturnValue({
-  sendMail: jest.fn().mockReturnValue({ messageId: '1' }),
-});
-
-htmlToPdf.generatePdf.mockImplementation(() => {});
-
 const sendInvoiceToCustomerDto = {
   email: 'john.doe@mail.com',
   message: 'This is the invoice',
@@ -23,6 +17,11 @@ const sendInvoiceToCustomerDto = {
 describe('Process Send Create Approval', () => {
   let salesInvoice, formSalesInvoice, salesInvoiceItem, item, tenantName, maker, customer;
   beforeEach(async (done) => {
+    nodemailer.createTransport.mockReturnValue({
+      sendMail: jest.fn().mockReturnValue({ messageId: '1' }),
+    });
+    htmlToPdf.generatePdf.mockImplementation(() => {});
+
     tenantName = tenantDatabase.sequelize.config.database.replace('point_', '');
     const recordFactories = await generateRecordFactories();
     ({ salesInvoice, formSalesInvoice, salesInvoiceItem, item, maker, customer } = recordFactories);
@@ -84,6 +83,15 @@ describe('Process Send Create Approval', () => {
     const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
     await new ProcessSendInvoiceToCustomer(tenantName, salesInvoice.id, sendInvoiceToCustomerDto).call();
     expect(loggerErrorSpy).toHaveBeenCalled();
+  });
+
+  it('send mailer with null referenceable type', async () => {
+    await salesInvoice.update({ referenceableType: 'SalesVisitation' });
+    const mailerSpy = jest.spyOn(Mailer.prototype, 'call');
+    const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+    await new ProcessSendInvoiceToCustomer(tenantName, salesInvoice.id, sendInvoiceToCustomerDto).call();
+    expect(mailerSpy).toHaveBeenCalled();
+    expect(loggerInfoSpy).toHaveBeenCalled();
   });
 });
 

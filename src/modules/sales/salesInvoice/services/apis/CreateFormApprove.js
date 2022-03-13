@@ -159,7 +159,7 @@ async function getSettingJournal(tenantDatabase, { feature, name }) {
 async function updateInventory(tenantDatabase, { transaction, salesInvoice, form }) {
   const salesInvoiceItems = salesInvoice.items;
   const doUpdateInventory = salesInvoiceItems.map(async (salesInvoiceItem) => {
-    if (salesInvoiceItems.quantity === 0) {
+    if (salesInvoiceItem.quantity === 0) {
       return;
     }
     const item = await salesInvoiceItem.getItem();
@@ -175,8 +175,8 @@ async function updateInventory(tenantDatabase, { transaction, salesInvoice, form
       unit: salesInvoiceItem.unit,
       converter: salesInvoiceItem.converter,
       options: {
-        ...(salesInvoiceItem.expiryDate && { expiryDate: salesInvoiceItem.expiryDate }),
-        ...(salesInvoiceItem.productionNumber && { productionNumber: salesInvoiceItem.productionNumber }),
+        expiryDate: salesInvoiceItem.expiryDate,
+        productionNumber: salesInvoiceItem.productionNumber,
       },
       transaction,
     }).call();
