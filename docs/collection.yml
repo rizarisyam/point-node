@@ -25,6 +25,31 @@ paths:
           schema:
             type: string
           example: '{{authToken}}'
+        - name: 'limit'
+          in: query
+          schema:
+            type: number
+          example: 10
+        - name: 'page'
+          in: query
+          schema:
+            type: number
+          example: 1
+        - name: 'filter_date_min'
+          in: query
+          schema:
+            type: date
+          example: '2022-03-01 00:00:00'
+        - name: 'filter_date_max'
+          in: query
+          schema:
+            type: date
+          example: '2022-03-01 00:00:00'
+        - name: 'filter_form'
+          in: query
+          schema:
+            type: string
+          example: 'pending;approvalDone'
       responses:
         '200':
           description: OK
@@ -354,6 +379,31 @@ paths:
           schema:
             type: string
           example: '{{authToken}}'
+        - name: filter_date_min
+          in: query
+          schema:
+            type: date
+          example: '2022-03-01 00:00:00'
+        - name: filter_date_max
+          in: query
+          schema:
+            type: date
+          example: '2022-03-01 00:00:00'
+        - name: selected_item
+          in: query
+          schema:
+            type: ids of item
+          example: '2,5'
+        - name: selected_customer
+          in: query
+          schema:
+            type: ids of customer
+          example: '2,5,6'
+        - name: selected_allocation
+          in: query
+          schema:
+            type: ids of allocation
+          example: '2,3'
       responses:
         '200':
           description: OK
