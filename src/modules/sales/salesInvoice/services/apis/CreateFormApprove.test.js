@@ -1,8 +1,10 @@
 const httpStatus = require('http-status');
-const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
+const ApiError = require('@src/utils/ApiError');
 const factory = require('@root/tests/utils/factory');
 const CreateFormApprove = require('./CreateFormApprove');
+
+const { User, Role, ModelHasRole, Inventory } = tenantDatabase;
 
 describe('Sales Invoice - CreateFormApprove', () => {
   describe('validations', () => {
@@ -51,28 +53,83 @@ describe('Sales Invoice - CreateFormApprove', () => {
   });
 
   describe('success approve', () => {
-    let salesInvoice, approver, formSalesInvoice;
+    let salesInvoice, approver, formSalesInvoice, salesInvoiceItem;
     beforeEach(async (done) => {
       const recordFactories = await generateRecordFactories();
-      ({ salesInvoice, approver, formSalesInvoice } = recordFactories);
-
-      ({ salesInvoice } = await new CreateFormApprove(tenantDatabase, {
-        approver,
-        salesInvoiceId: salesInvoice.id,
-      }).call());
+      ({ salesInvoice, approver, formSalesInvoice, salesInvoiceItem } = recordFactories);
 
       done();
     });
 
     it('update form status to approved', async () => {
+      ({ salesInvoice } = await new CreateFormApprove(tenantDatabase, {
+        approver,
+        salesInvoiceId: salesInvoice.id,
+      }).call());
+
       await formSalesInvoice.reload();
       expect(formSalesInvoice.approvalStatus).toEqual(1);
     });
 
     it('create the journals', async () => {
+      ({ salesInvoice } = await new CreateFormApprove(tenantDatabase, {
+        approver,
+        salesInvoiceId: salesInvoice.id,
+      }).call());
+
       const journals = await tenantDatabase.Journal.findAll({ where: { formId: formSalesInvoice.id } });
       await formSalesInvoice.reload();
       expect(journals.length).toEqual(5);
+    });
+
+    it('can be approve by super admin', async () => {
+      const superAdmin = await factory.user.create();
+      const superAdminRole = await Role.create({ name: 'super admin', guardName: 'api' });
+      await ModelHasRole.create({
+        roleId: superAdminRole.id,
+        modelId: superAdmin.id,
+        modelType: 'App\\Model\\Master\\User',
+      });
+      approver = await User.findOne({
+        where: { id: superAdmin.id },
+        include: [{ model: ModelHasRole, as: 'modelHasRole', include: [{ model: Role, as: 'role' }] }],
+      });
+      ({ salesInvoice } = await new CreateFormApprove(tenantDatabase, {
+        approver,
+        salesInvoiceId: salesInvoice.id,
+      }).call());
+    });
+
+    it('not create inventory when quantity 0', async () => {
+      let totalInventory = await Inventory.count();
+      expect(totalInventory).toEqual(1);
+      await salesInvoiceItem.update({ quantity: 0 });
+      ({ salesInvoice } = await new CreateFormApprove(tenantDatabase, {
+        approver,
+        salesInvoiceId: salesInvoice.id,
+      }).call());
+      totalInventory = await Inventory.count();
+      expect(totalInventory).toEqual(1);
+    });
+  });
+
+  describe('failed', () => {
+    let salesInvoice, approver, settingJournal;
+    beforeEach(async (done) => {
+      const recordFactories = await generateRecordFactories();
+      ({ salesInvoice, approver, settingJournal } = recordFactories);
+
+      done();
+    });
+
+    it('throws error when setting journal is missing', async () => {
+      await settingJournal.destroy();
+      await expect(async () => {
+        await new CreateFormApprove(tenantDatabase, {
+          approver,
+          salesInvoiceId: salesInvoice.id,
+        }).call();
+      }).rejects.toThrow('Journal sales account - cost of sales not found');
     });
   });
 });
@@ -88,6 +145,8 @@ const generateRecordFactories = async ({
   deliveryOrder,
   item,
   itemUnit,
+  inventoryForm,
+  inventory,
   deliveryNote,
   allocation,
   deliveryNoteItem,
@@ -120,6 +179,18 @@ const generateRecordFactories = async ({
   deliveryOrder = deliveryOrder || (await factory.deliveryOrder.create({ customer, warehouse }));
   item = item || (await factory.item.create({ chartOfAccount }));
   itemUnit = itemUnit || (await factory.itemUnit.create({ item, createdBy: maker.id }));
+  inventoryForm =
+    inventoryForm ||
+    (await factory.form.create({
+      branch,
+      formable: { id: 0 },
+      formableType: 'PurchaseInvoice',
+      number: 'PI2109001',
+      createdBy: maker.id,
+      updatedBy: maker.id,
+      requestApprovalTo: approver.id,
+    }));
+  inventory = inventory || (await factory.inventory.create({ form: inventoryForm, warehouse, item }));
   deliveryNote = deliveryNote || (await factory.deliveryNote.create({ customer, warehouse, deliveryOrder }));
   allocation = allocation || (await factory.allocation.create({ branch }));
   deliveryNoteItem = deliveryNoteItem || (await factory.deliveryNoteItem.create({ deliveryNote, item, allocation }));
@@ -180,7 +251,7 @@ const generateRecordFactories = async ({
     description: 'income tax payable',
     chartOfAccountId: chartOfAccount.id,
   });
-  await tenantDatabase.SettingJournal.create({
+  const settingJournal = await tenantDatabase.SettingJournal.create({
     feature: 'sales',
     name: 'cost of sales',
     description: 'cost of sales',
@@ -198,6 +269,8 @@ const generateRecordFactories = async ({
     deliveryOrder,
     item,
     itemUnit,
+    inventoryForm,
+    inventory,
     deliveryNote,
     allocation,
     deliveryNoteItem,
@@ -205,5 +278,6 @@ const generateRecordFactories = async ({
     salesInvoice,
     salesInvoiceItem,
     formSalesInvoice,
+    settingJournal,
   };
 };

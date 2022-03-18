@@ -4,10 +4,10 @@ const FindAll = require('./FindAll');
 
 describe('Sales Invoice - FindAll', () => {
   describe('success', () => {
-    let salesInvoice, formSalesInvoice;
+    let salesInvoice, formSalesInvoice, customer;
     beforeEach(async (done) => {
       const recordFactories = await generateRecordFactories();
-      ({ salesInvoice, formSalesInvoice } = recordFactories);
+      ({ salesInvoice, formSalesInvoice, customer } = recordFactories);
 
       done();
     });
@@ -18,6 +18,75 @@ describe('Sales Invoice - FindAll', () => {
       expect(salesInvoices.length).toBe(1);
       expect(salesInvoices[0].id).toBe(salesInvoice.id);
       expect(salesInvoices[0].form.number).toBe(formSalesInvoice.number);
+    });
+
+    it('return expected sales invoices with single like query', async () => {
+      const queries = {
+        filter_like: JSON.stringify({
+          'form.number': 'SI',
+        }),
+      };
+      const { salesInvoices } = await new FindAll(tenantDatabase, queries).call();
+
+      expect(salesInvoices.length).toBe(1);
+      expect(salesInvoices[0].id).toBe(salesInvoice.id);
+      expect(salesInvoices[0].form.number).toBe(formSalesInvoice.number);
+    });
+
+    it('return expected sales invoices with multiple query', async () => {
+      let queries = {
+        filter_like: JSON.stringify({
+          referenceableType: null,
+          customerName: customer.name,
+          'form.number': 'SI',
+        }),
+        filter_date_min: new Date(),
+        filter_date_max: new Date(),
+        filter_form: 'pending;approvalPending',
+      };
+      let { salesInvoices } = await new FindAll(tenantDatabase, queries).call();
+
+      expect(salesInvoices.length).toBe(1);
+      expect(salesInvoices[0].id).toBe(salesInvoice.id);
+      expect(salesInvoices[0].form.number).toBe(formSalesInvoice.number);
+
+      queries = {
+        filter_like: JSON.stringify({
+          referenceableType: null,
+          customerName: customer.name,
+          'form.number': 'SI',
+        }),
+        filter_date_min: new Date(),
+        filter_date_max: new Date(),
+        filter_form: 'cancellationApproved;approvalPending',
+      };
+      ({ salesInvoices } = await new FindAll(tenantDatabase, queries).call());
+
+      expect(salesInvoices.length).toBe(0);
+
+      queries = {
+        filter_like: JSON.stringify({
+          referenceableType: null,
+          customerName: customer.name,
+          'form.number': 'SI',
+        }),
+        filter_date_min: new Date(),
+        filter_date_max: new Date(),
+        filter_form: 'null;null',
+        limit: 5,
+        page: 1,
+      };
+      ({ salesInvoices } = await new FindAll(tenantDatabase, queries).call());
+
+      expect(salesInvoices.length).toBe(1);
+
+      queries = {
+        limit: 5,
+        page: 2,
+      };
+      ({ salesInvoices } = await new FindAll(tenantDatabase, queries).call());
+
+      expect(salesInvoices.length).toBe(0);
     });
   });
 });

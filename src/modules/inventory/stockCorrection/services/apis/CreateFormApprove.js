@@ -108,7 +108,7 @@ async function updateStockCorretionItems(tenantDatabase, { stockCorrection, tran
 async function updateInventory(tenantDatabase, { transaction, stockCorrection, stockCorrectionForm }) {
   const stockCorrectionItems = stockCorrection.items;
   const doUpdateInventory = stockCorrectionItems.map(async (stockCorrectionItem) => {
-    if (stockCorrectionItems.quantity === 0) {
+    if (stockCorrectionItem.quantity === 0) {
       return;
     }
     const item = await stockCorrectionItem.getItem();

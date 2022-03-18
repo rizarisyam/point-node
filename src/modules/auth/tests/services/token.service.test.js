@@ -1,5 +1,5 @@
 const moment = require('moment');
-const { generateToken, verifyToken } = require('../../services/token.service');
+const { generateToken, generatePayloadToken, verifyToken } = require('../../services/token.service');
 
 describe('Auth - Token Service', () => {
   describe('#generateToken', () => {
@@ -8,6 +8,15 @@ describe('Auth - Token Service', () => {
       const expires = moment().add(5, 'minutes');
       const secret = 'example-secret';
       const token = generateToken(userId, expires, secret);
+
+      expect(token).toBeTruthy();
+    });
+  });
+
+  describe('#generatePayloadToken', () => {
+    it('returns token when success generating token with default expires and default secret', () => {
+      const userId = 1;
+      const token = generatePayloadToken(userId);
 
       expect(token).toBeTruthy();
     });

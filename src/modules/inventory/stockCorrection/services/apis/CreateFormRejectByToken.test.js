@@ -1,9 +1,11 @@
 const httpStatus = require('http-status');
-const ApiError = require('@src/utils/ApiError');
 const moment = require('moment');
+const logger = require('@src/config/logger');
+const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
 const tokenService = require('@src/modules/auth/services/token.service');
+const CreateFormReject = require('./CreateFormReject');
 const CreateFormRejectByToken = require('./CreateFormRejectByToken');
 
 describe('Stock Correction - Create Form Reject By Token', () => {
@@ -57,6 +59,34 @@ describe('Stock Correction - Create Form Reject By Token', () => {
     it('update form status to rejected', async () => {
       await stockCorrectionForm.reload();
       expect(stockCorrectionForm.approvalStatus).toEqual(-1);
+    });
+  });
+
+  describe('failed', () => {
+    let stockCorrection, token;
+    beforeEach(async (done) => {
+      const recordFactories = await generateRecordFactories();
+      const { approver } = recordFactories;
+      ({ stockCorrection } = recordFactories);
+
+      token = await createToken(stockCorrection, approver);
+
+      done();
+    });
+
+    it('throws error when token payload undefined', async () => {
+      jest.spyOn(tokenService, 'verifyToken').mockReturnValue();
+      await expect(async () => {
+        await new CreateFormRejectByToken(tenantDatabase, token).call();
+      }).rejects.toThrow('Forbidden');
+      tokenService.verifyToken.mockRestore();
+    });
+
+    it('call logger error when get unexpected error', async () => {
+      const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+      jest.spyOn(CreateFormReject.prototype, 'call').mockRejectedValue('error');
+      await new CreateFormRejectByToken(tenantDatabase, token).call();
+      expect(loggerErrorSpy).toHaveBeenCalled();
     });
   });
 });

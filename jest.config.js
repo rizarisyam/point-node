@@ -5,7 +5,14 @@ module.exports = {
     NODE_ENV: 'test',
   },
   restoreMocks: true,
-  coveragePathIgnorePatterns: ['node_modules', 'src/config', 'src/app.js', 'tests'],
+  coveragePathIgnorePatterns: [
+    'node_modules',
+    'src/config',
+    'src/app.js',
+    'src/models/index.js',
+    'tests',
+    'models/tenantModels.js',
+  ],
   coverageReporters: ['text', 'lcov', 'clover', 'html'],
   moduleNameMapper: {
     '@root/(.*)': '<rootDir>/$1',

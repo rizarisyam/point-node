@@ -127,7 +127,7 @@ async function generateAttachmentPdf(tenantDatabase, { salesInvoiceForm, salesIn
       `<tr>
         <td>Sales order number</td>
         <td>:</td>
-        <td>${deliveryNote.deliveryOrder.salesOrder.form.number}</td>
+        <td>${deliveryNote?.deliveryOrder?.salesOrder?.form?.number}</td>
       </tr>`
     );
   }

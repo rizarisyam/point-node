@@ -4,6 +4,8 @@ const moment = require('moment');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
 const tokenService = require('@src/modules/auth/services/token.service');
+const logger = require('@src/config/logger');
+const CreateFormApprove = require('./CreateFormApprove');
 const CreateFormApproveByToken = require('./CreateFormApproveByToken');
 
 describe('Stock Correction - Create Form Approve By Token', () => {
@@ -62,6 +64,34 @@ describe('Stock Correction - Create Form Approve By Token', () => {
     it('create the journals', async () => {
       const journals = await tenantDatabase.Journal.findAll({ where: { formId: stockCorrectionForm.id } });
       expect(journals.length).toEqual(2);
+    });
+  });
+
+  describe('failed', () => {
+    let stockCorrection, token;
+    beforeEach(async (done) => {
+      const recordFactories = await generateRecordFactories();
+      const { approver } = recordFactories;
+      ({ stockCorrection } = recordFactories);
+
+      token = await createToken(stockCorrection, approver);
+
+      done();
+    });
+
+    it('throws error when token payload undefined', async () => {
+      jest.spyOn(tokenService, 'verifyToken').mockReturnValue();
+      await expect(async () => {
+        await new CreateFormApproveByToken(tenantDatabase, token).call();
+      }).rejects.toThrow('Forbidden');
+      tokenService.verifyToken.mockRestore();
+    });
+
+    it('call logger error when get unexpected error', async () => {
+      const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+      jest.spyOn(CreateFormApprove.prototype, 'call').mockRejectedValue('error');
+      await new CreateFormApproveByToken(tenantDatabase, token).call();
+      expect(loggerErrorSpy).toHaveBeenCalled();
     });
   });
 });

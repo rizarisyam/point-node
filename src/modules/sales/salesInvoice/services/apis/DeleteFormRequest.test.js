@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const { User, Role, ModelHasRole } = require('@src/models').tenant;
 const ApiError = require('@src/utils/ApiError');
 const tenantDatabase = require('@src/models').tenant;
 const factory = require('@root/tests/utils/factory');
@@ -53,25 +54,44 @@ describe('Sales Invoice - DeleteFormRequest', () => {
   });
 
   describe('success request', () => {
-    let salesInvoice, maker;
+    let salesInvoice, maker, deleteFormRequestDto;
     beforeEach(async (done) => {
       ({ salesInvoice, maker } = await generateRecordFactories());
 
-      const deleteFormRequestDto = {
+      deleteFormRequestDto = {
         reason: 'example reason',
       };
 
+      done();
+    });
+
+    it('update form cancellation status to pending', async () => {
       ({ salesInvoice } = await new DeleteFormRequest(tenantDatabase, {
         maker,
         salesInvoiceId: salesInvoice.id,
         deleteFormRequestDto,
       }).call());
 
-      done();
+      expect(salesInvoice.form.cancellationStatus).toEqual(0);
     });
 
-    it('update form cancellation status to pending', async () => {
-      expect(salesInvoice.form.cancellationStatus).toEqual(0);
+    it('can be request by super admin', async () => {
+      const superAdmin = await factory.user.create();
+      const superAdminRole = await Role.create({ name: 'super admin', guardName: 'api' });
+      await ModelHasRole.create({
+        roleId: superAdminRole.id,
+        modelId: superAdmin.id,
+        modelType: 'App\\Model\\Master\\User',
+      });
+      maker = await User.findOne({
+        where: { id: superAdmin.id },
+        include: [{ model: ModelHasRole, as: 'modelHasRole', include: [{ model: Role, as: 'role' }] }],
+      });
+      ({ salesInvoice } = await new DeleteFormRequest(tenantDatabase, {
+        maker,
+        salesInvoiceId: salesInvoice.id,
+        deleteFormRequestDto,
+      }).call());
     });
   });
 });
