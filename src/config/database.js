@@ -17,18 +17,18 @@ module.exports = {
           bigNumberStrings: true,
         },
       },
-      tenant: {
-        username: config.tenantDatabase.username,
-        password: config.tenantDatabase.password,
-        database: config.tenantDatabase.name,
-        host: config.tenantDatabase.host,
-        port: config.tenantDatabase.port,
-        dialect: DIALECT,
-        logging: config.tenantDatabase.logging,
-        dialectOptions: {
-          bigNumberStrings: true,
-        },
-      },
+      // tenant: {
+      //   username: config.tenantDatabase.username,
+      //   password: config.tenantDatabase.password,
+      //   database: config.tenantDatabase.name,
+      //   host: config.tenantDatabase.host,
+      //   port: config.tenantDatabase.port,
+      //   dialect: DIALECT,
+      //   logging: config.tenantDatabase.logging,
+      //   dialectOptions: {
+      //     bigNumberStrings: true,
+      //   },
+      // },
     },
   },
   staging: {
